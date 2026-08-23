@@ -133,3 +133,26 @@ CREATE TABLE ot_milestones (
   at       timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_ot_day ON ot_cases (case_date, suite, planned);
+
+-- ---------- On-call roster (who to call right now, by department) ----------
+CREATE TABLE oncall (
+  id          bigserial PRIMARY KEY,
+  dept        varchar(40) NOT NULL,               -- 'Cardiology', 'Duty Manager', ...
+  person      varchar(60) NOT NULL,
+  designation varchar(40),
+  phone       varchar(20),                        -- number or extension
+  note        varchar(80),                        -- 'Tonight 20:00–08:00'
+  updated_by  varchar(20) REFERENCES users(emp_id),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_oncall_dept ON oncall (dept, person);
+
+-- ---------- Web push subscriptions (one row per device) ----------
+CREATE TABLE push_subs (
+  endpoint   varchar(600) PRIMARY KEY,            -- push-service URL
+  emp_id     varchar(20) NOT NULL REFERENCES users(emp_id),
+  p256dh     varchar(120) NOT NULL,               -- client ECDH public key
+  auth       varchar(60)  NOT NULL,               -- client auth secret
+  created_at timestamptz  NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_push_emp ON push_subs (emp_id);

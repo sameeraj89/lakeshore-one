@@ -19,6 +19,7 @@ PORT=3000 node server/server.js     # custom port
 On first run it creates `server/data/` containing:
 - `lakeshore-one.db` — the SQLite database (WAL mode). **Back this file up.**
 - `secret.key` — token-signing secret (mode 600)
+- `vapid.json` — web-push signing keys (mode 600, generated on first run)
 
 Seeded accounts (PIN set on first sign-in): `LH-ADMIN` (admin — adds real
 users), `LH-DOC01`, `LH-IT01`, `LH-FM01`, `LH-HK01`, `LH-BM01`, `LH-SEC01`,
@@ -82,14 +83,37 @@ Everything lives in `server/data/lakeshore-one.db`. A nightly cron copy is
 enough for the pilot:
 `sqlite3 server/data/lakeshore-one.db ".backup /backups/lakeshore-$(date +%F).db"`
 
+## Web push notifications
+
+Built in, zero dependencies (VAPID + RFC 8291 implemented on Node's
+`crypto`). Staff tap the bell in the app header to opt in per device; alerts
+then arrive even with the app closed. What gets pushed is deliberately
+sparse: new tickets → that desk's agents (P1 also → management), status
+changes and comments → the ticket's reporter/assignee, bed turned ready →
+clinical staff. Requires HTTPS (same requirement as the PWA install) and an
+outbound path to the browser push services (`fcm.googleapis.com`,
+`*.push.apple.com`, `*.mozilla.com`) — note this is the one feature that
+needs the internet link up; everything else keeps working offline. Delivery
+is best-effort and never blocks an operation.
+
+## Command centre (wall view)
+
+Management / quality / admin get an **Open command centre** button on the
+dashboard — a full-screen live board (beds, theatres, service desk) meant
+for a corridor display or the morning ops huddle. For a dedicated display
+PC, sign in once as a management user and open `/lakeshore-one/?wall=1`;
+it goes straight to the wall and stays live over SSE. Tokens last 12 hours,
+so the display needs a morning re-login (or keep a browser profile signed
+in and re-open by bookmark).
+
 ## Scale-up path
 
 - `docs/schema.sql` is the equivalent PostgreSQL schema when the hospital
   wants a managed database; the API surface stays the same.
 - Replace `/api/login` with AD / SSO (OIDC) when IT is ready — tokens, roles
   and every other route are unchanged.
-- Notifications (WhatsApp / web push) hook naturally into `applyOp()` where
-  `broadcast()` is called.
+- WhatsApp notifications would hook into the same `notifyPushForOp()`
+  routing that web push uses.
 
 ## Alternative: run it on a PC inside the hospital (₹0)
 

@@ -304,6 +304,63 @@
   .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:60;
     background:var(--dark-card); color:var(--dark-ink); border-radius:12px; padding:10px 18px;
     font-size:13px; font-weight:500; box-shadow:var(--shadow); display:none; max-width:90%; text-align:center}
+
+  /* ---------- push bell ---------- */
+  .bell{border:1.5px solid var(--line); background:var(--card); border-radius:999px; width:32px; height:32px;
+    display:none; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-3); flex:none}
+  .bell svg{width:16px; height:16px}
+  .bell[aria-pressed="true"]{color:var(--brand); border-color:var(--brand); background:var(--brand-tint)}
+
+  /* ---------- on-call roster ---------- */
+  .ocdept{font-size:10.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink-3);
+    font-weight:700; margin:16px 2px 6px}
+  .ocrow{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px;
+    margin-bottom:8px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:12px}
+  .ocrow .ocp{flex:1; min-width:0}
+  .ocrow .ocn{font-weight:700; font-size:14px}
+  .ocrow .ocm{font-size:11.5px; color:var(--ink-2); margin-top:2px; line-height:1.5}
+  .ocrow .occall{flex:none; text-decoration:none; background:var(--good); color:#fff; border-radius:10px;
+    padding:8px 14px; font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px}
+  .ocrow .occall svg{width:13px; height:13px}
+  .ocedit{border:none; background:none; color:var(--ink-3); cursor:pointer; padding:6px; flex:none}
+  .ocedit svg{width:15px; height:15px}
+
+  /* ---------- OT utilisation (dash) ---------- */
+  .ota-note{font-size:10.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
+
+  /* ---------- command centre wall view ---------- */
+  #wallView{display:none; position:fixed; inset:0; z-index:70; background:var(--shell); overflow:auto; padding:16px}
+  #wallView.show{display:block}
+  .wall-head{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+  .wall-head img{height:30px}
+  .wall-title{font-family:'Montserrat',sans-serif; font-weight:800; font-size:18px; line-height:1.2}
+  .wall-title span{display:block; font:500 10px 'Roboto',sans-serif; letter-spacing:1.6px;
+    text-transform:uppercase; color:var(--ink-3); margin-top:2px}
+  .wall-clock{margin-left:auto; font:800 24px 'Montserrat',sans-serif; font-variant-numeric:tabular-nums}
+  .wall-x{border:1.5px solid var(--line); background:var(--card); border-radius:10px; width:34px; height:34px;
+    cursor:pointer; color:var(--ink-2); font-size:14px; flex:none; margin-left:10px}
+  .wall-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:12px; align-items:start}
+  .wtile{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm)}
+  .wtile h3{font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-3);
+    font-weight:700; margin-bottom:10px}
+  .wnums{display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; margin-bottom:10px}
+  .wnum .n{font:800 34px 'Montserrat',sans-serif; font-variant-numeric:tabular-nums; line-height:1}
+  .wnum .l{font-size:10px; letter-spacing:0.8px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:4px}
+  .wnum.good .n{color:var(--good)} .wnum.warn .n{color:var(--warn)} .wnum.crit .n{color:var(--crit)} .wnum.info .n{color:var(--brand)}
+  .wrow{display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:6px 0;
+    border-bottom:1px dashed var(--line); align-items:center}
+  .wrow:last-child{border-bottom:none}
+  .wrow .wl{color:var(--ink); font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .wrow .wv{font-weight:700; font-variant-numeric:tabular-nums; flex:none}
+  @media (min-width:1100px){
+    #wallView{padding:28px 34px}
+    .wall-head img{height:38px}
+    .wall-title{font-size:24px} .wall-title span{font-size:11px}
+    .wall-clock{font-size:34px}
+    .wall-grid{gap:16px}
+    .wnum .n{font-size:46px}
+    .wrow{font-size:14px}
+  }
 </style>
 
 
@@ -343,6 +400,7 @@
       <span class="logo-chip"><img id="logoImg" alt="VPS Lakeshore"></span>
       <div class="hdr-right">
         <div class="prod">Lakeshore <b>One</b></div>
+        <button class="bell" id="pushBtn" title="Notifications" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9Z"/><path d="M10.3 20.5a2 2 0 0 0 3.4 0"/></svg></button>
         <button class="me-chip" id="meChip"><span class="av" id="meAv"></span><span id="meName"></span></button>
       </div>
     </header>
@@ -395,7 +453,7 @@
       <section class="tab" id="tab-ops">
         <h1 class="page">Ops boards</h1>
         <p class="page-sub">Live bed state and today's operation theatre list — updated by the people doing the work.</p>
-        <div class="seg two ops-toggle" id="opsToggle"></div>
+        <div class="seg ops-toggle" id="opsToggle"></div>
         <div id="bedsView">
           <div class="kpis" id="bedKpis"></div>
           <div class="legend" id="bedLegend"></div>
@@ -406,6 +464,11 @@
           <div class="kpis" id="otKpis"></div>
           <button class="submit" id="otAddBtn" style="margin:0 0 12px">+ Schedule a case</button>
           <div id="otList"></div>
+        </div>
+        <div id="oncallView" style="display:none">
+          <p class="page-sub" style="margin:0 0 12px">Who to call right now, by department. Management keeps this list current.</p>
+          <button class="submit" id="ocAddBtn" style="margin:0 0 4px; display:none">+ Add on-call entry</button>
+          <div id="oncallList"></div>
         </div>
       </section>
 
@@ -429,10 +492,17 @@
       <section class="tab" id="tab-dash">
         <h1 class="page">Operations dashboard</h1>
         <p class="page-sub">Live position across all service desks.</p>
+        <button class="submit" id="wallOpen" style="margin:0 0 14px">Open command centre &middot; wall view</button>
         <div class="kpis" id="dashKpis"></div>
         <div class="dcard"><h3>Open tickets by service desk</h3><div id="dashBars"></div></div>
         <div class="dcard"><h3>Tickets raised &middot; last 14 days</h3><div class="cols" id="dashTrend"></div></div>
         <div class="dcard"><h3>Average resolution time &middot; last 7 days</h3><div id="dashRes"></div></div>
+        <div class="dcard"><h3>OT utilisation &middot; last 7 days</h3>
+          <div class="kpis" id="otaKpis" style="margin-bottom:12px"></div>
+          <div id="otaBars"></div>
+          <p class="ota-note">Utilisation = patient-in to patient-out over a 10-hour operating day, counted on days the
+            theatre ran. First-case on time = patient in within 15 minutes of the planned start.</p>
+        </div>
         <div class="dcard"><h3>Open incidents on campus</h3>
           <div class="map-wrap" id="mapWrap">
             <svg id="map" viewBox="120 140 860 960" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -500,6 +570,37 @@
   </div>
 </dialog>
 <dialog id="bedDlg"><div class="dlg-in" id="bedDlgIn"></div></dialog>
+
+<!-- Command centre — full-screen live wall view (Hospital 360) -->
+<div id="wallView" role="dialog" aria-label="Command centre">
+  <div class="wall-head">
+    <img id="wallLogo" alt="VPS Lakeshore">
+    <div class="wall-title">Command Centre<span>VPS Lakeshore &middot; live operations</span></div>
+    <div class="wall-clock" id="wallClock"></div>
+    <button class="wall-x" id="wallClose" title="Close">&#10005;</button>
+  </div>
+  <div class="wall-grid" id="wallGrid"></div>
+</div>
+
+<dialog id="oncallDlg">
+  <div class="dlg-in">
+    <h2 id="ocdTitle">On-call entry</h2>
+    <p>Visible to every signed-in user. No patient details here.</p>
+    <label class="fl">Department / specialty</label>
+    <input id="ocdDept" maxlength="40" placeholder="Cardiology / Anaesthesia / Duty Manager&hellip;">
+    <label class="fl">On-call person</label>
+    <input id="ocdPerson" maxlength="60" placeholder="Dr. &hellip;">
+    <label class="fl">Designation (optional)</label>
+    <input id="ocdDesig" maxlength="40" placeholder="Consultant / Registrar / Technician&hellip;">
+    <label class="fl">Phone / extension</label>
+    <input id="ocdPhone" maxlength="20" inputmode="tel" placeholder="0484-270&hellip; or ext 1234">
+    <label class="fl">Shift note (optional)</label>
+    <input id="ocdNote" maxlength="80" placeholder="Tonight 20:00–08:00">
+    <button class="submit" id="ocdSave">Save</button>
+    <button class="submit" id="ocdDelete" style="background:var(--crit-bg); color:var(--crit); margin-top:8px; display:none">Remove entry</button>
+    <button class="submit" id="ocdCancel" style="background:var(--neutral-bg); color:var(--ink-2); margin-top:8px">Cancel</button>
+  </div>
+</dialog>
 <dialog id="photoView" onclick="this.close()"><img alt="Ticket photo"></dialog>
 <dialog id="otDlg">
   <div class="dlg-in">
@@ -643,7 +744,7 @@ const OT_STAGE_META = {
   done:{label:'Done', cls:'b-st-done'},
   cancelled:{label:'Cancelled', cls:'b-st-can'}
 };
-function todayStr(){ const d = new Date();
+function todayStr(d){ d = d || new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function ensureOT(){ if (!db.ot) db.ot = { cases: [] }; }
 function hm(mins){ const d = new Date(Date.now() + mins*6e4);
@@ -665,8 +766,33 @@ function seedDemoOT(){
   ];
   for (const [suite, planned, dur, proc, surg, st] of demo){
     db.seq += 1;
+    /* synthetic milestones up to the current stage so the utilisation
+       analytics have something to chew on in demo mode */
+    const ms = [];
+    const start = new Date(t + 'T' + planned).getTime() + (hashCode(suite) % 20)*6e4;
+    const reached = OT_STAGES.indexOf(st);
+    for (let i = 1; i <= reached; i++)
+      ms.push({ to:OT_STAGES[i], at:new Date(start + (i-1)*22*6e4).toISOString(), by:'Demo' });
     db.ot.cases.push({ id:'OTC-' + db.seq, suite, date:t, planned, durMin:dur, procedure:proc,
-      surgeon:surg, status:st, milestones:[], demo:true });
+      surgeon:surg, status:st, milestones:ms, demo:true });
+  }
+}
+
+/* ---------- on-call roster (who to call right now) ---------- */
+function ensureOncall(){ if (!db.oncall) db.oncall = []; }
+function seedDemoOncall(){
+  ensureOncall();
+  if (db.oncall.length) return;
+  const now = new Date().toISOString();
+  for (const [dept, person, designation, phone, note] of [
+    ['Anaesthesia','Dr. Prakash V','Consultant','ext 4102','Tonight 20:00–08:00'],
+    ['Cardiology','Dr. Anitha Menon','Consultant','ext 4210',''],
+    ['Biomedical','Rahul Menon','Engineer','98470 11223','Equipment breakdowns'],
+    ['Duty Manager','Sini Jacob','Manager — Operations','ext 2001','Hospital-wide escalation'],
+    ['Blood Bank','Dr. Leena K','Transfusion Medicine','ext 3305','']
+  ]){
+    db.seq += 1;
+    db.oncall.push({ id:'OC-' + db.seq, dept, person, designation, phone, note, by:'Demo', at:now });
   }
 }
 
@@ -812,6 +938,24 @@ function apply(op){
     db.ot.cases.push({ id:'OTC-' + db.seq, suite:op.suite, date:op.date, planned:op.planned,
       durMin:op.durMin, procedure:op.procedure, surgeon:op.surgeon, status:'scheduled', milestones:[] });
     audit(op.by, 'scheduled OTC-' + db.seq + ' (' + op.suite + ' ' + op.planned + ' · ' + op.procedure + ')');
+  } else if (op.kind === 'oncall_set'){
+    ensureOncall();
+    if (op.id){
+      const r = db.oncall.find(x => x.id === op.id); if (!r) return false;
+      Object.assign(r, { dept:op.dept, person:op.person, designation:op.designation,
+        phone:op.phone, note:op.note, by:op.byName, at:op.at });
+      audit(op.by, 'updated on-call: ' + op.dept + ' → ' + op.person);
+    } else {
+      db.seq += 1;
+      db.oncall.push({ id:'OC-' + db.seq, dept:op.dept, person:op.person, designation:op.designation,
+        phone:op.phone, note:op.note, by:op.byName, at:op.at });
+      audit(op.by, 'set on-call: ' + op.dept + ' → ' + op.person);
+    }
+  } else if (op.kind === 'oncall_del'){
+    ensureOncall();
+    const r = db.oncall.find(x => x.id === op.id); if (!r) return false;
+    db.oncall = db.oncall.filter(x => x.id !== op.id);
+    audit(op.by, 'removed on-call: ' + r.dept + ' → ' + r.person);
   } else if (op.kind === 'ot_move'){
     ensureOT();
     const c = db.ot.cases.find(c => c.id === op.case); if (!c || c.status === op.to) return false;
@@ -1001,6 +1145,9 @@ function enterApp(){
     nav.appendChild(b);
   }
   setTab(isAgent(u.role) ? 'queue' : 'raise');
+  refreshPushBtn();
+  /* ?wall=1 → straight into the command centre (for a corridor display PC) */
+  try{ if (new URLSearchParams(location.search).get('wall') === '1' && canSeeAll(u.role)) wallOpenView(); }catch(e){}
 }
 function setTab(tab){
   ui.tab = tab;
@@ -1264,6 +1411,70 @@ function renderQueue(){
   const chips = document.querySelectorAll('#qStatus .fchip'); void chips;
 }
 
+/* ---------- OT utilisation analytics (7-day, from the milestone log) ---------- */
+function msAt(c, stage){
+  const m = (c.milestones || []).find(m => m.to === stage);
+  return m ? new Date(m.at).getTime() : null;
+}
+function otAnalytics(){
+  ensureOT();
+  const since = todayStr(new Date(Date.now() - 6*86400e3));
+  const cases = db.ot.cases.filter(c => c.status !== 'cancelled' && c.date >= since && c.date <= todayStr());
+  const bySuiteDay = new Map();
+  for (const c of cases){
+    const k = c.suite + '|' + c.date;
+    if (!bySuiteDay.has(k)) bySuiteDay.set(k, []);
+    bySuiteDay.get(k).push(c);
+  }
+  let firstOnTime = 0, firstStarted = 0;
+  const gaps = [];
+  const suiteUse = {};   /* suite -> { mins, days:Set, done } */
+  for (const [k, list] of bySuiteDay){
+    const suite = k.split('|')[0];
+    const su = suiteUse[suite] || (suiteUse[suite] = { mins:0, days:new Set(), done:0 });
+    su.days.add(list[0].date);
+    list.sort((a,b) => a.planned < b.planned ? -1 : 1);
+    const first = list[0], firstIn = msAt(first, 'in_ot');
+    if (firstIn){
+      firstStarted += 1;
+      if (firstIn <= new Date(first.date + 'T' + first.planned).getTime() + 15*6e4) firstOnTime += 1;
+    }
+    const started = list.filter(c => msAt(c, 'in_ot')).sort((a,b) => msAt(a,'in_ot') - msAt(b,'in_ot'));
+    for (let i = 1; i < started.length; i++){
+      const prevOut = msAt(started[i-1], 'out'), nextIn = msAt(started[i], 'in_ot');
+      if (prevOut && nextIn > prevOut && nextIn - prevOut < 6*3600e3) gaps.push((nextIn - prevOut)/6e4);
+    }
+    for (const c of list){
+      const a = msAt(c, 'in_ot'), b = msAt(c, 'out');
+      if (a && b && b > a) su.mins += (b - a)/6e4;
+      if (c.status === 'done') su.done += 1;
+    }
+  }
+  gaps.sort((a,b) => a-b);
+  return {
+    onPct: firstStarted ? Math.round(100*firstOnTime/firstStarted) : null,
+    medGap: gaps.length ? Math.round(gaps[Math.floor(gaps.length/2)]) : null,
+    doneTotal: Object.values(suiteUse).reduce((a,s) => a + s.done, 0),
+    util: OT_SUITES.map(sname => {
+      const su = suiteUse[sname];
+      return [sname, su && su.days.size ? Math.min(100, Math.round(100*su.mins/(su.days.size*600))) : 0];
+    })
+  };
+}
+function renderOTA(){
+  const a = otAnalytics();
+  $('otaKpis').innerHTML =
+    '<div class="kpi ' + (a.onPct === null ? 'prog' : a.onPct >= 80 ? 'done' : 'open') + '"><div class="n">' +
+      (a.onPct === null ? '–' : a.onPct + '%') + '</div><div class="l">First case on time</div></div>' +
+    '<div class="kpi prog"><div class="n">' + (a.medGap === null ? '–' : a.medGap + 'm') + '</div><div class="l">Median turnover</div></div>' +
+    '<div class="kpi done"><div class="n">' + a.doneTotal + '</div><div class="l">Cases done &middot; 7d</div></div>';
+  const mx = Math.max(1, ...a.util.map(x => x[1]));
+  $('otaBars').innerHTML = a.util.map(([l, v]) =>
+    '<div class="hbar"><span class="hl">' + esc(l) + '</span><span class="tr"><i style="width:' +
+    (v ? Math.max(4, Math.round(100*v/mx)) : 0) + '%"></i></span><span class="hv" style="min-width:38px">' +
+    (v ? v + '%' : '&ndash;') + '</span></div>').join('');
+}
+
 /* ---------- dashboard ---------- */
 function renderDash(){
   if (!canSeeAll(me().role)) return;
@@ -1329,7 +1540,122 @@ function renderDash(){
   });
   $('feed').innerHTML = db.audit.slice(0,15).map(a =>
     '<div><b>' + esc(a.by) + '</b> ' + esc(a.action) + ' · ' + ago(a.at) + '</div>').join('') || 'No activity yet.';
+  renderOTA();
 }
+
+/* ---------- command centre (Hospital 360 wall view) ----------
+   One glanceable live screen for a corridor display or the morning ops
+   huddle: beds, theatres, service desk. Data updates arrive over the same
+   SSE stream as everything else; a 30 s tick keeps the clock and relative
+   times honest between events. */
+let wallTimer = null;
+const wallIsOpen = () => $('wallView').classList.contains('show');
+function wallOpenView(){
+  if (!canSeeAll(me().role)) return;
+  $('wallLogo').src = LOGO;
+  $('wallView').classList.add('show');
+  renderWall();
+  clearInterval(wallTimer);
+  wallTimer = setInterval(renderWall, 30000);
+}
+function wallCloseView(){
+  $('wallView').classList.remove('show');
+  clearInterval(wallTimer); wallTimer = null;
+}
+function renderWall(){
+  if (!wallIsOpen() || !session) return;
+  const now = new Date();
+  $('wallClock').textContent = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  ensureBeds(); ensureOT();
+  const wnum = (cls, n, l) => '<div class="wnum ' + cls + '"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
+  const wrow = (l, v) => '<div class="wrow"><span class="wl">' + l + '</span><span class="wv">' + v + '</span></div>';
+  /* beds */
+  const all = Object.entries(db.beds);
+  const cnt = s => all.filter(([,b]) => b.status === s).length;
+  const occ = Math.round(100 * cnt('occupied') / all.length);
+  const tat = tatToday();
+  const wardRows = BED_WARDS.map(([code, name]) => {
+    const wb = all.filter(([id]) => id.startsWith(code + '-'));
+    const o = wb.filter(([,b]) => b.status === 'occupied').length;
+    const rdy = wb.filter(([,b]) => b.status === 'ready').length;
+    return wrow(esc(name), o + '/' + wb.length + (rdy ? ' · ' + rdy + ' ready' : ''));
+  }).join('');
+  /* theatres */
+  const t = todayStr();
+  const RUNNING = ['in_ot','anaesthesia','incision','closure','out'];
+  const cases = db.ot.cases.filter(c => c.date === t && c.status !== 'cancelled');
+  const running = cases.filter(c => RUNNING.includes(c.status)).length;
+  const done = cases.filter(c => c.status === 'done').length;
+  const late = cases.filter(c => c.status === 'scheduled' &&
+    Date.now() > new Date(t + 'T' + c.planned).getTime() + 15*6e4).length;
+  const suiteRows = OT_SUITES.map(sname => {
+    const cs = cases.filter(c => c.suite === sname);
+    const act = cs.find(c => RUNNING.includes(c.status));
+    const next = cs.filter(c => c.status === 'scheduled').sort((a,b) => a.planned < b.planned ? -1 : 1)[0];
+    const v = act ? OT_STAGE_META[act.status].label : next ? 'next ' + next.planned : cs.length ? 'list done' : 'idle';
+    return wrow(esc(sname), esc(v));
+  }).join('');
+  /* service desk */
+  const act = db.tickets.filter(x => x.status === 'open' || x.status === 'in_progress');
+  const p12 = act.filter(x => x.pri === 'P1' || x.pri === 'P2');
+  const onTrack = act.length ? Math.round(100 * act.filter(x =>
+    new Date(x.respondedAt ? x.dueResolve : x.dueRespond) > new Date()).length / act.length) + '%' : '–';
+  const hotRows = p12.slice(0,5).map(x =>
+    wrow(esc(x.pri + ' · ' + x.title), esc(ago(x.createdAt)))).join('') ||
+    wrow('No P1 / P2 open', '&#10003;');
+  const feedRows = (db.audit || []).slice(0,6).map(a =>
+    wrow(esc(a.action), esc(ago(a.at)))).join('') || wrow('No activity yet', '');
+  $('wallGrid').innerHTML =
+    '<div class="wtile"><h3>Beds &middot; ' + all.length + ' total</h3><div class="wnums">' +
+      wnum('info', occ + '%', 'Occupancy') + wnum('good', cnt('ready'), 'Ready') +
+      wnum('warn', cnt('dirty') + cnt('cleaning'), 'Turnaround') + wnum('crit', cnt('blocked'), 'Blocked') +
+      '</div>' + wardRows +
+      (tat !== null ? wrow('<b>Median turnaround today</b>', tat + ' min') : '') + '</div>' +
+    '<div class="wtile"><h3>Operation theatres &middot; today</h3><div class="wnums">' +
+      wnum('info', running, 'In theatre') + wnum('good', done + '/' + cases.length, 'Done') +
+      wnum(late ? 'crit' : 'good', late, 'Late starts') + '</div>' + suiteRows + '</div>' +
+    '<div class="wtile"><h3>Service desk</h3><div class="wnums">' +
+      wnum('info', act.length, 'Active') + wnum(p12.length ? 'crit' : 'good', p12.length, 'P1 / P2') +
+      wnum('good', onTrack, 'SLA on-track') + '</div>' + hotRows + '</div>' +
+    '<div class="wtile"><h3>Latest activity</h3>' + feedRows + '</div>';
+}
+$('wallOpen').onclick = wallOpenView;
+$('wallClose').onclick = wallCloseView;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && wallIsOpen()) wallCloseView(); });
+
+/* ---------- web push (server mode only) ---------- */
+const PUSH_OK = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+function b64ToU8(b){ const s = atob(b.replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from(s, c => c.charCodeAt(0)); }
+async function refreshPushBtn(){
+  const btn = $('pushBtn');
+  if (mode !== 'server' || !PUSH_OK){ btn.style.display = 'none'; return; }
+  btn.style.display = 'flex';
+  let sub = null;
+  try{ sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription(); }catch(e){}
+  btn.setAttribute('aria-pressed', String(!!sub));
+  btn.title = sub ? 'Notifications on — tap to turn off' : 'Turn on notifications';
+}
+$('pushBtn').onclick = async () => {
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const cur = await reg.pushManager.getSubscription();
+    if (cur){
+      await api('push/unsubscribe', { endpoint: cur.endpoint });
+      await cur.unsubscribe();
+      toast('Notifications off.');
+    } else {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted'){ toast('Notifications blocked — allow them in browser settings.'); return; }
+      const k = await api('push/key');
+      if (!k.ok){ toast('Could not fetch the notification key.'); return; }
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: b64ToU8(k.key) });
+      const r = await api('push/subscribe', { sub: sub.toJSON() });
+      if (r.ok) toast('Notifications on — alerts arrive even with the app closed.');
+      else { await sub.unsubscribe(); toast(r.error || 'Could not register for notifications.'); }
+    }
+  }catch(e){ toast('Could not change the notification setting.'); }
+  refreshPushBtn();
+};
 
 /* ---------- ops boards: beds + OT ---------- */
 function bedActions(status){
@@ -1472,12 +1798,83 @@ function renderOT(){
   }
 }
 function renderOps(){
-  seg($('opsToggle'), [['beds','Beds'],['ot','Operation theatres']], ui.opsView,
+  seg($('opsToggle'), [['beds','Beds'],['ot','Theatres'],['oncall','On-call']], ui.opsView,
       v => { ui.opsView = v; renderOps(); });
   $('bedsView').style.display = ui.opsView === 'beds' ? 'block' : 'none';
   $('otView').style.display = ui.opsView === 'ot' ? 'block' : 'none';
-  if (ui.opsView === 'beds') renderBeds(); else renderOT();
+  $('oncallView').style.display = ui.opsView === 'oncall' ? 'block' : 'none';
+  if (ui.opsView === 'beds') renderBeds();
+  else if (ui.opsView === 'ot') renderOT();
+  else renderOncall();
 }
+
+/* ---------- on-call roster ---------- */
+const canEditOncall = () => ['management','admin'].includes(me().role);
+let oncallEditId = null;
+function renderOncall(){
+  ensureOncall();
+  $('ocAddBtn').style.display = (canEditOncall() && mode !== 'readonly') ? 'block' : 'none';
+  const el = $('oncallList');
+  if (!db.oncall.length){
+    el.innerHTML = '<div class="empty">No on-call entries yet' +
+      (canEditOncall() ? ' — add the first one above.' : '. Management adds them.') + '</div>';
+    return;
+  }
+  const iPhone = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>';
+  const iEdit = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3.5 20.5 7 8.5 19H5v-3.5L17 3.5Z"/></svg>';
+  const byDept = new Map();
+  for (const r of db.oncall){
+    if (!byDept.has(r.dept)) byDept.set(r.dept, []);
+    byDept.get(r.dept).push(r);
+  }
+  let html = '';
+  for (const [dept, rows] of [...byDept.entries()].sort((a,b) => a[0].localeCompare(b[0]))){
+    html += '<div class="ocdept">' + esc(dept) + '</div>';
+    for (const r of rows){
+      const tel = (r.phone || '').replace(/[^\d+]/g, '');
+      html += '<div class="ocrow"><div class="ocp"><div class="ocn">' + esc(r.person) + '</div>' +
+        '<div class="ocm">' + esc([r.designation, r.note].filter(Boolean).join(' · ') || '&nbsp;') +
+        (r.by ? '<br>updated by ' + esc(r.by) + ' · ' + ago(r.at) : '') + '</div></div>' +
+        (r.phone ? (tel.length >= 4
+          ? '<a class="occall" href="tel:' + esc(tel) + '">' + iPhone + esc(r.phone) + '</a>'
+          : '<span class="occall" style="background:var(--neutral-bg); color:var(--ink-2)">' + iPhone + esc(r.phone) + '</span>') : '') +
+        (canEditOncall() && mode !== 'readonly'
+          ? '<button class="ocedit" data-ocid="' + esc(r.id) + '" title="Edit">' + iEdit + '</button>' : '') +
+        '</div>';
+    }
+  }
+  el.innerHTML = html;
+  for (const b of el.querySelectorAll('[data-ocid]'))
+    b.onclick = () => openOncallDlg(b.dataset.ocid);
+}
+function openOncallDlg(id){
+  ensureOncall();
+  const r = id ? db.oncall.find(x => String(x.id) === String(id)) : null;
+  oncallEditId = r ? r.id : null;
+  $('ocdTitle').textContent = r ? 'Edit on-call entry' : 'Add on-call entry';
+  $('ocdDept').value = r ? r.dept : ''; $('ocdPerson').value = r ? r.person : '';
+  $('ocdDesig').value = r ? (r.designation || '') : ''; $('ocdPhone').value = r ? (r.phone || '') : '';
+  $('ocdNote').value = r ? (r.note || '') : '';
+  $('ocdDelete').style.display = r ? 'block' : 'none';
+  $('oncallDlg').showModal();
+}
+$('ocAddBtn').onclick = () => openOncallDlg(null);
+$('ocdCancel').onclick = e => { e.preventDefault(); $('oncallDlg').close(); };
+$('ocdSave').onclick = () => {
+  const dept = $('ocdDept').value.trim(), person = $('ocdPerson').value.trim();
+  if (!dept || !person){ toast('Department and person are required.'); return; }
+  const u = me();
+  commit({ uid:uid(), kind:'oncall_set', id:oncallEditId, dept, person,
+    designation:$('ocdDesig').value.trim(), phone:$('ocdPhone').value.trim(), note:$('ocdNote').value.trim(),
+    by:u.empId, byName:u.name, at:new Date().toISOString() });
+  $('oncallDlg').close();
+};
+$('ocdDelete').onclick = () => {
+  if (!oncallEditId || !confirm('Remove this on-call entry?')) return;
+  const u = me();
+  commit({ uid:uid(), kind:'oncall_del', id:oncallEditId, by:u.empId, byName:u.name, at:new Date().toISOString() });
+  $('oncallDlg').close();
+};
 $('otAddBtn').onclick = () => {
   const ss = $('ocSuite');
   if (!ss.options.length) ss.innerHTML = OT_SUITES.map(s => '<option>' + esc(s) + '</option>').join('');
@@ -1552,6 +1949,7 @@ function renderAll(){
   if (ui.tab === 'queue') renderQueue();
   if (ui.tab === 'dash') renderDash();
   if (ui.tab === 'admin') renderAdmin();
+  if (wallIsOpen()) renderWall();
 }
 window.addEventListener('resize', () => { if (ui.tab === 'dash') renderDash(); });
 $('qSearch').addEventListener('input', () => { ui.qSearch = $('qSearch').value; renderQueue(); });
@@ -1569,7 +1967,7 @@ $('qSearch').addEventListener('input', () => { ui.qSearch = $('qSearch').value; 
     return;   /* show login */
   }
   ensureBeds();
-  if (mode === 'local') seedDemoOT();   /* demo schedule only in single-device mode */
+  if (mode === 'local'){ seedDemoOT(); seedDemoOncall(); }   /* demo data only in single-device mode */
   try{ const s = sessionStorage.getItem('l1-session');
     if (s && db.users.some(u => u.empId === s && u.active)){ session = s; enterApp(); return; } }catch(e){}
 })();
