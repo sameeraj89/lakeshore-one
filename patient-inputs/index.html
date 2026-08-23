@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#001E5F">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lakeshore One">
+<title>Lakeshore Patient Inputs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
+    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --shadow:0 8px 24px rgba(22,35,46,0.14); --shadow-sm:0 2px 8px rgba(22,35,46,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
+
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
+    text-transform:uppercase; margin-top:6px}
+  .mode-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn); background:var(--warn-bg);
+    border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  .trustbar{margin:6px 16px 12px; background:var(--brand-tint); border:1px solid var(--line);
+    border-radius:14px; padding:11px 14px; font-size:12px; line-height:1.55; color:var(--ink-2)}
+  .trustbar b{color:var(--brand-ink)}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:2px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--info); background:var(--info-bg);
+    border-radius:999px; padding:4px 11px; margin:0 0 10px}
+
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm)}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:15px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
+  input[type=text], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus, textarea:focus{border-color:var(--brand)}
+  textarea{min-height:80px; resize:vertical}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1 1 30%; min-width:88px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
+    font-family:'Figtree',sans-serif; line-height:1.3}
+  .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
+  .seg button[aria-pressed="true"].sev-high{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
+  .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  :root[data-theme="dark"] .submit{color:#0E1418}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .submit{color:#0E1418} }
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:6px; line-height:1.5}
+
+  .confirm{display:none; text-align:center; padding:30px 18px}
+  .confirm.show{display:block}
+  .confirm .big{width:64px; height:64px; border-radius:50%; background:var(--good-bg); color:var(--good);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px}
+  .confirm .big svg{width:30px; height:30px}
+  .confirm h2{font-weight:800; font-size:20px; margin-bottom:6px}
+  .confirm .refno{font-weight:800; font-size:15px; color:var(--brand-ink); background:var(--brand-tint);
+    display:inline-block; border-radius:999px; padding:6px 16px; margin:6px 0 14px}
+  .confirm p{font-size:13px; color:var(--ink-2); line-height:1.6; max-width:320px; margin:0 auto 6px}
+
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
+  .kpis.three{grid-template-columns:repeat(3,1fr)}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px}
+  .kpi .n{font-weight:700; font-size:24px; letter-spacing:-0.3px; font-variant-numeric:tabular-nums}
+  .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
+  .kpi .delta{font-size:11px; font-weight:700; margin-top:4px}
+  .delta.up-good{color:var(--good)} .delta.down-bad{color:var(--crit)}
+
+  .filters{display:flex; gap:7px; overflow-x:auto; padding:2px 0 12px; scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .filters button{flex:none; border:1.5px solid var(--line); background:var(--card); color:var(--ink-2);
+    border-radius:999px; padding:7px 13px; font-size:12px; font-weight:600; cursor:pointer; font-family:'Figtree',sans-serif}
+  .filters button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink); font-weight:700}
+
+  .qcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px;
+    margin-bottom:10px; box-shadow:var(--shadow-sm)}
+  .qrow{display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap}
+  .refid{font-size:11px; font-weight:700; color:var(--ink-3); font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
+  .b-complaint{background:var(--crit-bg); color:var(--crit)}
+  .b-suggestion{background:var(--info-bg); color:var(--info)}
+  .b-appreciation{background:var(--good-bg); color:var(--good)}
+  .b-query{background:var(--neutral-bg); color:var(--neutral)}
+  .b-stage{background:var(--brand-tint); color:var(--brand-ink)}
+  .b-sev{background:var(--warn-bg); color:var(--warn)}
+  .b-sla-ok{background:var(--good-bg); color:var(--good)}
+  .b-sla-due{background:var(--warn-bg); color:var(--warn)}
+  .b-sla-late{background:var(--crit-bg); color:var(--crit)}
+  .qtitle{font-size:14px; font-weight:700; line-height:1.4}
+  .qmeta{font-size:12px; color:var(--ink-2); margin-top:4px; line-height:1.5}
+  .qact{margin-top:10px; display:flex; gap:7px; flex-wrap:wrap}
+  .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
+    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+  .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
+  .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:26px 10px; line-height:1.6}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px}
+  .chart-card h3{font-size:13.5px; font-weight:700; margin-bottom:2px}
+  .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
+  .hbar{display:grid; grid-template-columns:150px 1fr 30px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
+  .cols{display:flex; align-items:flex-end; gap:5px; height:110px; padding-top:6px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:26px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
+  .col.hot .bar{background:var(--brand)}
+  .col .cl{font-size:9px; color:var(--ink-3); font-weight:500}
+  .col .cv{font-size:10px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
+  .stack i{display:block; height:100%}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin-top:10px}
+  .legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:21px; height:21px}
+  nav button[aria-pressed="true"]{color:var(--brand)}
+  .backlink{display:inline-block; font-size:11px; color:#8FA9DC; text-decoration:none; margin-top:5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
+      <small>Patient Inputs &middot; Voice of the Patient</small></div>
+    <span class="mode-tag" id="modeTag">Pilot &middot; this device</span>
+  </header>
+  <div class="trustbar"><b>Every input counts.</b> Complaints, suggestions, appreciation and queries from patients
+    and bystanders go straight to the Patient Experience team, with response targets on every complaint.</div>
+
+  <main>
+    <!-- ============ CAPTURE ============ -->
+    <section class="tab active" id="tab-capture">
+      <div id="captureForm">
+        <h1 class="page">Capture a patient input</h1>
+        <p class="page-sub">At the bedside, at a counter or at discharge &mdash; under two minutes. Name and UHID are optional.</p>
+        <div class="fcard">
+          <label class="fl">Who is giving this input?</label>
+          <div class="seg" id="fWho"></div>
+          <label class="fl">Type of input</label>
+          <div class="seg" id="fType"></div>
+          <div id="sevWrap">
+            <label class="fl">How serious is it?</label>
+            <div class="seg" id="fSev"></div>
+            <p class="hint" id="sevHint"></p>
+          </div>
+          <label class="fl" for="fWhere">Where did this come up?</label>
+          <select id="fWhere"></select>
+          <label class="fl" for="fAbout">What is it about?</label>
+          <select id="fAbout"></select>
+          <label class="fl" for="fName">Patient name <span>(optional)</span></label>
+          <input type="text" id="fName" placeholder="e.g. Mariyam K" maxlength="60">
+          <label class="fl" for="fUhid">UHID <span>(optional)</span></label>
+          <input type="text" id="fUhid" placeholder="e.g. LH0482913" maxlength="20">
+          <label class="fl" for="fDesc">What did the patient say?</label>
+          <textarea id="fDesc" placeholder="In the patient's own words where possible &mdash; what happened, what they expected, what would make it right&hellip;"></textarea>
+          <button class="submit" id="fSubmit">Log this input</button>
+          <p class="hint" style="text-align:center; margin-top:10px">Complaints get a reference number and a response target. Appreciation is shared with the team it names.</p>
+        </div>
+      </div>
+      <div class="confirm" id="confirm">
+        <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg></div>
+        <h2>Input logged</h2>
+        <div class="refno" id="refNo">PI-2608-101</div>
+        <p id="confirmMsg">The Patient Experience team will acknowledge this and follow up within the response target.</p>
+        <button class="submit" style="max-width:330px; margin:18px auto 0; display:block" id="again">Log another input</button>
+      </div>
+    </section>
+
+    <!-- ============ BOARD ============ -->
+    <section class="tab" id="tab-board">
+      <span class="viewtag">Patient Experience team view</span>
+      <h1 class="page">Inputs board</h1>
+      <p class="page-sub">Acknowledge &rarr; work &rarr; resolve. Response targets: high 24&nbsp;h, medium 48&nbsp;h, low 72&nbsp;h; suggestions reviewed within 7 days.</p>
+      <div class="kpis three" id="boardKpis"></div>
+      <div class="filters" id="boardFilters"></div>
+      <div id="boardList"></div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="tab" id="tab-trends">
+      <span class="viewtag">Patient Experience team view</span>
+      <h1 class="page">Experience trends</h1>
+      <p class="page-sub">What patients keep telling us. Rising inputs with a rising appreciation share means people are being heard &mdash; not that care got worse.</p>
+      <div class="kpis" id="trendKpis"></div>
+      <div class="chart-card">
+        <h3>Inputs per month</h3>
+        <div class="cs">Last 8 months &middot; all types</div>
+        <div class="cols" id="monthCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>What inputs are about</h3>
+        <div class="cs">This month &middot; count by theme</div>
+        <div id="themeBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Type mix &mdash; this month</h3>
+        <div class="cs" id="mixSub"></div>
+        <div class="stack" id="mixStack"></div>
+        <div class="legend" id="mixLegend"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
+    Inputs are saved only in this browser (localStorage); demo entries are fictional. The production build plugs into
+    the Lakeshore One backend for shared queues, sign-on and an audit trail &mdash; same path as the service desk.
+    <br><a class="backlink" href="../" style="color:var(--info)">&larr; Back to the Lakeshore One hub</a>
+  </footer>
+
+  <nav>
+    <button id="nav-capture" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4.97-2.4 8-5.4 8-9.5A5.5 5.5 0 0 0 12 7a5.5 5.5 0 0 0-8 4.5c0 4.1 3.03 7.1 8 9.5Z"/><path d="M12 10v4M10 12h4"/></svg>
+      Capture</button>
+    <button id="nav-board" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Board</button>
+    <button id="nav-trends" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+      Trends</button>
+  </nav>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const H = 36e5, D = 24*H;
+
+const WHO = ['Patient','Bystander / family','Staff, on the patient’s behalf'];
+const TYPES = ['Complaint','Suggestion','Appreciation','Query'];
+const SEV = [
+  ['High','Safety, dignity or a patient in distress — respond within 24 h'],
+  ['Medium','Service failure, needs fixing — respond within 48 h'],
+  ['Low','Minor irritant — respond within 72 h']
+];
+const WHERE = ['OP Block','Wards Tower','ICU Complex','Emergency & Trauma','Radiology & Imaging','Central Lab','Pharmacy','Billing & Admissions','OT Complex','Oncology Block','Canteen / F&B','Other'];
+const ABOUT = ['Waiting time','Doctor & clinical care','Nursing care','Billing & insurance','Communication & behaviour','Cleanliness & housekeeping','Food quality','Facilities & amenities','Discharge process','Appointment & registration','Other'];
+const TAT_H = { High:24, Medium:48, Low:72 };   /* complaints; suggestions & queries get 7 d review */
+const STAGES = ['New','Acknowledged','In progress','Resolved','Closed'];
+const NEXT_ACTION = { 'New':'Acknowledge', 'Acknowledged':'Start work', 'In progress':'Mark resolved', 'Resolved':'Close' };
+
+/* ---------- store (single-device pilot) ---------- */
+const KEY = 'lakeshore-patient-inputs-v1';
+let db = { seq: 100, items: [] };
+try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+
+function mkId(){
+  const d = new Date(); db.seq++;
+  return 'PI-' + String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + '-' + db.seq;
+}
+
+/* demo seed — so the board and trends aren't empty on first open */
+function seed(){
+  if (db.items.length) return;
+  const now = Date.now();
+  const mk = (agoH, type, sev, where, about, desc, stage, who) => ({
+    id: mkId(), createdAt: now - agoH*H, type, sev, where, about, desc, stage,
+    who: who || 'Patient', name:'', uhid:'', demo:true,
+    resolvedAt: (stage === 'Resolved' || stage === 'Closed') ? now - Math.max(1, agoH-20)*H : null });
+  db.items = [
+    mk(2,  'Complaint','High','Emergency & Trauma','Waiting time','Chest-pain patient says triage took long; family very anxious about the delay before ECG.','New'),
+    mk(5,  'Appreciation',null,'Wards Tower','Nursing care','“Sister Anu on L4 stayed past her shift to settle my father — please thank her.”','New','Bystander / family'),
+    mk(9,  'Complaint','Medium','Billing & Admissions','Billing & insurance','Insurance pre-auth took three counter visits; patient asked for one desk to own the file.','Acknowledged'),
+    mk(26, 'Suggestion',null,'OP Block','Appointment & registration','Senior citizens ask for a separate registration queue in the morning rush.','In progress'),
+    mk(30, 'Complaint','Medium','Radiology & Imaging','Waiting time','USG appointment at 10:20, taken in at 11:35. No one updated the patient meanwhile.','In progress'),
+    mk(50, 'Complaint','Low','Canteen / F&B','Food quality','Diabetic meal tray arrived with dessert twice this week.','Resolved'),
+    mk(76, 'Query',null,'Pharmacy','Billing & insurance','Discharge pharmacy bill shows brand substitution — family wants the price difference explained.','Resolved'),
+    mk(120,'Appreciation',null,'OT Complex','Doctor & clinical care','Patient thanks Dr. George and the ortho OT team for clear counselling before knee replacement.','Closed'),
+    mk(150,'Complaint','Medium','Wards Tower','Cleanliness & housekeeping','Washroom on L6 east wing not cleaned between shifts; raised twice with housekeeping.','Closed')
+  ];
+  save();
+}
+
+/* ---------- capture form ---------- */
+let whoSel = WHO[0], typeSel = 'Complaint', sevSel = 'Medium';
+function seg(el, items, sel, onPick, clsFn){
+  el.innerHTML = '';
+  for (const it of items){
+    const label = Array.isArray(it) ? it[0] : it;
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    if (clsFn) b.className = clsFn(label);
+    b.setAttribute('aria-pressed', label === sel);
+    b.onclick = () => onPick(label);
+    el.appendChild(b);
+  }
+}
+function renderForm(){
+  seg($('fWho'), WHO, whoSel, v => { whoSel = v; renderForm(); });
+  seg($('fType'), TYPES, typeSel, v => { typeSel = v; renderForm(); });
+  $('sevWrap').style.display = typeSel === 'Complaint' ? 'block' : 'none';
+  seg($('fSev'), SEV, sevSel, v => { sevSel = v; renderForm(); }, l => l === 'High' ? 'sev-high' : '');
+  const s = SEV.find(x => x[0] === sevSel); $('sevHint').textContent = s ? s[1] : '';
+  if (!$('fWhere').options.length) $('fWhere').innerHTML = WHERE.map(z => '<option>' + z + '</option>').join('');
+  if (!$('fAbout').options.length) $('fAbout').innerHTML = ABOUT.map(z => '<option>' + z + '</option>').join('');
+}
+$('fSubmit').onclick = () => {
+  const desc = $('fDesc').value.trim();
+  if (!desc){ $('fDesc').focus(); return; }
+  const item = { id: mkId(), createdAt: Date.now(), who: whoSel, type: typeSel,
+    sev: typeSel === 'Complaint' ? sevSel : null, where: $('fWhere').value, about: $('fAbout').value,
+    name: $('fName').value.trim(), uhid: $('fUhid').value.trim(), desc, stage:'New', resolvedAt: null };
+  db.items.unshift(item); save();
+  $('refNo').textContent = item.id;
+  $('confirmMsg').textContent =
+    item.type === 'Complaint' ? 'Response target: ' + TAT_H[item.sev] + ' hours. The Patient Experience team will acknowledge and follow up.' :
+    item.type === 'Appreciation' ? 'This will be shared with the team it names — appreciation gets read out in the daily huddle.' :
+    item.type === 'Suggestion' ? 'Suggestions are reviewed by the Patient Experience committee within 7 days.' :
+    'The team will get an answer back to the patient or family.';
+  $('captureForm').style.display = 'none'; $('confirm').classList.add('show');
+  renderBoard(); renderTrends(); window.scrollTo(0,0);
+};
+$('again').onclick = () => {
+  $('confirm').classList.remove('show'); $('captureForm').style.display = 'block';
+  $('fDesc').value = ''; $('fName').value = ''; $('fUhid').value = '';
+  typeSel = 'Complaint'; sevSel = 'Medium'; renderForm();
+};
+
+/* ---------- board ---------- */
+let boardFilter = 'Open';
+const FILTERS = ['Open','Complaint','Suggestion','Appreciation','Query','Resolved','All'];
+
+function tatBadge(it){
+  if (it.stage === 'Resolved' || it.stage === 'Closed')
+    return '<span class="badge b-sla-ok">' + it.stage.toLowerCase() + '</span>';
+  const dueMs = it.createdAt + (it.type === 'Complaint' ? TAT_H[it.sev]*H : 7*D);
+  const left = dueMs - Date.now();
+  if (left < 0) return '<span class="badge b-sla-late">overdue ' + fmtDur(-left) + '</span>';
+  if (left < 8*H) return '<span class="badge b-sla-due">due in ' + fmtDur(left) + '</span>';
+  return '<span class="badge b-sla-ok">due in ' + fmtDur(left) + '</span>';
+}
+function fmtDur(ms){
+  const h = Math.round(ms/H);
+  if (h < 1) return Math.max(1, Math.round(ms/6e4)) + ' min';
+  if (h < 48) return h + ' h';
+  return Math.round(h/24) + ' d';
+}
+function ago(ts){ return fmtDur(Date.now() - ts) + ' ago'; }
+
+function renderBoard(){
+  const open = db.items.filter(i => i.stage !== 'Resolved' && i.stage !== 'Closed');
+  const overdue = open.filter(i => i.createdAt + (i.type === 'Complaint' ? TAT_H[i.sev]*H : 7*D) < Date.now());
+  const resolved7 = db.items.filter(i => i.resolvedAt && Date.now() - i.resolvedAt < 7*D);
+  $('boardKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:var(--brand)">' + open.length + '</div><div class="l">Open</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (overdue.length ? 'var(--crit)' : 'var(--good)') + '">' + overdue.length + '</div><div class="l">Past target</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + resolved7.length + '</div><div class="l">Resolved &middot; 7 d</div></div>';
+
+  const fEl = $('boardFilters'); fEl.innerHTML = '';
+  for (const f of FILTERS){
+    const b = document.createElement('button'); b.textContent = f;
+    b.setAttribute('aria-pressed', f === boardFilter);
+    b.onclick = () => { boardFilter = f; renderBoard(); };
+    fEl.appendChild(b);
+  }
+
+  let list = db.items.slice();
+  if (boardFilter === 'Open') list = list.filter(i => i.stage !== 'Resolved' && i.stage !== 'Closed');
+  else if (boardFilter === 'Resolved') list = list.filter(i => i.stage === 'Resolved' || i.stage === 'Closed');
+  else if (boardFilter !== 'All') list = list.filter(i => i.type === boardFilter);
+  list.sort((a,b) => b.createdAt - a.createdAt);
+
+  $('boardList').innerHTML = list.length ? list.map(it =>
+    '<div class="qcard"><div class="qrow"><span class="refid">' + it.id + '</span>' +
+    '<span class="badge b-' + it.type.toLowerCase() + '">' + it.type + '</span>' +
+    (it.sev ? '<span class="badge ' + (it.sev === 'High' ? 'b-sla-late' : 'b-sev') + '">' + it.sev + '</span>' : '') +
+    '<span class="badge b-stage">' + it.stage + '</span>' + tatBadge(it) + '</div>' +
+    '<div class="qtitle">' + esc(it.desc) + '</div>' +
+    '<div class="qmeta">' + it.where + ' &middot; ' + it.about + ' &middot; from ' + it.who.toLowerCase() +
+      (it.name ? ' &middot; ' + esc(it.name) : '') + (it.uhid ? ' &middot; ' + esc(it.uhid) : '') +
+      ' &middot; logged ' + ago(it.createdAt) + '</div>' +
+    (NEXT_ACTION[it.stage] ? '<div class="qact"><button class="primary" data-adv="' + it.id + '">' + NEXT_ACTION[it.stage] + '</button></div>' : '') +
+    '</div>').join('')
+    : '<div class="empty">Nothing here. Inputs logged on the Capture tab land on this board.</div>';
+
+  for (const b of $('boardList').querySelectorAll('[data-adv]'))
+    b.onclick = () => {
+      const it = db.items.find(x => x.id === b.dataset.adv);
+      if (!it) return;
+      it.stage = STAGES[STAGES.indexOf(it.stage) + 1];
+      if (it.stage === 'Resolved') it.resolvedAt = Date.now();
+      save(); renderBoard(); renderTrends();
+    };
+}
+function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ---------- trends ---------- */
+/* fixed history for past months; the current month is computed live */
+const HIST = [ ['Jan',34],['Feb',41],['Mar',37],['Apr',45],['May',52],['Jun',48],['Jul',57] ];
+
+function renderTrends(){
+  const now = new Date();
+  const thisMonth = db.items.filter(i => { const d = new Date(i.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+  const comp = thisMonth.filter(i => i.type === 'Complaint');
+  const appr = thisMonth.filter(i => i.type === 'Appreciation');
+  const done = db.items.filter(i => i.resolvedAt);
+  const medH = done.length ? Math.round(median(done.map(i => (i.resolvedAt - i.createdAt)/H))) : 0;
+
+  $('trendKpis').innerHTML =
+    '<div class="kpi"><div class="n">' + thisMonth.length + '</div><div class="l">Inputs this month</div><div class="delta up-good">&#9650; capture drive on</div></div>' +
+    '<div class="kpi"><div class="n">' + (thisMonth.length ? Math.round(100*comp.length/thisMonth.length) : 0) + '<small>%</small></div><div class="l">Complaint share</div></div>' +
+    '<div class="kpi"><div class="n">' + medH + '<small> h</small></div><div class="l">Median resolution</div><div class="delta up-good">target &lt; 48 h</div></div>' +
+    '<div class="kpi"><div class="n">' + appr.length + '</div><div class="l">Appreciations</div><div class="delta up-good">read out in huddles</div></div>';
+
+  const months = HIST.concat([[now.toLocaleString('en',{month:'short'}), thisMonth.length]]);
+  const max = Math.max(...months.map(m => m[1]), 1);
+  $('monthCols').innerHTML = months.map((m,i) =>
+    '<div class="col' + (i === months.length-1 ? ' hot' : '') + '"><span class="cv">' + m[1] + '</span>' +
+    '<span class="bar" style="height:' + Math.round(88*m[1]/max) + '%"></span><span class="cl">' + m[0] + '</span></div>').join('');
+
+  const byTheme = {};
+  for (const i of thisMonth) byTheme[i.about] = (byTheme[i.about] || 0) + 1;
+  const themes = Object.entries(byTheme).sort((a,b) => b[1]-a[1]).slice(0,7);
+  const tMax = Math.max(...themes.map(t => t[1]), 1);
+  $('themeBars').innerHTML = themes.length ? themes.map(t =>
+    '<div class="hbar"><span class="hl">' + t[0] + '</span><span class="tr"><i style="width:' + Math.round(100*t[1]/tMax) + '%"></i></span><span class="hv">' + t[1] + '</span></div>').join('')
+    : '<div class="empty">No inputs yet this month.</div>';
+
+  const mix = TYPES.map(t => [t, thisMonth.filter(i => i.type === t).length]).filter(m => m[1]);
+  const tot = mix.reduce((a,m) => a + m[1], 0) || 1;
+  const colors = { Complaint:'var(--crit)', Suggestion:'var(--info)', Appreciation:'var(--good)', Query:'var(--neutral)' };
+  $('mixSub').textContent = 'Share of ' + tot + ' inputs by type';
+  $('mixStack').innerHTML = mix.map(m => '<i style="width:' + (100*m[1]/tot) + '%; background:' + colors[m[0]] + '" title="' + m[0] + '"></i>').join('');
+  $('mixLegend').innerHTML = mix.map(m => '<span><b style="background:' + colors[m[0]] + '"></b>' + m[0] + ' ' + Math.round(100*m[1]/tot) + '%</span>').join('');
+}
+function median(a){ const s = a.slice().sort((x,y) => x-y); const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  for (const k of ['capture','board','trends']){
+    $('tab-' + k).classList.toggle('active', k === t);
+    $('nav-' + k).setAttribute('aria-pressed', k === t);
+  }
+  window.scrollTo(0,0);
+}
+for (const k of ['capture','board','trends']) $('nav-' + k).onclick = () => setTab(k);
+
+seed(); renderForm(); renderBoard(); renderTrends();
+setInterval(() => { renderBoard(); }, 60e3);   /* keep the ageing / TAT badges fresh */
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+</body>
+</html>
