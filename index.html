@@ -90,7 +90,7 @@
     <div class="tagline">You&rsquo;re in good hands.</div>
     <div class="sub">The unified operations suite for VPS Lakeshore Hospital — service desk,
       live IT monitoring and patient-safety reporting, in one place. Pick an app to get started.</div>
-    <div class="note"><b>Note:</b> on this static host the apps run in single-device demo mode.
+    <div class="note" id="modeNote"><b>Note:</b> on this static host the apps run in single-device demo mode.
       Shared multi-user state runs on the Claude artifact links held by IT.</div>
   </div>
 
@@ -123,5 +123,13 @@
 </footer>
 
 <script>if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+<script>
+/* the demo-mode note only applies on static hosts — swap it when the live server answers */
+fetch('api/health',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+  if (j && j.service === 'lakeshore-one')
+    document.getElementById('modeNote').innerHTML =
+      '<b>Live system</b> — connected to the hospital server. Sign-ins, tickets and updates are shared across all devices in real time.';
+}).catch(()=>{});
+</script>
 </body>
 </html>
