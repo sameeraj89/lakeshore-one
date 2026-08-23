@@ -287,6 +287,19 @@
   .b-st-done{background:var(--good-bg); color:var(--good)}
   .b-st-can{background:var(--neutral-bg); color:var(--neutral); text-decoration:line-through}
   .b-late{background:var(--crit-bg); color:var(--crit)}
+
+  /* ---------- praise ---------- */
+  .pcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px;
+    margin-bottom:10px; box-shadow:var(--shadow-sm)}
+  .pcard .prow{display:flex; align-items:center; gap:9px}
+  .pcard .av{width:34px; height:34px; border-radius:50%; background:var(--maroon); color:#fff; flex:none;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px}
+  .pcard .pname{font-size:14px; font-weight:700}
+  .pcard .pdept{font-size:11.5px; color:var(--ink-2); margin-top:1px}
+  .b-praise{background:var(--maroon-tint); color:var(--maroon)}
+  .pcard .ptext{font-size:13px; line-height:1.55; margin-top:9px; white-space:pre-wrap}
+  .pcard .pfrom{font-size:11.5px; color:var(--ink-3); margin-top:8px}
+  .pcard .pfrom b{color:var(--ink-2)}
   footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
   nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:520px;
     background:var(--card); border-top:1px solid var(--line); display:none; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
@@ -408,6 +421,29 @@
           <button class="submit" id="otAddBtn" style="margin:0 0 12px">+ Schedule a case</button>
           <div id="otList"></div>
         </div>
+      </section>
+
+      <!-- PRAISE -->
+      <section class="tab" id="tab-praise">
+        <h1 class="page">Praise a colleague</h1>
+        <p class="page-sub">Caught someone doing great work? Say it here &mdash; the whole hospital sees the wall, and it goes on record.</p>
+        <div class="fcard" style="margin-top:0">
+          <label class="fl" for="prWho">Who are you praising?</label>
+          <select id="prWho"></select>
+          <div id="prOtherWrap" style="display:none">
+            <label class="fl" for="prOtherName">Their name</label>
+            <input id="prOtherName" maxlength="60" placeholder="e.g. Sr. Mary George">
+            <label class="fl" for="prOtherDept">Department (optional)</label>
+            <input id="prOtherDept" maxlength="60" placeholder="e.g. Emergency Nursing">
+          </div>
+          <label class="fl">What stood out?</label>
+          <div class="seg" id="prVal"></div>
+          <label class="fl" for="prText">Say it in your own words</label>
+          <textarea id="prText" maxlength="500" placeholder="What did they do, and why did it matter?"></textarea>
+          <button class="submit" id="prSubmit">Send praise</button>
+        </div>
+        <div class="filters" id="prFilters" style="margin-top:16px"></div>
+        <div id="praiseList"></div>
       </section>
 
       <!-- QUEUE -->
@@ -535,7 +571,7 @@
  {"empId":"LH-DOC01","name":"Dr. Anitha Menon","role":"doctor","dept":"Cardiology","pinHash":null,"active":true},
  {"empId":"LH-MGT01","name":"Hospital Director","role":"management","dept":"Administration","pinHash":null,"active":true}
 ],
-"tickets":[]}
+"tickets":[],"praise":[]}
 </script>
 
 <script>
@@ -598,6 +634,7 @@ const STATUS = {
   open:{label:'Open', cls:'b-open'}, in_progress:{label:'In progress', cls:'b-prog'},
   resolved:{label:'Resolved', cls:'b-res'}, closed:{label:'Closed', cls:'b-closed'}
 };
+const PRAISE_VALUES = ['Patient first','Team player','Went the extra mile','Calm in a crisis','Always improving'];
 
 /* ---------- beds module config ---------- */
 const BED_WARDS = [
@@ -676,7 +713,8 @@ const SEED = JSON.parse($('seed').textContent);
 let db = null, artifactNS = null, mode = 'loading', session = null;
 let ui = { tab:'raise', mod:null, type:'incident', cat:null, pri:'P3',
            qStatus:'active', qMod:'all', expanded:new Set(),
-           opsView:'beds', ward:'3A', qMine:false, qSearch:'' };
+           opsView:'beds', ward:'3A', qMine:false, qSearch:'',
+           praiseVal:null, praiseFilter:'all' };
 
 /* ---------- crypto ---------- */
 async function hashPin(empId, pin){
@@ -741,6 +779,11 @@ function notifyDiff(prev, next){
       if (last.type === 'comment' && last.by !== u.empId) toast(last.byName + ' commented on ' + t.id);
     }
   }
+  const prevPraise = new Set((prev.praise || []).map(p => p.id));
+  for (const pr of (next.praise || [])){
+    if (prevPraise.has(pr.id)) continue;
+    if (pr.forId === u.empId) toast(pr.byName + ' praised you — ' + pr.value + ' 🎉');
+  }
 }
 
 /* ---------- persistence (same CAS pattern as Ops Desk) ---------- */
@@ -749,7 +792,7 @@ async function bootData(){
     const r = await fetch('/api/health', { cache:'no-store' });
     if (r.ok && (await r.json()).service === 'lakeshore-one'){
       mode = 'server';
-      db = { seq:0, ops:[], users:[], tickets:[], beds:null, bedlog:[], ot:{cases:[]}, audit:[] };
+      db = { seq:0, ops:[], users:[], tickets:[], beds:null, bedlog:[], ot:{cases:[]}, praise:[], people:[], audit:[] };
       return;
     }
   }catch(e){}
@@ -813,6 +856,14 @@ function apply(op){
     db.ot.cases.push({ id:'OTC-' + db.seq, suite:op.suite, date:op.date, planned:op.planned,
       durMin:op.durMin, procedure:op.procedure, surgeon:op.surgeon, status:'scheduled', milestones:[] });
     audit(op.by, 'scheduled OTC-' + db.seq + ' (' + op.suite + ' ' + op.planned + ' · ' + op.procedure + ')');
+  } else if (op.kind === 'praise'){
+    if (!db.praise) db.praise = [];
+    if (op.forId && op.forId === op.by) return false;
+    db.seq += 1;
+    db.praise.unshift({ id:'PRS-' + db.seq, uid:op.uid, forId:op.forId || null, forName:op.forName,
+      forDept:op.forDept || '', value:op.value, text:op.text || '', by:op.by, byName:op.byName, at:op.at });
+    if (db.praise.length > 300) db.praise.length = 300;
+    audit(op.by, 'praised ' + op.forName + ' (' + op.value + ')');
   } else if (op.kind === 'ot_move'){
     ensureOT();
     const c = db.ot.cases.find(c => c.id === op.case); if (!c || c.status === op.to) return false;
@@ -974,13 +1025,14 @@ const NAV_ICONS = {
   raise:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
   ops:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 18h18M3 18v2M21 18v2M7 10V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3"/></svg>',
   mine:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>',
+  praise:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5C7 16.5 3.5 13.3 3.5 9.6 3.5 7 5.5 5 8 5c1.6 0 3.1.8 4 2.1C12.9 5.8 14.4 5 16 5c2.5 0 4.5 2 4.5 4.6 0 3.7-3.5 6.9-8.5 10.9Z"/></svg>',
   queue:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
   dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',
   admin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8 13 6a6.6 6.6 0 0 1 2.2 1.3l3.2-1 1.6 2.8-2.2 2.4a6.7 6.7 0 0 1 0 2.6l2.2 2.4-1.6 2.8-3.2-1A6.6 6.6 0 0 1 13 20l-1 3.2h-.2L11 20a6.6 6.6 0 0 1-2.2-1.3l-3.2 1L4 16.9l2.2-2.4a6.7 6.7 0 0 1 0-2.6L4 9.5l1.6-2.8 3.2 1A6.6 6.6 0 0 1 11 6l1-3.2Z"/></svg>'
 };
 function tabsForRole(){
   const r = me().role;
-  const t = [['raise','Raise'],['mine','Mine'],['ops','Ops']];
+  const t = [['raise','Raise'],['mine','Mine'],['ops','Ops'],['praise','Praise']];
   if (isAgent(r) || canSeeAll(r)) t.push(['queue','Queue']);
   if (canSeeAll(r)) t.push(['dash','Dash']);
   if (r === 'admin') t.push(['admin','Admin']);
@@ -1497,6 +1549,66 @@ $('ocSave').onclick = () => {
   toast('Case added to today’s list.');
 };
 
+/* ---------- praise ---------- */
+function ensurePraise(){ if (!db.praise) db.praise = []; }
+function peopleList(){
+  const src = (db.people && db.people.length) ? db.people : db.users.filter(x => x.active);
+  return src.filter(x => x.empId !== session);
+}
+function renderPraise(){
+  ensurePraise();
+  const sel = $('prWho');
+  const prev = sel.value;
+  sel.innerHTML = peopleList().map(x =>
+    '<option value="' + esc(x.empId) + '">' + esc(x.name) + (x.dept ? ' — ' + esc(x.dept) : '') + '</option>').join('') +
+    '<option value="__other">Someone not listed…</option>';
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  $('prOtherWrap').style.display = sel.value === '__other' ? 'block' : 'none';
+  if (!ui.praiseVal) ui.praiseVal = PRAISE_VALUES[0];
+  seg($('prVal'), PRAISE_VALUES, ui.praiseVal, v => { ui.praiseVal = v; renderPraise(); });
+  $('prSubmit').disabled = (mode === 'readonly');
+  const u = me();
+  const ff = $('prFilters'); ff.innerHTML = '';
+  for (const [key,label] of [['all','Everyone'],['me','For me'],['mine','From me']]){
+    const b = document.createElement('button'); b.className = 'fchip';
+    b.setAttribute('aria-pressed', ui.praiseFilter === key); b.textContent = label;
+    b.onclick = () => { ui.praiseFilter = key; renderPraise(); };
+    ff.appendChild(b);
+  }
+  let list = db.praise;
+  if (ui.praiseFilter === 'me') list = list.filter(x => x.forId === u.empId);
+  if (ui.praiseFilter === 'mine') list = list.filter(x => x.by === u.empId);
+  $('praiseList').innerHTML = list.length ? list.map(x =>
+    '<div class="pcard"><div class="prow"><span class="av">' + esc(initials(x.forName)) + '</span>' +
+    '<div><div class="pname">' + esc(x.forName) + '</div>' +
+    (x.forDept ? '<div class="pdept">' + esc(x.forDept) + '</div>' : '') + '</div>' +
+    '<span class="badge b-praise" style="margin-left:auto">' + esc(x.value) + '</span></div>' +
+    (x.text ? '<div class="ptext">' + esc(x.text) + '</div>' : '') +
+    '<div class="pfrom">from <b>' + esc(x.byName) + '</b> · ' + ago(x.at) + '</div></div>').join('')
+    : '<div class="empty">' + (ui.praiseFilter === 'me'
+        ? 'No praise for you yet — keep doing the work, it shows.'
+        : 'No praise on the wall yet — be the first to recognise someone.') + '</div>';
+}
+$('prWho').onchange = () => renderPraise();
+$('prSubmit').onclick = async () => {
+  const u = me();
+  const other = $('prWho').value === '__other';
+  const person = other ? null : peopleList().find(x => x.empId === $('prWho').value);
+  const forName = other ? $('prOtherName').value.trim() : (person ? person.name : '');
+  const forDept = other ? $('prOtherDept').value.trim() : ((person && person.dept) || '');
+  if (!forName){ toast(other ? 'Add their name.' : 'Pick a colleague.'); return; }
+  const text = $('prText').value.trim();
+  if (!text){ toast('Say a few words — that’s the point.'); $('prText').focus(); return; }
+  $('prSubmit').disabled = true;
+  const ok = await commit({ uid:uid(), kind:'praise', forId:(person ? person.empId : null), forName, forDept,
+    value:ui.praiseVal || PRAISE_VALUES[0], text, by:u.empId, byName:u.name, at:new Date().toISOString() });
+  $('prSubmit').disabled = (mode === 'readonly');
+  if (ok){
+    $('prText').value = ''; $('prOtherName').value = ''; $('prOtherDept').value = '';
+    toast('Praise sent — it’s on the wall.');
+  }
+};
+
 /* ---------- admin ---------- */
 function renderAdmin(){
   if (me().role !== 'admin') return;
@@ -1550,6 +1662,7 @@ function renderAll(){
   if (ui.tab === 'raise') renderRaise();
   if (ui.tab === 'mine') renderMine();
   if (ui.tab === 'ops') renderOps();
+  if (ui.tab === 'praise') renderPraise();
   if (ui.tab === 'queue') renderQueue();
   if (ui.tab === 'dash') renderDash();
   if (ui.tab === 'admin') renderAdmin();
