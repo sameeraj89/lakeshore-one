@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#001E5F">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lakeshore One">
+<title>Lakeshore Discharge Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
+    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --shadow:0 8px 24px rgba(22,35,46,0.14); --shadow-sm:0 2px 8px rgba(22,35,46,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
+
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
+    text-transform:uppercase; margin-top:6px}
+  .mode-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn); background:var(--warn-bg);
+    border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:10px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--info); background:var(--info-bg);
+    border-radius:999px; padding:4px 11px; margin:0 0 10px}
+
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px}
+  .kpi .n{font-weight:700; font-size:24px; letter-spacing:-0.3px; font-variant-numeric:tabular-nums}
+  .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
+
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+    box-shadow:var(--shadow-sm); margin-bottom:14px}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
+  input[type=text], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus{border-color:var(--brand)}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1 1 28%; min-width:80px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
+    font-family:'Figtree',sans-serif; line-height:1.3}
+  .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
+  .submit{width:100%; margin-top:16px; padding:13px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  :root[data-theme="dark"] .submit{color:#0E1418}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .submit{color:#0E1418} }
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
+
+  .roomhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px}
+  .roomhead h2{font-size:14px; font-weight:800}
+  .roomhead .rs{font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--ink-3)}
+
+  .qcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;
+    margin-bottom:8px; box-shadow:var(--shadow-sm)}
+  .qcard.late{border-left:4px solid var(--crit)}
+  .qrow{display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap}
+  .tok{font-weight:800; font-size:13px; color:var(--brand-ink); background:var(--brand-tint);
+    border-radius:8px; padding:2px 9px; font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
+  .b-cash{background:var(--neutral-bg); color:var(--neutral)}
+  .b-ins{background:var(--info-bg); color:var(--info)}
+  .b-corp{background:var(--brand-tint); color:var(--brand-ink)}
+  .b-ok{background:var(--good-bg); color:var(--good)}
+  .b-due{background:var(--warn-bg); color:var(--warn)}
+  .b-late{background:var(--crit-bg); color:var(--crit)}
+  .b-step{background:var(--maroon-tint); color:var(--maroon)}
+  .qname{font-size:13.5px; font-weight:700}
+  .qmeta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
+  .qtrail{font-size:11px; color:var(--ink-3); margin-top:6px; line-height:1.6}
+  .qtrail b{color:var(--ink-2); font-weight:600}
+  .prog{display:flex; gap:3px; margin-top:9px}
+  .prog i{flex:1; height:6px; border-radius:3px; background:var(--neutral-bg)}
+  .prog i.done{background:var(--good)}
+  .prog i.cur{background:var(--maroon)}
+  .qact{margin-top:10px; display:flex; gap:7px; flex-wrap:wrap}
+  .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
+    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+  .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
+  .qact button.ghost{color:var(--ink-3)}
+  .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:22px 10px; line-height:1.6}
+  .outrow{display:flex; align-items:center; gap:8px; padding:9px 4px; border-bottom:1px solid var(--line);
+    font-size:12px; color:var(--ink-2)}
+  .outrow:last-child{border-bottom:0}
+  .outrow .on{font-weight:700; color:var(--ink); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .outrow .ot{font-weight:700; font-variant-numeric:tabular-nums}
+
+  .rcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 15px;
+    margin-bottom:10px; box-shadow:var(--shadow-sm)}
+  .rcard .rrow{display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .rcard h2{font-size:14.5px; font-weight:800}
+  .rcard .rs{font-size:11px; font-weight:700; letter-spacing:0.5px}
+  .rs.busy{color:var(--maroon)} .rs.idle{color:var(--good)}
+  .rcard .rmeta{font-size:12px; color:var(--ink-2); margin-top:6px; line-height:1.6}
+  .rstat{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px}
+  .rstat div{background:var(--shell); border:1px solid var(--line); border-radius:10px; padding:8px 9px}
+  .rstat .v{font-weight:800; font-size:16px; font-variant-numeric:tabular-nums}
+  .rstat .k{font-size:9.5px; letter-spacing:0.8px; text-transform:uppercase; color:var(--ink-3); margin-top:2px}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px}
+  .chart-card h3{font-size:13.5px; font-weight:700; margin-bottom:2px}
+  .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
+  .cols{display:flex; align-items:flex-end; gap:4px; height:110px; padding-top:6px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
+  .col.hot .bar{background:var(--maroon)}
+  .col .cl{font-size:8.5px; color:var(--ink-3); font-weight:500}
+  .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  .hbar{display:grid; grid-template-columns:135px 1fr 68px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .tr i.in-tgt{background:var(--good)}
+  .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums; font-size:11px; color:var(--ink-2)}
+  .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
+  .stack i{display:block; height:100%}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin-top:10px}
+  .legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:21px; height:21px}
+  nav button[aria-pressed="true"]{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
+      <small>Discharge Tracker &middot; Wards &amp; Billing</small></div>
+    <span class="mode-tag">Pilot &middot; this device</span>
+  </header>
+
+  <main>
+    <!-- ============ BOARD ============ -->
+    <section class="tab active" id="tab-board">
+      <h1 class="page">Discharge board</h1>
+      <p class="page-sub">The clock starts when the consultant advises discharge. Each hand-off &mdash; summary, pharmacy, bill, TPA, settlement, bed vacated &mdash; is tapped done by the desk that owns it. Target: out in 3&frac34; h cash, 5&frac34; h insured.</p>
+      <div class="kpis" id="boardKpis"></div>
+      <div class="fcard">
+        <label class="fl" for="fName">Patient name</label>
+        <input type="text" id="fName" placeholder="e.g. Thomas V" maxlength="60">
+        <label class="fl" for="fUhid">UHID <span>(optional)</span></label>
+        <input type="text" id="fUhid" placeholder="e.g. LH0482913" maxlength="20">
+        <label class="fl" for="fWard">Ward</label>
+        <select id="fWard"></select>
+        <label class="fl" for="fBed">Bed</label>
+        <input type="text" id="fBed" placeholder="e.g. 3A-12" maxlength="12">
+        <label class="fl">Payer</label>
+        <div class="seg" id="fPayer"></div>
+        <label class="fl" for="fDoc">Consultant <span>(optional)</span></label>
+        <input type="text" id="fDoc" placeholder="e.g. Dr Mathew K" maxlength="60">
+        <button class="submit" id="fSubmit">Discharge advised &mdash; start the clock</button>
+        <p class="hint" id="fHint"></p>
+      </div>
+      <div id="boardList"></div>
+      <div class="roomhead"><h2>Discharged today</h2><span class="rs" id="outCount"></span></div>
+      <div class="fcard" id="outList" style="padding:6px 14px"></div>
+    </section>
+
+    <!-- ============ WARDS ============ -->
+    <section class="tab" id="tab-wards">
+      <span class="viewtag">Nursing &amp; bed management view</span>
+      <h1 class="page">Beds freeing up &mdash; now</h1>
+      <p class="page-sub">Every active discharge is a bed the next admission is waiting for. Wards with discharges stuck past target are where a phone call helps most.</p>
+      <div class="kpis" id="wardKpis"></div>
+      <div id="wardCards"></div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="tab" id="tab-trends">
+      <span class="viewtag">Operations view</span>
+      <h1 class="page">Discharge turnaround</h1>
+      <p class="page-sub">Advise-to-out time and where it goes. Beds released before 1 pm feed same-day admissions; late-afternoon bunching pushes admissions to the next morning.</p>
+      <div class="kpis" id="trendKpis"></div>
+      <div class="chart-card">
+        <h3>Median advise-to-out &mdash; last 7 days</h3>
+        <div class="cs">Hours from discharge advice to bed vacated</div>
+        <div class="cols" id="dayCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Where the time goes</h3>
+        <div class="cs">Average minutes per step vs target &mdash; last 7 days</div>
+        <div id="stepBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Bed release by hour</h3>
+        <div class="cs">Discharges out per hour &mdash; last 7 days</div>
+        <div class="cols" id="hourCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Payer mix &mdash; last 7 days</h3>
+        <div class="cs" id="mixSub"></div>
+        <div class="stack" id="mixStack"></div>
+        <div class="legend" id="mixLegend"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
+    The board is saved only in this browser (localStorage); demo entries are fictional and re-seeded daily.
+    Production plugs into the Lakeshore One backend (one shared board across ward, pharmacy, billing and the
+    insurance desk) and can later stamp steps automatically from HIS events instead of manual taps.
+    <br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>
+  </footer>
+
+  <nav>
+    <button id="nav-board" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2.5" width="8" height="4" rx="1.5"/><path d="M16 4.5h2a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2"/><path d="M9 13.5l2 2 4-4.5"/></svg>
+      Board</button>
+    <button id="nav-wards" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6M3 18h18M3 18v2M21 18v2M6 11V8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>
+      Wards</button>
+    <button id="nav-trends" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+      Trends</button>
+  </nav>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const M = 6e4, D = 864e5;
+
+/* The discharge relay. Each step is owned by one desk; tpa applies only to
+   insured / corporate-credit patients. Targets in minutes from the previous step. */
+const STEPS = [
+  { key:'summary',  label:'Discharge summary',  short:'Summary',   who:'Treating team',   tgt:60 },
+  { key:'pharmacy', label:'Pharmacy clearance', short:'Pharmacy',  who:'Ward pharmacy',   tgt:45 },
+  { key:'billing',  label:'Final bill ready',   short:'Bill',      who:'IP billing',      tgt:60 },
+  { key:'tpa',      label:'TPA approval',       short:'TPA',       who:'Insurance desk',  tgt:120, insOnly:true },
+  { key:'settle',   label:'Bill settled',       short:'Settled',   who:'Billing counter', tgt:30 },
+  { key:'depart',   label:'Patient out',        short:'Out',       who:'Ward nurse',      tgt:30 }
+];
+const PAYERS = ['Cash','Insurance / TPA','Corporate'];
+const PAYER_BADGE = { 'Cash':'b-cash', 'Insurance / TPA':'b-ins', 'Corporate':'b-corp' };
+const WARDS = [
+  { id:'3A', name:'Ward 3A · General Medicine' },
+  { id:'3B', name:'Ward 3B · Surgical' },
+  { id:'4A', name:'Ward 4A · Cardiac' },
+  { id:'5B', name:'Ward 5B · Oncology' },
+  { id:'SD', name:'MICU Step-down' },
+  { id:'T6', name:'Tower L6 · Deluxe' }
+];
+const wardName = id => (WARDS.find(w => w.id === id) || { name:id }).name;
+
+/* ---------- store ---------- */
+const KEY = 'lakeshore-discharge-v1';
+let db = { items: [] };
+try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function isToday(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
+function sameDay(ts, d){ return new Date(ts).toDateString() === d.toDateString(); }
+
+/* ---------- relay maths ---------- */
+const pathFor = it => STEPS.filter(s => !s.insOnly || it.payer !== 'Cash');
+const pathTarget = it => pathFor(it).reduce((a,s) => a + s.tgt, 0);
+function curStep(it){ return pathFor(it).find(s => !it.done[s.key]) || null; }
+function stepStart(it, s){
+  const p = pathFor(it), k = p.indexOf(s);
+  return k > 0 ? it.done[p[k-1].key] : it.advisedAt;
+}
+function stepMins(it, s){                                 /* actual or running minutes in a step */
+  const end = it.done[s.key] || Date.now();
+  return Math.round((end - stepStart(it, s)) / M);
+}
+const elapsedMin = it => Math.round(((it.outAt || Date.now()) - it.advisedAt) / M);
+const tatMin = it => Math.round((it.outAt - it.advisedAt) / M);
+
+function fmtMin(mins){
+  if (mins < 90) return mins + ' min';
+  const h = Math.floor(mins/60), m = mins % 60;
+  return h + ' h' + (m ? ' ' + m + ' m' : '');
+}
+function hhmm(ts){ const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function median(a){ const s = a.slice().sort((x,y) => x-y); const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
+
+function badge(mins, tgt, prefix){                        /* ok / due / late against a target */
+  const cls = mins <= tgt ? 'b-ok' : mins <= tgt*1.5 ? 'b-due' : 'b-late';
+  return '<span class="badge ' + cls + '">' + (prefix || '') + fmtMin(mins) + '</span>';
+}
+const isLate = it => elapsedMin(it) > pathTarget(it) || (curStep(it) && stepMins(it, curStep(it)) > curStep(it).tgt*1.5);
+
+/* ---------- daily demo seed — a believable week so the boards aren't empty ---------- */
+const NAMES = ['Mariyam K','Thomas V','Anitha R','Suresh P','Fathima N','Georgekutty J','Lakshmi D','Rahim A','Annie C','Vishnu M','Sara P','Biju T','Meera S','Abdul S','Rosamma J','Hari K','Nimmy P','Joseph M','Devika A','Shaji K'];
+const DOCS = ['Dr Mathew K','Dr Priya N','Dr Salim A','Dr George T','Dr Anju R','Dr Vinod P'];
+let seedN = 0;
+function base(advisedAt, payer){
+  seedN++;
+  const w = WARDS[seedN % WARDS.length];
+  return { id:'seed' + Date.now() + '-' + seedN, name: NAMES[seedN % NAMES.length],
+    uhid:'LH0' + (400000 + Math.floor(Math.random()*99999)),
+    ward: w.id, bed: w.id + '-' + (10 + Math.floor(Math.random()*20)),
+    payer, consultant: DOCS[seedN % DOCS.length],
+    advisedAt, done:{}, status:'active', demo:true };
+}
+function randPayer(){ const r = Math.random(); return r < 0.5 ? 'Insurance / TPA' : r < 0.85 ? 'Cash' : 'Corporate'; }
+function stepDur(s){
+  let f = 0.45 + Math.random()*0.9;
+  if (s.key === 'tpa' && Math.random() < 0.3) f = 1.3 + Math.random()*1.6;      /* the classic TPA blowout */
+  if (s.key === 'billing' && Math.random() < 0.15) f = 1.2 + Math.random()*0.8;
+  return Math.round(s.tgt * f);
+}
+function mkCompleted(advisedAt, payer){
+  const it = base(advisedAt, payer);
+  let t = advisedAt;
+  for (const s of pathFor(it)){ t += stepDur(s)*M; it.done[s.key] = t; }
+  it.status = 'out'; it.outAt = t;
+  return it;
+}
+function mkActive(payer, agoMin, doneCount){
+  const it = base(Date.now() - agoMin*M, payer);
+  let t = it.advisedAt;
+  const p = pathFor(it);
+  for (let k = 0; k < doneCount; k++){
+    t += Math.round(p[k].tgt * (0.6 + Math.random()*0.5)) * M;
+    if (t > Date.now() - 5*M) t = Date.now() - 5*M;
+    it.done[p[k].key] = t;
+  }
+  return it;
+}
+function seedDemo(){
+  db.items = db.items.filter(i => Date.now() - i.advisedAt < 8*D);   /* keep a week */
+  if (db.items.some(i => isToday(i.advisedAt))) return;
+  /* past six days of completed discharges */
+  for (let d = 6; d >= 1; d--){
+    const day = new Date(); day.setDate(day.getDate() - d); day.setHours(9,0,0,0);
+    if (db.items.some(i => sameDay(i.advisedAt, day))) continue;
+    const n = 7 + Math.floor(Math.random()*6);
+    for (let k = 0; k < n; k++)
+      db.items.push(mkCompleted(day.getTime() + Math.random()*4.5*36e5, randPayer()));
+  }
+  /* today — completed ones through the morning, then a live board */
+  const now = Date.now(), d0 = new Date(); d0.setHours(8,30,0,0);
+  for (let t = d0.getTime(); t < now - 2*36e5; t += (18 + Math.random()*24)*M){
+    const it = mkCompleted(t, randPayer());
+    if (it.outAt < now - 10*M) db.items.push(it);
+  }
+  const open = new Date(); open.setHours(9,30,0,0);
+  if (now > open.getTime()){
+    db.items.push(mkActive('Insurance / TPA', 290, 3));   /* stuck at TPA, well past target */
+    db.items.push(mkActive('Cash', 165, 3));              /* at settlement */
+    db.items.push(mkActive('Insurance / TPA', 120, 2));   /* bill being prepared */
+    db.items.push(mkActive('Cash', 55, 1));               /* pharmacy clearing */
+    db.items.push(mkActive('Corporate', 20, 0));          /* just advised */
+  }
+  save();
+}
+
+/* ---------- initiate form ---------- */
+let payerSel = 'Cash';
+function renderForm(){
+  const el = $('fPayer'); el.innerHTML = '';
+  for (const p of PAYERS){
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = p;
+    b.setAttribute('aria-pressed', p === payerSel);
+    b.onclick = () => { payerSel = p; renderForm(); };
+    el.appendChild(b);
+  }
+  const sel = $('fWard'), keep = sel.value;
+  sel.innerHTML = WARDS.map(w => '<option value="' + w.id + '">' + w.name + '</option>').join('');
+  if (keep) sel.value = keep;
+  const tgt = payerSel === 'Cash' ? 225 : 345;
+  $('fHint').textContent = (payerSel === 'Cash' ? 'Cash path skips TPA approval — ' : 'Insured path includes TPA approval — ')
+    + 'target out in ' + fmtMin(tgt) + '.';
+}
+$('fSubmit').onclick = () => {
+  const name = $('fName').value.trim();
+  if (!name){ alert('Enter the patient name.'); return; }
+  const it = { id:'d' + Date.now(), name, uhid: $('fUhid').value.trim(),
+    ward: $('fWard').value, bed: $('fBed').value.trim() || $('fWard').value + '-?',
+    payer: payerSel, consultant: $('fDoc').value.trim(),
+    advisedAt: Date.now(), done:{}, status:'active' };
+  db.items.push(it); save();
+  $('fName').value = ''; $('fUhid').value = ''; $('fBed').value = ''; $('fDoc').value = ''; payerSel = 'Cash';
+  renderAll();
+  alert('Clock started for ' + it.name + ' — ' + wardName(it.ward) + ', bed ' + it.bed +
+    '.\nFirst hand-off: discharge summary (target ' + STEPS[0].tgt + ' min).');
+};
+
+/* ---------- board ---------- */
+const active = () => db.items.filter(i => i.status === 'active');
+const outToday = () => db.items.filter(i => i.status === 'out' && isToday(i.outAt));
+
+function renderBoard(){
+  const act = active(), out = outToday();
+  const late = act.filter(isLate);
+  const tats = out.map(tatMin);
+  $('boardKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:var(--brand)">' + act.length + '</div><div class="l">Discharges in progress</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (late.length ? 'var(--crit)' : 'var(--good)') + '">' + late.length + '</div><div class="l">Past target now</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + out.length + '</div><div class="l">Beds freed today</div></div>' +
+    '<div class="kpi"><div class="n">' + (tats.length ? fmtMin(Math.round(median(tats))) : '—') + '</div><div class="l">Median advise&rarr;out today</div></div>';
+
+  let html = '';
+  for (const w of WARDS){
+    const list = act.filter(i => i.ward === w.id).sort((a,b) => a.advisedAt - b.advisedAt);
+    if (!list.length) continue;
+    html += '<div class="roomhead"><h2>' + w.name + '</h2><span class="rs">' + list.length + ' in progress</span></div>';
+    for (const it of list){
+      const p = pathFor(it), cur = curStep(it);
+      const inStep = stepMins(it, cur);
+      const doneTrail = p.filter(s => it.done[s.key])
+        .map(s => '<b>' + s.short + '</b> ' + hhmm(it.done[s.key])).join(' &middot; ');
+      html += '<div class="qcard' + (isLate(it) ? ' late' : '') + '">' +
+        '<div class="qrow"><span class="tok">' + esc(it.bed) + '</span>' +
+        '<span class="badge ' + PAYER_BADGE[it.payer] + '">' + it.payer + '</span>' +
+        '<span class="badge b-step">at ' + cur.label.toLowerCase() + '</span>' +
+        badge(elapsedMin(it), pathTarget(it), 'total ') + '</div>' +
+        '<div class="qname">' + esc(it.name) + '</div>' +
+        '<div class="qmeta">' + (it.uhid ? esc(it.uhid) + ' &middot; ' : '') +
+          (it.consultant ? esc(it.consultant) + ' &middot; ' : '') +
+          'advised ' + hhmm(it.advisedAt) + ' &middot; with ' + cur.who.toLowerCase() +
+          ' ' + fmtMin(inStep) + ' (target ' + cur.tgt + ' min)</div>' +
+        '<div class="prog">' + p.map(s =>
+          '<i class="' + (it.done[s.key] ? 'done' : s.key === cur.key ? 'cur' : '') + '" title="' + s.label + '"></i>').join('') + '</div>' +
+        (doneTrail ? '<div class="qtrail">' + doneTrail + '</div>' : '') +
+        '<div class="qact"><button class="primary" data-adv="' + it.id + '">Done: ' + cur.label.toLowerCase() + '</button>' +
+        '<button class="ghost" data-cancel="' + it.id + '">Discharge off</button></div></div>';
+    }
+  }
+  $('boardList').innerHTML = html || '<div class="empty">No discharges in progress. Start the clock above when a consultant advises discharge.</div>';
+
+  const outs = out.slice().sort((a,b) => b.outAt - a.outAt);
+  $('outCount').textContent = outs.length + ' out';
+  $('outList').innerHTML = outs.length ? outs.slice(0, 10).map(it =>
+    '<div class="outrow"><span class="ot" style="color:var(--ink-3)">' + hhmm(it.outAt) + '</span>' +
+    '<span class="on">' + esc(it.name) + ' &middot; ' + esc(it.bed) + '</span>' +
+    badge(tatMin(it), pathTarget(it)) + '</div>').join('')
+    : '<div class="empty" style="padding:12px">No discharges completed yet today.</div>';
+
+  for (const b of $('boardList').querySelectorAll('[data-adv]'))
+    b.onclick = () => {
+      const it = db.items.find(x => x.id === b.dataset.adv);
+      if (!it || it.status !== 'active') return;
+      const cur = curStep(it);
+      it.done[cur.key] = Date.now();
+      if (!curStep(it)){ it.status = 'out'; it.outAt = Date.now(); }
+      save(); renderAll();
+    };
+  for (const b of $('boardList').querySelectorAll('[data-cancel]'))
+    b.onclick = () => {
+      const it = db.items.find(x => x.id === b.dataset.cancel);
+      if (it && confirm('Take ' + it.name + ' off the discharge board? (Discharge cancelled by the team.)')){
+        it.status = 'cancelled'; save(); renderAll();
+      }
+    };
+}
+
+/* ---------- wards ---------- */
+function renderWards(){
+  const act = active(), out = outToday();
+  const early = out.filter(i => new Date(i.outAt).getHours() < 13);
+  const withinTgt = out.filter(i => tatMin(i) <= pathTarget(i));
+  $('wardKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:var(--brand)">' + act.length + '</div><div class="l">Beds freeing now</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + out.length + '</div><div class="l">Beds freed today</div></div>' +
+    '<div class="kpi"><div class="n">' + (out.length ? Math.round(100*early.length/out.length) : 0) + '<small>%</small></div><div class="l">Out before 1 pm</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (out.length && withinTgt.length/out.length < 0.7 ? 'var(--crit)' : 'var(--good)') + '">' +
+      (out.length ? Math.round(100*withinTgt.length/out.length) : 0) + '<small>%</small></div><div class="l">Within target today</div></div>';
+
+  $('wardCards').innerHTML = WARDS.map(w => {
+    const a = act.filter(i => i.ward === w.id);
+    const o = out.filter(i => i.ward === w.id);
+    const tats = o.map(tatMin);
+    const longest = a.length ? a.reduce((x,y) => elapsedMin(x) > elapsedMin(y) ? x : y) : null;
+    return '<div class="rcard"><div class="rrow"><h2>' + w.name + '</h2>' +
+      '<span class="rs ' + (a.length ? 'busy' : 'idle') + '">' + (a.length ? a.length + ' IN PROGRESS' : 'CLEAR') + '</span></div>' +
+      '<div class="rmeta">' + (longest
+        ? 'Longest running: ' + esc(longest.name) + ' &middot; bed ' + esc(longest.bed) + ' &middot; ' +
+          fmtMin(elapsedMin(longest)) + ' in, at ' + curStep(longest).label.toLowerCase()
+        : 'No discharge in progress') + '</div>' +
+      '<div class="rstat"><div><div class="v">' + a.length + '</div><div class="k">Active</div></div>' +
+      '<div><div class="v">' + o.length + '</div><div class="k">Out today</div></div>' +
+      '<div><div class="v">' + (tats.length ? fmtMin(Math.round(median(tats))) : '—') + '</div><div class="k">Median A&rarr;O</div></div></div></div>';
+  }).join('');
+}
+
+/* ---------- trends ---------- */
+function renderTrends(){
+  const week = db.items.filter(i => i.status === 'out' && Date.now() - i.outAt < 7*D);
+  const cash = week.filter(i => i.payer === 'Cash').map(tatMin);
+  const ins = week.filter(i => i.payer !== 'Cash').map(tatMin);
+  const within = week.filter(i => tatMin(i) <= pathTarget(i));
+  $('trendKpis').innerHTML =
+    '<div class="kpi"><div class="n">' + week.length + '</div><div class="l">Discharges &middot; 7 d</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (week.length && within.length/week.length < 0.7 ? 'var(--crit)' : 'var(--good)') + '">' +
+      (week.length ? Math.round(100*within.length/week.length) : 0) + '<small>%</small></div><div class="l">Within target</div></div>' +
+    '<div class="kpi"><div class="n">' + (cash.length ? fmtMin(Math.round(median(cash))) : '—') + '</div><div class="l">Median &middot; cash (tgt 3 h 45 m)</div></div>' +
+    '<div class="kpi"><div class="n">' + (ins.length ? fmtMin(Math.round(median(ins))) : '—') + '</div><div class="l">Median &middot; insured (tgt 5 h 45 m)</div></div>';
+
+  /* median TAT per day */
+  let dayHtml = '';
+  const medians = [];
+  for (let d = 6; d >= 0; d--){
+    const day = new Date(); day.setDate(day.getDate() - d);
+    const tats = week.filter(i => sameDay(i.outAt, day)).map(tatMin);
+    medians.push([day, tats.length ? median(tats)/60 : 0]);
+  }
+  const dMax = Math.max(...medians.map(m => m[1]), 5);
+  for (const [day, h] of medians)
+    dayHtml += '<div class="col' + (h > 4.5 ? ' hot' : '') + '"><span class="cv">' + (h ? h.toFixed(1) : '·') + '</span>' +
+      '<span class="bar" style="height:' + Math.round(88*h/dMax) + '%"></span>' +
+      '<span class="cl">' + day.toLocaleString('en',{weekday:'short'}) + '</span></div>';
+  $('dayCols').innerHTML = dayHtml;
+
+  /* average minutes per step vs target */
+  $('stepBars').innerHTML = STEPS.map(s => {
+    const durs = week.filter(i => i.done[s.key]).map(i => stepMins(i, s));
+    const avg = durs.length ? Math.round(durs.reduce((a,b) => a+b, 0)/durs.length) : 0;
+    const w = Math.min(100, Math.round(100*avg/(s.tgt*2)));
+    return '<div class="hbar"><span class="hl">' + s.label + '</span>' +
+      '<span class="tr"><i class="' + (avg <= s.tgt ? 'in-tgt' : '') + '" style="width:' + w + '%"></i></span>' +
+      '<span class="hv">' + avg + '/' + s.tgt + 'm</span></div>';
+  }).join('');
+
+  /* bed release by hour */
+  const byHour = {};
+  for (const i of week){ const h = new Date(i.outAt).getHours(); byHour[h] = (byHour[h] || 0) + 1; }
+  const hours = []; for (let h = 9; h <= 20; h++) hours.push(h);
+  const hMax = Math.max(...hours.map(h => byHour[h] || 0), 1);
+  $('hourCols').innerHTML = hours.map(h =>
+    '<div class="col' + ((byHour[h] || 0) === hMax ? ' hot' : '') + '"><span class="cv">' + (byHour[h] || '·') + '</span>' +
+    '<span class="bar" style="height:' + Math.round(88*(byHour[h] || 0)/hMax) + '%"></span><span class="cl">' + h + 'h</span></div>').join('');
+
+  /* payer mix */
+  const mix = PAYERS.map(p => [p, week.filter(i => i.payer === p).length]).filter(m => m[1]);
+  const tot = mix.reduce((a,m) => a + m[1], 0) || 1;
+  const colors = { 'Cash':'var(--neutral)', 'Insurance / TPA':'var(--info)', 'Corporate':'var(--brand)' };
+  $('mixSub').textContent = 'Share of ' + tot + ' discharges by payer';
+  $('mixStack').innerHTML = mix.map(m => '<i style="width:' + (100*m[1]/tot) + '%; background:' + colors[m[0]] + '" title="' + m[0] + '"></i>').join('');
+  $('mixLegend').innerHTML = mix.map(m => '<span><b style="background:' + colors[m[0]] + '"></b>' + m[0] + ' ' + Math.round(100*m[1]/tot) + '%</span>').join('');
+}
+
+/* ---------- tabs & boot ---------- */
+function setTab(t){
+  for (const k of ['board','wards','trends']){
+    $('tab-' + k).classList.toggle('active', k === t);
+    $('nav-' + k).setAttribute('aria-pressed', k === t);
+  }
+  window.scrollTo(0,0);
+}
+for (const k of ['board','wards','trends']) $('nav-' + k).onclick = () => setTab(k);
+
+function renderAll(){ renderForm(); renderBoard(); renderWards(); renderTrends(); }
+seedDemo(); renderAll();
+setInterval(renderAll, 60e3);          /* keep the clocks ticking */
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+</body>
+</html>
