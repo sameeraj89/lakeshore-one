@@ -36,6 +36,14 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 A "patient care affected" toggle on every ticket auto-raises priority to at
 least P2 — the healthcare-specific rule ITIL guides call out.
 
+## Backend server (live multi-user system)
+
+`server/server.js` is a zero-dependency Node.js (>= 22.5) backend: sign-in,
+server-enforced roles, SQLite storage, live updates via SSE, and it serves
+this same frontend. `node server/server.js` and the apps switch from demo
+mode to the real system automatically. See `server/README.md` for the VPS
+deployment guide (systemd + Caddy HTTPS, ~5 minutes) and `Dockerfile`.
+
 ## Data
 
 The pilot stores everything in the artifact's `data/db.json` (users, tickets,

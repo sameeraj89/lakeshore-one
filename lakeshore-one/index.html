@@ -440,9 +440,9 @@
     </main>
 
     <footer>
-      <b style="color:var(--ink-2)">Lakeshore One &mdash; pilot build for VPS Lakeshore.</b><br>
-      Access control and PINs are enforced in the app with hashed PINs in the shared store &mdash; good for a pilot,
-      not a substitute for hospital sign-on. The production path (server, database schema, AD/SSO) is documented in the project repo.
+      <b style="color:var(--ink-2)">Lakeshore One &mdash; VPS Lakeshore.</b><br>
+      When connected to the Lakeshore One server, roles and PINs are enforced server-side with a full audit trail.
+      Other hosting runs in pilot/demo mode &mdash; see the project repo for the deployment guide and AD/SSO path.
     </footer>
 
     <nav id="nav"></nav>
@@ -649,8 +649,45 @@ async function hashPin(empId, pin){
   return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+/* ---------- server mode (Lakeshore One backend) ---------- */
+let token = null;
+try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+async function api(path, body){
+  const r = await fetch('/api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchState(){
+  const r = await fetch('/api/state', { headers:{ Authorization:'Bearer ' + token }, cache:'no-store' });
+  if (r.ok) db = await r.json();
+  return r.ok;
+}
+let sseStarted = false;
+function startSSE(){
+  if (sseStarted || !token) return;
+  sseStarted = true;
+  try{
+    const es = new EventSource('/api/events?token=' + encodeURIComponent(token));
+    es.onmessage = async () => { if (await fetchState()) renderAll(); };
+  }catch(e){}
+}
+
 /* ---------- persistence (same CAS pattern as Ops Desk) ---------- */
 async function bootData(){
+  try{
+    const r = await fetch('/api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one'){
+      mode = 'server';
+      db = { seq:0, ops:[], users:[], tickets:[], beds:null, bedlog:[], ot:{cases:[]}, audit:[] };
+      return;
+    }
+  }catch(e){}
   try{
     const r = await fetch('data/db.json', { cache:'no-store' });
     db = r.ok ? await r.json() : structuredClone(SEED);
@@ -737,6 +774,13 @@ function apply(op){
   return true;
 }
 async function commit(op, isReplay){
+  if (mode === 'server'){
+    apply(op); renderAll();                 /* optimistic */
+    const r = await api('op', { op });
+    if (!r.ok) toast(r.error || 'Not allowed.');
+    if (await fetchState()) renderAll();    /* authoritative */
+    return r.ok;
+  }
   const changed = apply(op);
   if (changed) renderAll();
   if (mode === 'local'){ try{ localStorage.setItem('l1-local', JSON.stringify(db)); }catch(e){} return true; }
@@ -796,6 +840,26 @@ async function doLogin(){
   const empId = $('liEmp').value.trim().toUpperCase();
   const err = $('liErr'); err.textContent = '';
   if (!empId){ err.textContent = 'Enter your employee ID.'; return; }
+  if (mode === 'server'){
+    if (loginStage === 'setpin'){
+      const p1 = $('liPin1').value, p2 = $('liPin2').value;
+      if (!/^\d{4,6}$/.test(p1)){ err.textContent = 'PIN must be 4–6 digits.'; return; }
+      if (p1 !== p2){ err.textContent = 'PINs don’t match.'; return; }
+      const r = await api('set-pin', { empId, pin: p1 });
+      if (!r.ok){ err.textContent = r.error || 'Could not set PIN.'; return; }
+      token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+      await fetchState(); session = empId; enterApp(); startSSE(); return;
+    }
+    const r = await api('login', { empId, pin: $('liPin').value });
+    if (r.needPin){
+      loginStage = 'setpin';
+      $('pinBlock').style.display = 'none'; $('pinSetBlock').style.display = 'block';
+      $('liGo').textContent = 'Set PIN & sign in'; $('liPin1').focus(); return;
+    }
+    if (!r.ok){ err.textContent = r.error || 'Sign-in failed.'; return; }
+    token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+    await fetchState(); session = empId; enterApp(); startSSE(); return;
+  }
   const u = db.users.find(u => u.empId === empId);
   if (!u || !u.active){ err.textContent = 'Unknown or inactive employee ID. Contact IT / admin.'; return; }
   if (u.pinHash === null){
@@ -824,7 +888,8 @@ function startSession(empId){
   enterApp();
 }
 function logout(){
-  session = null; try{ sessionStorage.removeItem('l1-session'); }catch(e){}
+  session = null;
+  try{ sessionStorage.removeItem('l1-session'); sessionStorage.removeItem('l1-token'); }catch(e){}
   location.reload();
 }
 $('liGo').onclick = doLogin;
@@ -1326,6 +1391,14 @@ window.addEventListener('resize', () => { if (ui.tab === 'dash') renderDash(); }
 /* ---------- boot ---------- */
 (async function(){
   await bootData();
+  if (mode === 'server'){
+    if (token){
+      const meR = await api('me');
+      if (meR.ok){ await fetchState(); session = meR.empId; enterApp(); startSSE(); return; }
+      token = null; try{ sessionStorage.removeItem('l1-token'); }catch(e){}
+    }
+    return;   /* show login */
+  }
   ensureBeds();
   if (mode === 'local') seedDemoOT();   /* demo schedule only in single-device mode */
   try{ const s = sessionStorage.getItem('l1-session');
@@ -1333,7 +1406,7 @@ window.addEventListener('resize', () => { if (ui.tab === 'dash') renderDash(); }
 })();
 </script>
 
-
 <script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+
 </body>
 </html>
