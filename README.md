@@ -9,6 +9,9 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 | Folder | App | What it does |
 |---|---|---|
 | `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, management dashboard with campus map, admin user management + audit trail |
+| `patient-inputs/` | Patient Inputs | Voice-of-the-patient desk — capture complaints / suggestions / appreciation / queries at any touchpoint, Patient Experience triage board with response targets (high 24 h, medium 48 h, low 72 h), experience trends |
+| `usg-wait/` | USG Wait | Ultrasound wait-time tracker — token queue per machine, register → start → complete taps, live estimated waits and auto room assignment, machine load view, hourly wait trends |
+| `ot-schedule/` | OT Schedule | Operation theatre planning — book cases with table-clash checks (20-min turnover protected), six-theatre day timeline 07:00–21:00, case list with statuses, utilisation insights. Complements the live OT stage board inside the main app |
 | `it-pulse/` | IT Pulse | Live campus IT monitoring map (network / Wi-Fi / servers / power / CCTV layers, 12-h zone trends) — simulated telemetry, adapter point documented in-page |
 | `ops-desk/` | Ops Desk | Earlier shared incident board (superseded by Lakeshore One) |
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
@@ -17,6 +20,17 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 
 - Admin provisions users (employee ID, name, role, department); each user sets a
   4–6 digit PIN on first sign-in (stored as SHA-256, never plaintext).
+- **Sign in with Google** (server mode): set `GOOGLE_CLIENT_ID` on the backend
+  and a Google button appears on the login page. The server verifies the ID
+  token and matches the Google email to the account's linked email (admin adds
+  it in user management); optionally `GOOGLE_HOSTED_DOMAIN` auto-provisions
+  staff accounts for the hospital's Workspace domain.
+- **Guest / Patient sign-in** (all modes): one tap, no account. Guests and
+  patients get a limited view — raise facility, housekeeping and security
+  requests and track their own tickets only; no ops boards, queues or
+  dashboards, enforced server-side in live mode.
+- **Nurse (demo)**: a one-tap demo nurse session for walkthroughs — always
+  available in demo mode, and on the server only when `DEMO_LOGIN=1`.
 - Roles gate the UI and actions: staff/doctor/nurse raise & track; agents work
   their desk's queue; management/quality see everything + dashboard; admin
   manages users and sees the audit trail.

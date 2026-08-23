@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#001E5F">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lakeshore One">
+<title>Lakeshore USG Wait</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
+    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --shadow:0 8px 24px rgba(22,35,46,0.14); --shadow-sm:0 2px 8px rgba(22,35,46,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
+
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
+    text-transform:uppercase; margin-top:6px}
+  .mode-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn); background:var(--warn-bg);
+    border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:10px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--info); background:var(--info-bg);
+    border-radius:999px; padding:4px 11px; margin:0 0 10px}
+
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px}
+  .kpi .n{font-weight:700; font-size:24px; letter-spacing:-0.3px; font-variant-numeric:tabular-nums}
+  .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
+
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+    box-shadow:var(--shadow-sm); margin-bottom:14px}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
+  input[type=text], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus{border-color:var(--brand)}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1 1 28%; min-width:80px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
+    font-family:'Figtree',sans-serif; line-height:1.3}
+  .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
+  .seg button[aria-pressed="true"].emg{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
+  .submit{width:100%; margin-top:16px; padding:13px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  :root[data-theme="dark"] .submit{color:#0E1418}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .submit{color:#0E1418} }
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
+
+  .roomhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px}
+  .roomhead h2{font-size:14px; font-weight:800}
+  .roomhead .rs{font-size:11px; font-weight:700; letter-spacing:0.5px}
+  .rs.busy{color:var(--maroon)} .rs.idle{color:var(--good)}
+
+  .qcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;
+    margin-bottom:8px; box-shadow:var(--shadow-sm)}
+  .qcard.scanning{border-left:4px solid var(--maroon)}
+  .qrow{display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap}
+  .tok{font-weight:800; font-size:13px; color:var(--brand-ink); background:var(--brand-tint);
+    border-radius:8px; padding:2px 9px; font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
+  .b-op{background:var(--info-bg); color:var(--info)}
+  .b-ip{background:var(--neutral-bg); color:var(--neutral)}
+  .b-emg{background:var(--crit-bg); color:var(--crit)}
+  .b-scan{background:var(--maroon-tint); color:var(--maroon)}
+  .b-w-ok{background:var(--good-bg); color:var(--good)}
+  .b-w-due{background:var(--warn-bg); color:var(--warn)}
+  .b-w-late{background:var(--crit-bg); color:var(--crit)}
+  .qname{font-size:13.5px; font-weight:700}
+  .qmeta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
+  .qact{margin-top:9px; display:flex; gap:7px; flex-wrap:wrap}
+  .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
+    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+  .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
+  .qact button.ghost{color:var(--ink-3)}
+  .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:22px 10px; line-height:1.6}
+
+  .rcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 15px;
+    margin-bottom:10px; box-shadow:var(--shadow-sm)}
+  .rcard .rrow{display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .rcard h2{font-size:14.5px; font-weight:800}
+  .rcard .rmeta{font-size:12px; color:var(--ink-2); margin-top:6px; line-height:1.6}
+  .rstat{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px}
+  .rstat div{background:var(--shell); border:1px solid var(--line); border-radius:10px; padding:8px 9px}
+  .rstat .v{font-weight:800; font-size:16px; font-variant-numeric:tabular-nums}
+  .rstat .k{font-size:9.5px; letter-spacing:0.8px; text-transform:uppercase; color:var(--ink-3); margin-top:2px}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px}
+  .chart-card h3{font-size:13.5px; font-weight:700; margin-bottom:2px}
+  .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
+  .cols{display:flex; align-items:flex-end; gap:4px; height:110px; padding-top:6px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
+  .col.hot .bar{background:var(--maroon)}
+  .col .cl{font-size:8.5px; color:var(--ink-3); font-weight:500}
+  .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  .hbar{display:grid; grid-template-columns:135px 1fr 34px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
+  .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
+  .stack i{display:block; height:100%}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin-top:10px}
+  .legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:21px; height:21px}
+  nav button[aria-pressed="true"]{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
+      <small>USG Wait &middot; Radiology &amp; Imaging</small></div>
+    <span class="mode-tag">Pilot &middot; this device</span>
+  </header>
+
+  <main>
+    <!-- ============ QUEUE ============ -->
+    <section class="tab active" id="tab-queue">
+      <h1 class="page">Ultrasound queue</h1>
+      <p class="page-sub">Register the patient when they report to the counter, start when they enter the room, complete when they leave. Wait time measures counter &rarr; couch.</p>
+      <div class="fcard">
+        <label class="fl" for="rName">Patient name <span>(optional)</span></label>
+        <input type="text" id="rName" placeholder="e.g. Thomas V" maxlength="60">
+        <label class="fl" for="rUhid">UHID <span>(optional)</span></label>
+        <input type="text" id="rUhid" placeholder="e.g. LH0482913" maxlength="20">
+        <label class="fl">Patient class</label>
+        <div class="seg" id="rCls"></div>
+        <label class="fl" for="rRoom">Machine / room</label>
+        <select id="rRoom"></select>
+        <button class="submit" id="rSubmit">Issue token &amp; join queue</button>
+        <p class="hint" id="rHint"></p>
+      </div>
+      <div id="queueList"></div>
+    </section>
+
+    <!-- ============ ROOMS ============ -->
+    <section class="tab" id="tab-rooms">
+      <span class="viewtag">Radiology in-charge view</span>
+      <h1 class="page">Machine load &mdash; now</h1>
+      <p class="page-sub">Live state of every ultrasound room: who is on the couch, how many are waiting and how the day has run.</p>
+      <div class="kpis" id="roomKpis"></div>
+      <div id="roomCards"></div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="tab" id="tab-trends">
+      <span class="viewtag">Radiology in-charge view</span>
+      <h1 class="page">Wait-time trends</h1>
+      <p class="page-sub">Today's pattern. The 10:00&ndash;13:00 OP peak is where extra slots or a floating sonologist pay off first.</p>
+      <div class="kpis" id="trendKpis"></div>
+      <div class="chart-card">
+        <h3>Average wait by hour &mdash; today</h3>
+        <div class="cs">Minutes from registration to scan start</div>
+        <div class="cols" id="hourCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Scans by machine &mdash; today</h3>
+        <div class="cs">Completed scans per room</div>
+        <div id="roomBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Patient mix &mdash; today</h3>
+        <div class="cs" id="mixSub"></div>
+        <div class="stack" id="mixStack"></div>
+        <div class="legend" id="mixLegend"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
+    The queue is saved only in this browser (localStorage); demo entries are fictional and re-seeded daily.
+    Production plugs into the Lakeshore One backend (shared queue across the counter, rooms and in-charge)
+    and can later read HIS order timestamps instead of manual taps.
+    <br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>
+  </footer>
+
+  <nav>
+    <button id="nav-queue" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      Queue</button>
+    <button id="nav-rooms" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+      Rooms</button>
+    <button id="nav-trends" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+      Trends</button>
+  </nav>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const M = 6e4;
+
+const ROOMS = [
+  { id:'USG-1', name:'USG 1 · Radiology main', avg:12 },
+  { id:'USG-2', name:'USG 2 · Radiology main', avg:14 },
+  { id:'USG-3', name:'USG 3 · OP Block L2', avg:11 },
+  { id:'USG-4', name:'USG 4 · Obstetric & fetal', avg:18 }
+];
+const TURNOVER = 3;                    /* minutes between patients */
+const CLS = ['OP','IP','Emergency'];
+const CLS_BADGE = { OP:'b-op', IP:'b-ip', Emergency:'b-emg' };
+const WAIT_TARGET = 30;                /* minutes — service promise for OP USG */
+
+/* ---------- store ---------- */
+const KEY = 'lakeshore-usg-wait-v1';
+let db = { daySeq: 0, day: '', items: [] };
+try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function todayStr(){ const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function isToday(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
+
+function nextToken(){
+  if (db.day !== todayStr()){ db.day = todayStr(); db.daySeq = 0; }
+  db.daySeq++;
+  return 'U-' + String(db.daySeq).padStart(2,'0');
+}
+
+/* daily demo seed — a believable morning so the boards aren't empty */
+const NAMES = ['Mariyam K','Thomas V','Anitha R','Suresh P','Fathima N','Georgekutty J','Lakshmi D','Rahim A','Annie C','Vishnu M','Sara P','Biju T','Meera S','Abdul S','Rosamma J','Hari K','Nimmy P','Joseph M','Devika A','Shaji K'];
+function seedToday(){
+  db.items = db.items.filter(i => Date.now() - i.regAt < 7*864e5);   /* keep a week */
+  if (db.items.some(i => isToday(i.regAt))) return;
+  const now = Date.now(), d = new Date(); d.setHours(8,0,0,0);
+  const open = d.getTime();
+  if (now < open + 30*M) return;                                     /* too early — start clean */
+  let n = 0;
+  const mk = (room, regAt, wait, dur, cls) => ({ id:'seed' + (++n), token: nextToken(),
+    name: NAMES[n % NAMES.length], uhid:'', cls: cls || (Math.random() < 0.25 ? 'IP' : 'OP'),
+    room, regAt, startAt: regAt + wait*M, endAt: regAt + (wait + dur)*M, status:'done', demo:true });
+  /* completed scans through the day so far */
+  for (const r of ROOMS){
+    let t = open + (Math.random()*20)*M;
+    while (t < now - 45*M){
+      const peak = new Date(t).getHours() >= 10 && new Date(t).getHours() < 13;
+      const wait = Math.round((peak ? 22 : 10) + Math.random()*(peak ? 26 : 14));
+      const dur = Math.round(r.avg * (0.7 + Math.random()*0.6));
+      db.items.push(mk(r.id, t, wait, dur));
+      t += (dur + wait/3 + TURNOVER + Math.random()*8)*M;
+    }
+  }
+  /* someone on the couch in rooms 1 & 4, and a live queue */
+  const scan = (room, minsIn, name, cls) => db.items.push({ id:'seed' + (++n), token: nextToken(), name, uhid:'',
+    cls: cls || 'OP', room, regAt: now - (minsIn + 18)*M, startAt: now - minsIn*M, endAt: null, status:'scanning', demo:true });
+  scan('USG-1', 7, 'Rosamma J'); scan('USG-4', 12, 'Devika A', 'OP');
+  const waitq = [ ['USG-1', 24, 'Hari K', 'OP'], ['USG-1', 9, 'Nimmy P', 'OP'],
+    ['USG-2', 16, 'Joseph M', 'IP'], ['USG-3', 31, 'Meera S', 'OP'], ['USG-3', 5, 'Shaji K', 'OP'] ];
+  for (const [room, agoMin, name, cls] of waitq)
+    db.items.push({ id:'seed' + (++n), token: nextToken(), name, uhid:'', cls, room,
+      regAt: now - agoMin*M, startAt: null, endAt: null, status:'waiting', demo:true });
+  save();
+}
+
+/* ---------- queue maths ---------- */
+const today = () => db.items.filter(i => isToday(i.regAt));
+const inRoom = room => today().filter(i => i.room === room);
+function roomAvg(room){
+  const done = inRoom(room).filter(i => i.status === 'done' && i.startAt && i.endAt);
+  const r = ROOMS.find(x => x.id === room);
+  if (!done.length) return r.avg;
+  return Math.round(done.reduce((a,i) => a + (i.endAt - i.startAt)/M, 0) / done.length);
+}
+function waitingSorted(room){
+  return inRoom(room).filter(i => i.status === 'waiting')
+    .sort((a,b) => (a.cls === 'Emergency' ? -1 : 0) - (b.cls === 'Emergency' ? -1 : 0) || a.regAt - b.regAt);
+}
+function estStart(room, pos){                      /* minutes until the k-th waiting patient starts */
+  const avg = roomAvg(room);
+  const cur = inRoom(room).find(i => i.status === 'scanning');
+  const remain = cur ? Math.max(2, avg - Math.round((Date.now() - cur.startAt)/M)) : 0;
+  return remain + pos*(avg + TURNOVER);
+}
+function expectedWait(room){ return estStart(room, waitingSorted(room).length); }
+function waitedMin(i){ return Math.round((Date.now() - i.regAt)/M); }
+function waitBadge(mins){
+  if (mins <= WAIT_TARGET) return '<span class="badge b-w-ok">waiting ' + mins + ' min</span>';
+  if (mins <= WAIT_TARGET*2) return '<span class="badge b-w-due">waiting ' + mins + ' min</span>';
+  return '<span class="badge b-w-late">waiting ' + mins + ' min</span>';
+}
+
+/* ---------- register ---------- */
+let clsSel = 'OP';
+function renderRegister(){
+  const el = $('rCls'); el.innerHTML = '';
+  for (const c of CLS){
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = c;
+    if (c === 'Emergency') b.className = 'emg';
+    b.setAttribute('aria-pressed', c === clsSel);
+    b.onclick = () => { clsSel = c; renderRegister(); };
+    el.appendChild(b);
+  }
+  const sel = $('rRoom'), keep = sel.value;
+  sel.innerHTML = '<option value="auto">Auto — shortest expected wait</option>' +
+    ROOMS.map(r => '<option value="' + r.id + '">' + r.name + ' · ~' + expectedWait(r.id) + ' min</option>').join('');
+  if (keep) sel.value = keep;
+  const best = ROOMS.reduce((a,r) => expectedWait(r.id) < expectedWait(a.id) ? r : a, ROOMS[0]);
+  $('rHint').textContent = 'Shortest queue right now: ' + best.name + ' — expected wait ~' + expectedWait(best.id) + ' min.';
+}
+$('rSubmit').onclick = () => {
+  let room = $('rRoom').value;
+  if (room === 'auto')
+    room = ROOMS.reduce((a,r) => expectedWait(r.id) < expectedWait(a.id) ? r : a, ROOMS[0]).id;
+  const it = { id:'p' + Date.now(), token: nextToken(), name: $('rName').value.trim(), uhid: $('rUhid').value.trim(),
+    cls: clsSel, room, regAt: Date.now(), startAt: null, endAt: null, status:'waiting' };
+  db.items.push(it); save();
+  $('rName').value = ''; $('rUhid').value = ''; clsSel = 'OP';
+  renderAll();
+  alert('Token ' + it.token + ' — ' + ROOMS.find(r => r.id === room).name + '\nExpected wait ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
+};
+
+/* ---------- queue board ---------- */
+function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function hhmm(ts){ const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+
+function renderQueue(){
+  let html = '';
+  for (const r of ROOMS){
+    const cur = inRoom(r.id).find(i => i.status === 'scanning');
+    const q = waitingSorted(r.id);
+    html += '<div class="roomhead"><h2>' + r.name + '</h2><span class="rs ' + (cur ? 'busy' : 'idle') + '">' +
+      (cur ? 'Scanning' : 'Free') + ' · ' + q.length + ' waiting</span></div>';
+    if (cur)
+      html += '<div class="qcard scanning"><div class="qrow"><span class="tok">' + cur.token + '</span>' +
+        '<span class="badge ' + CLS_BADGE[cur.cls] + '">' + cur.cls + '</span>' +
+        '<span class="badge b-scan">on couch · ' + Math.round((Date.now() - cur.startAt)/M) + ' min</span></div>' +
+        '<div class="qname">' + (esc(cur.name) || 'Unnamed patient') + '</div>' +
+        '<div class="qmeta">Registered ' + hhmm(cur.regAt) + ' · started ' + hhmm(cur.startAt) +
+        ' · waited ' + Math.round((cur.startAt - cur.regAt)/M) + ' min</div>' +
+        '<div class="qact"><button class="primary" data-done="' + cur.id + '">Complete scan</button></div></div>';
+    if (!cur && !q.length) html += '<div class="empty" style="padding:10px">Room free — no one waiting.</div>';
+    q.forEach((i, k) => {
+      html += '<div class="qcard"><div class="qrow"><span class="tok">' + i.token + '</span>' +
+        '<span class="badge ' + CLS_BADGE[i.cls] + '">' + i.cls + '</span>' + waitBadge(waitedMin(i)) +
+        '<span class="badge b-ip" style="background:var(--brand-tint); color:var(--brand-ink)">est. start ~' + estStart(r.id, k) + ' min</span></div>' +
+        '<div class="qname">' + (esc(i.name) || 'Unnamed patient') + '</div>' +
+        '<div class="qmeta">Registered ' + hhmm(i.regAt) + (i.uhid ? ' · ' + esc(i.uhid) : '') + ' · position ' + (k+1) + ' in queue</div>' +
+        '<div class="qact">' + (k === 0 && !cur ? '<button class="primary" data-start="' + i.id + '">Start scan</button>' : '') +
+        '<button class="ghost" data-noshow="' + i.id + '">No-show</button></div></div>';
+    });
+  }
+  $('queueList').innerHTML = html;
+  for (const b of $('queueList').querySelectorAll('[data-start]'))
+    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.start);
+      if (i){ i.status = 'scanning'; i.startAt = Date.now(); save(); renderAll(); } };
+  for (const b of $('queueList').querySelectorAll('[data-done]'))
+    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.done);
+      if (i){ i.status = 'done'; i.endAt = Date.now(); save(); renderAll(); } };
+  for (const b of $('queueList').querySelectorAll('[data-noshow]'))
+    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.noshow);
+      if (i){ i.status = 'noshow'; save(); renderAll(); } };
+}
+
+/* ---------- rooms ---------- */
+function renderRooms(){
+  const t = today(), waiting = t.filter(i => i.status === 'waiting'), done = t.filter(i => i.status === 'done' && i.startAt);
+  const waits = done.map(i => Math.round((i.startAt - i.regAt)/M));
+  const longest = waiting.length ? Math.max(...waiting.map(waitedMin)) : 0;
+  $('roomKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:var(--brand)">' + waiting.length + '</div><div class="l">In queue now</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (longest > WAIT_TARGET ? 'var(--crit)' : 'var(--good)') + '">' + longest + '<small> min</small></div><div class="l">Longest current wait</div></div>' +
+    '<div class="kpi"><div class="n">' + (waits.length ? Math.round(median(waits)) : 0) + '<small> min</small></div><div class="l">Median wait today · target ' + WAIT_TARGET + '</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + done.length + '</div><div class="l">Scans completed</div></div>';
+
+  $('roomCards').innerHTML = ROOMS.map(r => {
+    const cur = inRoom(r.id).find(i => i.status === 'scanning');
+    const q = waitingSorted(r.id);
+    const rd = inRoom(r.id).filter(i => i.status === 'done' && i.startAt);
+    const rw = rd.map(i => Math.round((i.startAt - i.regAt)/M));
+    return '<div class="rcard"><div class="rrow"><h2>' + r.name + '</h2>' +
+      '<span class="rs ' + (cur ? 'busy' : 'idle') + '">' + (cur ? 'SCANNING' : 'FREE') + '</span></div>' +
+      '<div class="rmeta">' + (cur ? (esc(cur.name) || 'Patient') + ' on the couch · ' + Math.round((Date.now() - cur.startAt)/M) + ' min in'
+        : 'No patient on the couch') + ' · avg scan ' + roomAvg(r.id) + ' min</div>' +
+      '<div class="rstat"><div><div class="v">' + q.length + '</div><div class="k">Waiting</div></div>' +
+      '<div><div class="v">' + (rw.length ? Math.round(median(rw)) : 0) + '<small style="font-size:10px"> min</small></div><div class="k">Median wait</div></div>' +
+      '<div><div class="v">' + rd.length + '</div><div class="k">Done today</div></div></div></div>';
+  }).join('');
+}
+
+/* ---------- trends ---------- */
+function renderTrends(){
+  const t = today(), done = t.filter(i => i.status === 'done' && i.startAt);
+  const waits = done.map(i => Math.round((i.startAt - i.regAt)/M));
+  const over = waits.filter(w => w > WAIT_TARGET).length;
+  $('trendKpis').innerHTML =
+    '<div class="kpi"><div class="n">' + done.length + '</div><div class="l">Scans today</div></div>' +
+    '<div class="kpi"><div class="n">' + (waits.length ? Math.round(median(waits)) : 0) + '<small> min</small></div><div class="l">Median wait</div></div>' +
+    '<div class="kpi"><div class="n">' + (waits.length ? Math.max(...waits) : 0) + '<small> min</small></div><div class="l">Worst wait</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (done.length && over/done.length > 0.2 ? 'var(--crit)' : 'var(--good)') + '">' +
+      (waits.length ? Math.round(100*over/waits.length) : 0) + '<small>%</small></div><div class="l">Waited &gt; ' + WAIT_TARGET + ' min</div></div>';
+
+  const byHour = {};
+  for (const i of done){ const h = new Date(i.regAt).getHours();
+    (byHour[h] = byHour[h] || []).push(Math.round((i.startAt - i.regAt)/M)); }
+  const hours = []; for (let h = 8; h <= Math.min(20, new Date().getHours()); h++) hours.push(h);
+  const avgs = hours.map(h => byHour[h] ? Math.round(byHour[h].reduce((a,b) => a+b,0)/byHour[h].length) : 0);
+  const hMax = Math.max(...avgs, WAIT_TARGET);
+  $('hourCols').innerHTML = hours.map((h,i) =>
+    '<div class="col' + (avgs[i] > WAIT_TARGET ? ' hot' : '') + '"><span class="cv">' + (avgs[i] || '·') + '</span>' +
+    '<span class="bar" style="height:' + Math.round(88*avgs[i]/hMax) + '%"></span><span class="cl">' + h + 'h</span></div>').join('');
+
+  const rMax = Math.max(...ROOMS.map(r => inRoom(r.id).filter(i => i.status === 'done').length), 1);
+  $('roomBars').innerHTML = ROOMS.map(r => { const n = inRoom(r.id).filter(i => i.status === 'done').length;
+    return '<div class="hbar"><span class="hl">' + r.name + '</span><span class="tr"><i style="width:' + Math.round(100*n/rMax) + '%"></i></span><span class="hv">' + n + '</span></div>'; }).join('');
+
+  const mix = CLS.map(c => [c, t.filter(i => i.cls === c && i.status !== 'noshow').length]).filter(m => m[1]);
+  const tot = mix.reduce((a,m) => a+m[1], 0) || 1;
+  const colors = { OP:'var(--info)', IP:'var(--neutral)', Emergency:'var(--crit)' };
+  $('mixSub').textContent = 'Share of ' + tot + ' patients registered today';
+  $('mixStack').innerHTML = mix.map(m => '<i style="width:' + (100*m[1]/tot) + '%; background:' + colors[m[0]] + '"></i>').join('');
+  $('mixLegend').innerHTML = mix.map(m => '<span><b style="background:' + colors[m[0]] + '"></b>' + m[0] + ' ' + Math.round(100*m[1]/tot) + '%</span>').join('');
+}
+function median(a){ const s = a.slice().sort((x,y) => x-y); const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
+
+/* ---------- tabs & boot ---------- */
+function setTab(t){
+  for (const k of ['queue','rooms','trends']){
+    $('tab-' + k).classList.toggle('active', k === t);
+    $('nav-' + k).setAttribute('aria-pressed', k === t);
+  }
+  window.scrollTo(0,0);
+}
+for (const k of ['queue','rooms','trends']) $('nav-' + k).onclick = () => setTab(k);
+
+function renderAll(){ renderRegister(); renderQueue(); renderRooms(); renderTrends(); }
+seedToday(); renderAll();
+setInterval(renderAll, 30e3);          /* live waits tick over */
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+</body>
+</html>
