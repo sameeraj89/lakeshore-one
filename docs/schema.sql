@@ -92,3 +92,44 @@ CREATE TABLE catalog (
   active    boolean       NOT NULL DEFAULT true,
   UNIQUE (module, type, category)
 );
+
+-- ---------- Bed tracking ----------
+CREATE TYPE bed_status AS ENUM ('occupied','dirty','cleaning','ready','blocked');
+CREATE TABLE beds (
+  bed_id     varchar(10) PRIMARY KEY,          -- '3A-01'
+  ward       varchar(10) NOT NULL,             -- '3A', 'ICU', ...
+  status     bed_status  NOT NULL DEFAULT 'ready',
+  since      timestamptz,
+  updated_by varchar(20) REFERENCES users(emp_id)
+);
+CREATE TABLE bed_events (                       -- turnaround-time source
+  id       bigserial PRIMARY KEY,
+  bed_id   varchar(10) NOT NULL REFERENCES beds(bed_id),
+  from_st  bed_status, to_st bed_status NOT NULL,
+  actor    varchar(20) NOT NULL REFERENCES users(emp_id),
+  at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_bed_events ON bed_events (bed_id, at);
+
+-- ---------- OT tracking ----------
+CREATE TYPE ot_stage AS ENUM
+  ('scheduled','in_ot','anaesthesia','incision','closure','out','cleaning','done','cancelled');
+CREATE TABLE ot_cases (
+  id        varchar(16) PRIMARY KEY,            -- 'OTC-104'
+  suite     varchar(30) NOT NULL,               -- 'OT-1 · Cardiac'
+  case_date date        NOT NULL,
+  planned   time        NOT NULL,
+  dur_min   int         NOT NULL,
+  procedure varchar(120) NOT NULL,              -- procedure only; no patient names
+  surgeon   varchar(60)  NOT NULL,
+  status    ot_stage     NOT NULL DEFAULT 'scheduled',
+  created_by varchar(20) REFERENCES users(emp_id)
+);
+CREATE TABLE ot_milestones (
+  id       bigserial PRIMARY KEY,
+  case_id  varchar(16) NOT NULL REFERENCES ot_cases(id),
+  stage    ot_stage    NOT NULL,
+  actor    varchar(20) NOT NULL REFERENCES users(emp_id),
+  at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_ot_day ON ot_cases (case_date, suite, planned);
