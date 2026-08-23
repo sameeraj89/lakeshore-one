@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#2B7CBE">
+<meta name="theme-color" content="#001E5F">
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Lakeshore One">
 <title>Lakeshore SafeReport</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
 <style>
   :root{
     --bg:#F2EFF1; --shell:#FAF8F9; --card:#FFFFFF;
     --ink:#241820; --ink-2:#6B5A63; --ink-3:#98878F;
     --line:rgba(36,24,32,0.10);
-    --accent:#8B1A4A; --accent-ink:#6E123A; --accent-tint:rgba(139,26,74,0.07);
+    --accent:#001E5F; --accent-ink:#001542; --accent-tint:rgba(0,30,95,0.07);
     --blue:#2B7CBE; --blue-ink:#1B5A8E; --blue-tint:rgba(43,124,190,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
@@ -24,7 +24,7 @@
     --info:#1B5A8E; --info-bg:#E3EEF8;
     --neutral:#6B5A63; --neutral-bg:#EFEAEC;
     --dark-card:#2A1E26; --dark-ink:#F6F1F3;
-    --chart:#8B1A4A; --chart-2:rgba(139,26,74,0.45); --chart-fill:rgba(139,26,74,0.12);
+    --chart:#E8146E; --chart-2:rgba(232,20,110,0.45); --chart-fill:rgba(232,20,110,0.12);
     --shadow:0 8px 24px rgba(36,24,32,0.14); --shadow-sm:0 2px 8px rgba(36,24,32,0.10);
   }
   @media (prefers-color-scheme: dark){
@@ -61,15 +61,14 @@
   }
 
   *{box-sizing:border-box; margin:0; padding:0}
-  body{background:var(--bg); color:var(--ink); font-family:'Roboto',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(36,24,32,0.08); display:flex; flex-direction:column}
 
-  header{padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between; gap:10px}
-  .wordmark{font-family:'Montserrat',sans-serif; font-weight:800; font-size:17px; line-height:1.1}
-  .wordmark .vps{color:var(--accent)} .wordmark .lks{color:var(--blue)}
-  .wordmark small{display:block; font-family:'Roboto',sans-serif; font-weight:500; font-size:10px;
-    letter-spacing:2.2px; color:var(--ink-3); text-transform:uppercase; margin-top:2px}
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-family:'Figtree',sans-serif; font-weight:600; font-size:10px;
+    letter-spacing:2.2px; color:#8FA9DC; text-transform:uppercase; margin-top:6px}
   .mock-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn);
     background:var(--warn-bg); border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
 
@@ -80,7 +79,7 @@
   main{flex:1; padding-bottom:86px}
   .tab{display:none; padding:2px 16px 20px}
   .tab.active{display:block}
-  h1.page{font-family:'Montserrat',sans-serif; font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  h1.page{font-family:'Figtree',sans-serif; font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
   .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
   .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
     letter-spacing:1px; text-transform:uppercase; color:var(--blue-ink); background:var(--blue-tint);
@@ -91,12 +90,12 @@
     color:var(--ink-3); margin:15px 2px 6px}
   label.fl:first-child{margin-top:0}
   input[type=text], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
-    border-radius:10px; padding:11px 12px; font-family:'Roboto',sans-serif; font-size:14px; color:var(--ink); outline:none}
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
   input:focus, select:focus, textarea:focus{border-color:var(--accent)}
   textarea{min-height:80px; resize:vertical}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
   .seg button{flex:1 1 30%; min-width:88px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
-    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer; font-family:'Roboto',sans-serif; line-height:1.3}
+    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif; line-height:1.3}
   .seg button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink)}
   .seg.harm button[aria-pressed="true"].h-sev{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
   .anon{display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -112,10 +111,10 @@
   .switch input:checked + .tr::after{transform:translateX(20px)}
   .checks{display:flex; flex-wrap:wrap; gap:7px}
   .checks button{border:1.5px solid var(--line); background:var(--shell); color:var(--ink-2); border-radius:999px;
-    padding:7px 13px; font-size:12px; font-weight:500; cursor:pointer; font-family:'Roboto',sans-serif}
+    padding:7px 13px; font-size:12px; font-weight:500; cursor:pointer; font-family:'Figtree',sans-serif}
   .checks button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink); font-weight:700}
   .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--accent);
-    color:#fff; font-family:'Montserrat',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
   .hint{font-size:11.5px; color:var(--ink-3); margin-top:6px; line-height:1.5}
 
   /* confirmation */
@@ -124,8 +123,8 @@
   .confirm .big{width:64px; height:64px; border-radius:50%; background:var(--good-bg); color:var(--good);
     display:flex; align-items:center; justify-content:center; margin:0 auto 14px}
   .confirm .big svg{width:30px; height:30px}
-  .confirm h2{font-family:'Montserrat',sans-serif; font-weight:800; font-size:20px; margin-bottom:6px}
-  .confirm .irno{font-family:'Montserrat',sans-serif; font-weight:800; font-size:15px; color:var(--accent-ink);
+  .confirm h2{font-family:'Figtree',sans-serif; font-weight:800; font-size:20px; margin-bottom:6px}
+  .confirm .irno{font-family:'Figtree',sans-serif; font-weight:800; font-size:15px; color:var(--accent-ink);
     background:var(--accent-tint); display:inline-block; border-radius:999px; padding:6px 16px; margin:6px 0 14px}
   .confirm p{font-size:13px; color:var(--ink-2); line-height:1.6; max-width:320px; margin:0 auto 6px}
   .confirm .steps{text-align:left; margin:16px auto 0; max-width:330px}
@@ -165,7 +164,7 @@
   .step.done .link{background:var(--good)}
 
   .dcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px; box-shadow:var(--shadow-sm)}
-  .dcard h3{font-family:'Montserrat',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.8px;
+  .dcard h3{font-family:'Figtree',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.8px;
     text-transform:uppercase; color:var(--accent-ink); margin-bottom:10px}
   .dcard p{font-size:13px; line-height:1.6; color:var(--ink)}
   .kv{display:grid; grid-template-columns:110px 1fr; gap:7px 10px; font-size:12.5px}
@@ -187,7 +186,7 @@
   /* analytics */
   .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
   .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px}
-  .kpi .n{font-family:'Montserrat',sans-serif; font-weight:800; font-size:24px; font-variant-numeric:tabular-nums}
+  .kpi .n{font-family:'Figtree',sans-serif; font-weight:800; font-size:24px; font-variant-numeric:tabular-nums}
   .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
   .kpi .l{font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
   .kpi .delta{font-size:11px; font-weight:700; margin-top:4px}
@@ -215,7 +214,7 @@
   nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
     background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
   nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
-    font-family:'Roboto',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:21px; height:21px}
   nav button[aria-pressed="true"]{color:var(--accent)}
@@ -226,7 +225,7 @@
 <body>
 <div class="app">
   <header>
-    <div class="wordmark"><span class="vps">vps</span> <span class="lks">lakeshore</span>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
       <small>SafeReport &middot; Patient Safety IR</small></div>
     <span class="mock-tag">Mockup</span>
   </header>
