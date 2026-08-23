@@ -117,3 +117,25 @@ building, and the system keeps working if the internet link drops.
 
 **Moving between PC and VPS later:** install Node on the new machine and copy
 `server/data/` across. That's the entire migration.
+
+**Mac mini (Apple Silicon):** excellent always-on host if one is available.
+1. Install Node 22 LTS (nodejs.org) and clone the repo to `/Users/Shared/lakeshore-one`.
+2. Create `/Library/LaunchDaemons/in.lakeshore.one.plist`:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>in.lakeshore.one</string>
+  <key>ProgramArguments</key>
+  <array><string>/usr/local/bin/node</string>
+         <string>/Users/Shared/lakeshore-one/server/server.js</string></array>
+  <key>EnvironmentVariables</key><dict><key>PORT</key><string>8080</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+</dict></plist>
+```
+   Then: `sudo launchctl load -w /Library/LaunchDaemons/in.lakeshore.one.plist`
+   (check the node path with `which node` — Homebrew installs to /opt/homebrew/bin/node).
+3. Server-ify the Mac: Energy settings → prevent sleep + start after power
+   failure; disable FileVault (or enable auto-login) so it boots unattended;
+   defer automatic macOS restarts; reserve its IP in the router.
