@@ -20,6 +20,17 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 
 - Admin provisions users (employee ID, name, role, department); each user sets a
   4–6 digit PIN on first sign-in (stored as SHA-256, never plaintext).
+- **Sign in with Google** (server mode): set `GOOGLE_CLIENT_ID` on the backend
+  and a Google button appears on the login page. The server verifies the ID
+  token and matches the Google email to the account's linked email (admin adds
+  it in user management); optionally `GOOGLE_HOSTED_DOMAIN` auto-provisions
+  staff accounts for the hospital's Workspace domain.
+- **Guest / Patient sign-in** (all modes): one tap, no account. Guests and
+  patients get a limited view — raise facility, housekeeping and security
+  requests and track their own tickets only; no ops boards, queues or
+  dashboards, enforced server-side in live mode.
+- **Nurse (demo)**: a one-tap demo nurse session for walkthroughs — always
+  available in demo mode, and on the server only when `DEMO_LOGIN=1`.
 - Roles gate the UI and actions: staff/doctor/nurse raise & track; agents work
   their desk's queue; management/quality see everything + dashboard; admin
   manages users and sees the audit trail.
