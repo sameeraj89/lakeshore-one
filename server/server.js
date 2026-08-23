@@ -75,6 +75,19 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
 CREATE TABLE IF NOT EXISTS audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, action TEXT NOT NULL, at TEXT NOT NULL
 );
+-- Anonymous complaints: deliberately NO reporter column. The submitting
+-- request is authenticated (staff-only channel) but the identity is never
+-- written anywhere. Follow-up is via the SHA-256 hash of a one-time
+-- reference code generated on the complainant's device.
+CREATE TABLE IF NOT EXISTS complaints (
+  id TEXT PRIMARY KEY, category TEXT NOT NULL, body TEXT NOT NULL, zone TEXT,
+  code_hash TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS complaint_updates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, complaint_id TEXT NOT NULL, kind TEXT NOT NULL,
+  to_status TEXT, body TEXT, author_name TEXT NOT NULL,
+  shared INTEGER NOT NULL DEFAULT 0, at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS applied_ops (uid TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
@@ -84,6 +97,8 @@ db.exec(`
 CREATE INDEX IF NOT EXISTS idx_tickets_queue ON tickets (module, status, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_updates ON ticket_updates (ticket_id, at);
 CREATE INDEX IF NOT EXISTS idx_bed_events ON bed_events (bed_id, at);
+CREATE INDEX IF NOT EXISTS idx_complaints_code ON complaints (code_hash);
+CREATE INDEX IF NOT EXISTS idx_complaint_updates ON complaint_updates (complaint_id, at);
 `);
 
 /* ---------- domain config (mirrors the frontend) ---------- */
@@ -92,6 +107,9 @@ const ROLES = ['doctor','nurse','staff','it_agent','facility_agent','housekeepin
 const MODS = ['it','fac','hk','bm','sec'];
 const PRI = { P1:{resp:15,res:240}, P2:{resp:60,res:480}, P3:{resp:240,res:1440}, P4:{resp:1440,res:4320} };
 const TICKET_STATUS = ['open','in_progress','resolved','closed'];
+const COMPLAINT_STATUS = ['new','in_review','closed'];
+const COMPLAINT_CATS = ['Harassment / misconduct','Patient safety concern','Ethics / integrity',
+  'Billing / financial','Staff behaviour','Work environment','Other'];
 const BED_STATUS = ['occupied','dirty','cleaning','ready','blocked'];
 const BED_WARDS = [['3A',20],['4B',16],['5A',14],['ON',16],['ICU',12],['HDU',8]];
 const OT_STAGES = ['scheduled','in_ot','anaesthesia','incision','closure','out','cleaning','done'];
@@ -184,6 +202,19 @@ function noteFailure(empId){
   a.n += 1;
   if (a.n >= 5){ a.until = Date.now() + 15*60e3; a.n = 0; }
   attempts.set(empId, a);
+}
+
+/* ---------- complaint-lookup rate limiting (per IP) ---------- */
+const lookupMisses = new Map();   // ip -> {n, until}
+function lookupThrottled(ip){
+  const a = lookupMisses.get(ip);
+  return !!(a && a.until > Date.now());
+}
+function noteLookupMiss(ip){
+  const a = lookupMisses.get(ip) || { n: 0, until: 0 };
+  a.n += 1;
+  if (a.n >= 20){ a.until = Date.now() + 15*60e3; a.n = 0; }
+  lookupMisses.set(ip, a);
 }
 
 /* ---------- SSE ---------- */
@@ -303,6 +334,38 @@ function applyOp(op, u){
       audit(empId, `${c.id} → ${op.to}`);
       return { ok:true };
     }
+    case 'complaint_new': {
+      /* Anonymous channel: any signed-in employee may file one, and the
+         acting user's identity is deliberately NOT stored or audited. */
+      const body = s(op.text, 4000);
+      const codeHash = String(op.codeHash || '');
+      if (!body || !COMPLAINT_CATS.includes(op.cat) || !/^[0-9a-f]{64}$/.test(codeHash))
+        return { ok:false, error:'invalid complaint' };
+      const seq = nextSeq(), id = 'CMP-' + seq;
+      db.prepare('INSERT INTO complaints (id,category,body,zone,code_hash,status,created_at) VALUES (?,?,?,?,?,?,?)')
+        .run(id, op.cat, body, s(op.zone, 60), codeHash, 'new', at);
+      audit('anonymous', `complaint ${id} received via the anonymous channel`);
+      return { ok:true, id };
+    }
+    case 'complaint_status': {
+      if (!canSeeAll(role)) return { ok:false, error:'not allowed' };
+      const c = db.prepare('SELECT * FROM complaints WHERE id=?').get(String(op.complaint));
+      if (!c || !COMPLAINT_STATUS.includes(op.to) || c.status === op.to) return { ok:false, error:'invalid transition' };
+      db.prepare('UPDATE complaints SET status=? WHERE id=?').run(op.to, c.id);
+      db.prepare('INSERT INTO complaint_updates (complaint_id,kind,to_status,author_name,shared,at) VALUES (?,?,?,?,0,?)')
+        .run(c.id, 'status', op.to, name, at);
+      audit(empId, `moved ${c.id} to ${op.to}`);
+      return { ok:true };
+    }
+    case 'complaint_note': {
+      if (!canSeeAll(role)) return { ok:false, error:'not allowed' };
+      const c = db.prepare('SELECT id FROM complaints WHERE id=?').get(String(op.complaint));
+      if (!c || !op.text) return { ok:false, error:'no such complaint' };
+      db.prepare('INSERT INTO complaint_updates (complaint_id,kind,body,author_name,shared,at) VALUES (?,?,?,?,?,?)')
+        .run(c.id, 'note', s(op.text, 1000), name, op.shared ? 1 : 0, at);
+      audit(empId, `added a note on ${c.id}`);   /* note content stays out of the audit trail */
+      return { ok:true };
+    }
     case 'user_add': {
       if (role !== 'admin') return { ok:false, error:'admin only' };
       const nu = op.user || {};
@@ -374,7 +437,16 @@ function buildState(u){
   const auditRows = canSeeAll(role)
     ? db.prepare('SELECT actor "by", action, at FROM audit ORDER BY id DESC LIMIT 40').all()
     : [];
-  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, audit:auditRows };
+  /* anonymous complaints: only the review roles receive them; code_hash never leaves the server */
+  let complaints = [];
+  if (canSeeAll(role)){
+    const cu = db.prepare('SELECT * FROM complaint_updates WHERE complaint_id=? ORDER BY at');
+    complaints = db.prepare('SELECT * FROM complaints ORDER BY created_at DESC LIMIT 300').all()
+      .map(c => ({ id:c.id, cat:c.category, text:c.body, zone:c.zone || '', status:c.status, createdAt:c.created_at,
+        updates: cu.all(c.id).map(x => ({ uid:String(x.id), type:x.kind, to:x.to_status,
+          text:x.body || '', byName:x.author_name, shared:!!x.shared, at:x.at })) }));
+  }
+  return { seq, ops:[], users, tickets:tix, complaints, beds, bedlog, ot:{ cases }, audit:auditRows };
 }
 
 /* ---------- HTTP plumbing ---------- */
@@ -433,6 +505,23 @@ const server = http.createServer(async (req, res) => {
       audit(eid, 'set their PIN');
       broadcast();
       return json(res, 200, { token:sign(eid), empId:eid });
+    }
+
+    /* Complaint status lookup — deliberately UNAUTHENTICATED and unaudited:
+       requiring a sign-in (or logging the caller) would tie the lookup to a
+       person and undo the anonymity of the channel. The reference-code hash
+       is the only credential; misses are rate-limited per IP. */
+    if (p === '/api/complaint-status' && req.method === 'POST'){
+      const ip = req.socket.remoteAddress || '?';
+      if (lookupThrottled(ip)) return json(res, 429, { error:'Too many attempts — try again later.' });
+      const { codeHash } = await readBody(req);
+      const c = /^[0-9a-f]{64}$/.test(String(codeHash || ''))
+        ? db.prepare('SELECT * FROM complaints WHERE code_hash=?').get(String(codeHash)) : null;
+      if (!c){ noteLookupMiss(ip); return json(res, 404, { error:'No complaint found for that code.' }); }
+      const responses = db.prepare(
+        "SELECT body, at FROM complaint_updates WHERE complaint_id=? AND kind='note' AND shared=1 AND body<>'' ORDER BY at")
+        .all(c.id);
+      return json(res, 200, { id:c.id, status:c.status, receivedAt:c.created_at, responses });
     }
 
     /* authenticated routes */

@@ -8,7 +8,7 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 
 | Folder | App | What it does |
 |---|---|---|
-| `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, management dashboard with campus map, admin user management + audit trail |
+| `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, management dashboard with campus map, anonymous complaints channel (see below), admin user management + audit trail |
 | `it-pulse/` | IT Pulse | Live campus IT monitoring map (network / Wi-Fi / servers / power / CCTV layers, 12-h zone trends) — simulated telemetry, adapter point documented in-page |
 | `ops-desk/` | Ops Desk | Earlier shared incident board (superseded by Lakeshore One) |
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
@@ -23,6 +23,30 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 - **Honest limitation:** enforcement is client-side and PINs are hashes in the
   shared store. Fine for a pilot; production needs hospital sign-on (AD/SSO) and
   a server — see `docs/schema.sql` for the target database schema.
+
+## Anonymous complaints ("Speak up")
+
+A separate channel on the Raise tab for harassment, patient-safety, ethics
+and similar concerns that staff would rather not put their name on. It runs
+on a different trust model from tickets:
+
+- **No identity is stored, anywhere.** The complaint record has no reporter
+  fields, the submit operation carries no name/ID, and the audit trail only
+  says a complaint was received "via the anonymous channel". Sign-in is used
+  solely to keep the channel staff-only at submit time.
+- **Follow-up via a one-time reference code**, generated on the submitter's
+  device and shown once. Only its SHA-256 hash is stored, so nobody — not
+  even a database reader — can link a code to a person. Checking status with
+  the code is an unauthenticated request on purpose, so the lookup can't be
+  tied to an account either (misses are rate-limited per IP).
+- **Reviewed with discretion** by Management, Quality and Admin only, in a
+  dedicated "Concerns" tab: new → in review → closed, with internal notes
+  and optional responses shared back to the complainant through the code.
+- **Honest limitation:** in the shared-artifact and single-device demo modes
+  the data store is client-readable like everything else, so confidentiality
+  of the complaint *content* is only enforced by the UI there; anonymity of
+  the *submitter* holds in every mode because identity is simply never
+  recorded. The backend server enforces reviewer-only visibility properly.
 
 ## Priority / SLA matrix
 

@@ -93,6 +93,37 @@ CREATE TABLE catalog (
   UNIQUE (module, type, category)
 );
 
+-- ---------- Anonymous complaints ----------
+-- Different trust model from tickets: there is deliberately NO reporter
+-- column and no FK to users. Submission is staff-only (authenticated
+-- request) but the identity is never written — not here, not in audit_log.
+-- Follow-up is via the SHA-256 hash of a one-time reference code that is
+-- generated on the complainant's device; the code itself never reaches
+-- the server. Review is restricted to management / quality / admin.
+CREATE TYPE complaint_status AS ENUM ('new','in_review','closed');
+CREATE TABLE complaints (
+  id          varchar(16) PRIMARY KEY,            -- 'CMP-118'
+  category    varchar(60)      NOT NULL,          -- harassment / safety / ethics / ...
+  body        text             NOT NULL,
+  zone        varchar(60),                        -- optional; empty = prefer not to say
+  code_hash   char(64)         NOT NULL,          -- SHA-256 of the reference code
+  status      complaint_status NOT NULL DEFAULT 'new',
+  created_at  timestamptz      NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_complaints_code ON complaints (code_hash);
+
+CREATE TABLE complaint_updates (
+  id           bigserial PRIMARY KEY,
+  complaint_id varchar(16) NOT NULL REFERENCES complaints(id),
+  kind         varchar(8)  NOT NULL CHECK (kind IN ('status','note')),
+  to_status    complaint_status,
+  body         text,
+  author       varchar(20) NOT NULL REFERENCES users(emp_id),  -- reviewers are not anonymous
+  shared       boolean     NOT NULL DEFAULT false, -- true = shown to the complainant on code lookup
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_complaint_updates ON complaint_updates (complaint_id, created_at);
+
 -- ---------- Bed tracking ----------
 CREATE TYPE bed_status AS ENUM ('occupied','dirty','cleaning','ready','blocked');
 CREATE TABLE beds (
