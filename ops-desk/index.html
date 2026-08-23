@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#2B7CBE">
+<meta name="theme-color" content="#001E5F">
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Lakeshore One">
 <title>Lakeshore Ops Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
 <style>
   :root{
     --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
     --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
     --line:rgba(22,35,46,0.10);
-    --brand:#2B7CBE; --brand-ink:#1B5A8E; --maroon:#8B1A4A;
-    --brand-tint:rgba(43,124,190,0.08);
+    --brand:#001E5F; --brand-ink:#001542; --maroon:#E8146E;
+    --brand-tint:rgba(0,30,95,0.07);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
     --crit:#B3261E; --crit-bg:#FBE4E2;
@@ -69,19 +69,18 @@
 
   *{box-sizing:border-box; margin:0; padding:0}
   html,body{height:100%}
-  body{background:var(--bg); color:var(--ink); font-family:'Roboto',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
-  header{padding:14px 16px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px}
-  .wordmark{font-family:'Montserrat',sans-serif; font-weight:800; font-size:17px; line-height:1.1}
-  .wordmark .vps{color:var(--maroon)} .wordmark .lks{color:var(--brand)}
-  .wordmark small{display:block; font-family:'Roboto',sans-serif; font-weight:500; font-size:10px;
-    letter-spacing:2.2px; color:var(--ink-3); text-transform:uppercase; margin-top:2px}
-  .me-chip{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
-    border-radius:999px; padding:5px 12px 5px 6px; font-size:12px; font-weight:500; color:var(--ink-2);
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-family:'Figtree',sans-serif; font-weight:600; font-size:10px;
+    letter-spacing:2.2px; color:#8FA9DC; text-transform:uppercase; margin-top:6px}
+  .me-chip{display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.28);
+    border-radius:999px; padding:5px 12px 5px 6px; font-size:12px; font-weight:500; color:#fff;
     cursor:pointer; max-width:190px}
-  .me-chip .av{width:26px; height:26px; border-radius:50%; background:var(--brand); color:#fff;
+  .me-chip .av{width:26px; height:26px; border-radius:50%; background:var(--maroon); color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex:none}
   .me-chip .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
@@ -93,7 +92,7 @@
   main{flex:1; padding-bottom:86px}
   .tab{display:none; padding:4px 16px 20px}
   .tab.active{display:block}
-  h1.page{font-family:'Montserrat',sans-serif; font-weight:800; font-size:21px; margin:6px 2px 2px; letter-spacing:-0.2px}
+  h1.page{font-family:'Figtree',sans-serif; font-weight:800; font-size:21px; margin:6px 2px 2px; letter-spacing:-0.2px}
   .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px}
 
   /* ---- form ---- */
@@ -103,17 +102,17 @@
   label.fl:first-child{margin-top:0}
   input[type=text], select, textarea{
     width:100%; background:var(--shell); border:1.5px solid var(--line); border-radius:10px;
-    padding:11px 12px; font-family:'Roboto',sans-serif; font-size:14px; color:var(--ink); outline:none}
+    padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
   input:focus, select:focus, textarea:focus{border-color:var(--brand)}
   textarea{min-height:88px; resize:vertical}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
   .seg button{flex:1; min-width:70px; padding:9px 4px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--shell); color:var(--ink-2); font-size:12.5px; font-weight:700; cursor:pointer;
-    font-family:'Roboto',sans-serif}
+    font-family:'Figtree',sans-serif}
   .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
   .seg button.p-urgent[aria-pressed="true"]{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
   .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--brand);
-    color:#fff; font-family:'Montserrat',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
   .submit:disabled{opacity:.55; cursor:default}
   .as-note{font-size:12px; color:var(--ink-2); margin-top:10px; text-align:center}
   .as-note b{color:var(--ink)}
@@ -122,7 +121,7 @@
   /* ---- KPI row ---- */
   .kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px}
   .kpi{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
-  .kpi .n{font-family:'Montserrat',sans-serif; font-weight:800; font-size:22px; font-variant-numeric:tabular-nums}
+  .kpi .n{font-family:'Figtree',sans-serif; font-weight:800; font-size:22px; font-variant-numeric:tabular-nums}
   .kpi .l{font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:2px}
   .kpi.open .n{color:var(--crit)} .kpi.prog .n{color:var(--brand)} .kpi.done .n{color:var(--good)}
 
@@ -131,7 +130,7 @@
   .filters::-webkit-scrollbar{display:none}
   .fchip{flex:none; border:1.5px solid var(--line); background:var(--card); color:var(--ink-2);
     border-radius:999px; padding:7px 14px; font-size:12.5px; font-weight:500; cursor:pointer;
-    font-family:'Roboto',sans-serif; display:flex; gap:6px; align-items:center}
+    font-family:'Figtree',sans-serif; display:flex; gap:6px; align-items:center}
   .fchip[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink); font-weight:700}
   .fchip .ct{font-variant-numeric:tabular-nums; background:var(--neutral-bg); border-radius:999px;
     padding:1px 7px; font-size:11px; font-weight:700}
@@ -170,9 +169,9 @@
   .cbox{display:flex; gap:8px}
   .cbox input{flex:1}
   .cbox button{border:none; border-radius:10px; background:var(--brand); color:#fff; font-weight:700;
-    padding:0 16px; cursor:pointer; font-family:'Roboto',sans-serif; font-size:13px}
+    padding:0 16px; cursor:pointer; font-family:'Figtree',sans-serif; font-size:13px}
   .actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
-  .abtn{flex:1; min-width:120px; padding:11px 8px; border-radius:10px; font-family:'Montserrat',sans-serif;
+  .abtn{flex:1; min-width:120px; padding:11px 8px; border-radius:10px; font-family:'Figtree',sans-serif;
     font-weight:700; font-size:12.5px; cursor:pointer; border:1.5px solid var(--line); background:var(--shell); color:var(--ink)}
   .abtn.primary{background:var(--brand); border-color:var(--brand); color:#fff}
   .abtn.success{background:var(--good); border-color:var(--good); color:#fff}
@@ -198,7 +197,7 @@
     background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50;
     padding-bottom:env(safe-area-inset-bottom)}
   nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
-    font-family:'Roboto',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:0.4px;
+    font-family:'Figtree',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:0.4px;
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:22px; height:22px}
   nav button[aria-pressed="true"]{color:var(--brand)}
@@ -210,7 +209,7 @@
     background:var(--card); color:var(--ink); box-shadow:var(--shadow)}
   dialog::backdrop{background:rgba(10,16,20,0.5)}
   .dlg-in{padding:20px}
-  .dlg-in h2{font-family:'Montserrat',sans-serif; font-weight:800; font-size:18px; margin-bottom:4px}
+  .dlg-in h2{font-family:'Figtree',sans-serif; font-weight:800; font-size:18px; margin-bottom:4px}
   .dlg-in p{font-size:12.5px; color:var(--ink-2); margin-bottom:6px; line-height:1.5}
   footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
   .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:60;
@@ -223,7 +222,7 @@
 <body>
 <div class="app">
   <header>
-    <div class="wordmark"><span class="vps">vps</span> <span class="lks">lakeshore</span>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
       <small>Ops Desk &middot; Incident Reporting</small></div>
     <button class="me-chip" id="meChip" aria-label="Your profile">
       <span class="av" id="meAv">?</span><span class="nm" id="meName">Set up profile</span>
