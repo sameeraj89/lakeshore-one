@@ -2,9 +2,8 @@
 /* =====================================================================
    Lakeshore One — backend server (pilot / production-lite).
 
-   Zero npm dependencies: Node.js >= 22.5 only (built-in node:sqlite).
-   Run:   npm start   (= node --experimental-sqlite server/server.js)
-          The flag is required on early Node 22.5.x, a no-op on newer 22.x.
+   Zero npm dependencies: Node.js >= 22.13 only (stable built-in node:sqlite).
+   Run:   npm start   (= node server/server.js)
    Env:   PORT (default 8080)
           DATA_DIR (default <server dir>/data)  — sqlite db + secret live here
 

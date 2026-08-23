@@ -3,4 +3,4 @@ WORKDIR /app
 COPY . .
 EXPOSE 8080
 ENV PORT=8080
-CMD ["node", "--experimental-sqlite", "server/server.js"]
+CMD ["node", "server/server.js"]

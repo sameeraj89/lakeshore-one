@@ -5,11 +5,11 @@
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=22.5"
+    "node": ">=22.13"
   },
   "scripts": {
-    "start": "node --experimental-sqlite server/server.js",
-    "test": "node --experimental-sqlite server/smoke-test.js"
+    "start": "node server/server.js",
+    "test": "node server/smoke-test.js"
   },
   "repository": {
     "type": "git",

@@ -6,7 +6,9 @@ all in one file, nothing to `npm install`.
 
 ## Requirements
 
-- Node.js **22.5 or newer** (uses the built-in `node:sqlite`)
+- Node.js **22.13 or newer** (uses the stabilized built-in `node:sqlite`;
+  tested in CI on the current 22.x and 24.x lines). `node:sqlite` first
+  appeared, behind a flag and still changing, in 22.5 — use a current release.
 - Nothing else. No npm packages, no external database.
 
 ## Run
@@ -17,13 +19,7 @@ PORT=3000 npm start                 # custom port
 npm test                            # zero-dependency smoke test (spawns a throwaway DB)
 ```
 
-`npm start` runs `node --experimental-sqlite server/server.js`. The flag is
-required on early Node 22.5.x (where `node:sqlite` is still behind it) and is a
-harmless no-op on newer 22.x — run the raw command the same way if you skip npm:
-
-```bash
-node --experimental-sqlite server/server.js
-```
+`npm start` runs `node server/server.js` — run that directly if you skip npm.
 
 The smoke test (`server/smoke-test.js`) starts the server on a temp database
 and checks the security- and correctness-critical paths — patient-impact
@@ -77,7 +73,7 @@ sudo tee /etc/systemd/system/lakeshore-one.service > /dev/null <<'UNIT'
 Description=Lakeshore One
 After=network.target
 [Service]
-ExecStart=/usr/bin/node --experimental-sqlite /opt/lakeshore-one/server/server.js
+ExecStart=/usr/bin/node /opt/lakeshore-one/server/server.js
 Environment=PORT=8080
 Restart=always
 User=www-data
@@ -124,9 +120,9 @@ use `http://<lan-ip>:8080` on hospital Wi-Fi.
 **Windows box:**
 1. Install Node.js 22 LTS from nodejs.org.
 2. Download this repo (Code → Download ZIP) and extract, e.g. to `C:\lakeshore-one`.
-3. Test: `node --experimental-sqlite C:\lakeshore-one\server\server.js` → open `http://localhost:8080`.
+3. Test: `node C:\lakeshore-one\server\server.js` → open `http://localhost:8080`.
 4. Auto-start: Task Scheduler → Create Task → trigger "At startup" →
-   action `node.exe` with arguments `--experimental-sqlite C:\lakeshore-one\server\server.js`
+   action `node.exe` with argument `C:\lakeshore-one\server\server.js`
    (or install NSSM to run it as a proper Windows service).
 5. Reserve the machine's IP in the router/DHCP so the address never changes.
 
@@ -149,7 +145,6 @@ building, and the system keeps working if the internet link drops.
   <key>Label</key><string>in.lakeshore.one</string>
   <key>ProgramArguments</key>
   <array><string>/usr/local/bin/node</string>
-         <string>--experimental-sqlite</string>
          <string>/Users/Shared/lakeshore-one/server/server.js</string></array>
   <key>EnvironmentVariables</key><dict><key>PORT</key><string>8080</string></dict>
   <key>RunAtLoad</key><true/>
