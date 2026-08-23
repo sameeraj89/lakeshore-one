@@ -133,3 +133,20 @@ CREATE TABLE ot_milestones (
   at       timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_ot_day ON ot_cases (case_date, suite, planned);
+
+-- WhatsApp intake channel (server/whatsapp.js) ------------------------
+CREATE TABLE wa_links (
+  phone     varchar(20) PRIMARY KEY,               -- E.164 digits only
+  emp_id    varchar(20) NOT NULL REFERENCES users(emp_id),
+  linked_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE wa_messages (
+  id        bigserial PRIMARY KEY,
+  wamid     varchar(128) UNIQUE,                   -- Meta message id (webhook dedup)
+  phone     varchar(20)  NOT NULL,
+  direction varchar(3)   NOT NULL CHECK (direction IN ('in','out')),
+  body      varchar(1000),
+  ticket_id varchar(16) REFERENCES tickets(id),
+  at        timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_wa_msg_phone ON wa_messages (phone, at DESC);

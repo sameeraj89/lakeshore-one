@@ -105,8 +105,10 @@ enough for the pilot:
   wants a managed database; the API surface stays the same.
 - Replace `/api/login` with AD / SSO (OIDC) when IT is ready — tokens, roles
   and every other route are unchanged.
-- Notifications (WhatsApp / web push) hook naturally into `applyOp()` where
-  `broadcast()` is called.
+- **WhatsApp intake with AI triage is built in** — staff report incidents by
+  texting the hospital's WhatsApp number, and get ticket updates back there.
+  Setup guide: `server/WHATSAPP.md`. Web push remains a natural follow-on at
+  the same `applyOp()` hook.
 
 ## Alternative: run it on a PC inside the hospital (₹0)
 
