@@ -90,3 +90,30 @@ enough for the pilot:
   and every other route are unchanged.
 - Notifications (WhatsApp / web push) hook naturally into `applyOp()` where
   `broadcast()` is called.
+
+## Alternative: run it on a PC inside the hospital (₹0)
+
+Any always-on machine on the hospital network can host this — an old desktop,
+an Intel N100 mini-PC (~6 W), or a Raspberry Pi 5. The server idles at ~50 MB
+RAM. Requirements: UPS-backed power, auto-start on boot, a reserved LAN IP.
+
+**Linux box:** follow the VPS guide from step "Node 22", skip Caddy/DNS; staff
+use `http://<lan-ip>:8080` on hospital Wi-Fi.
+
+**Windows box:**
+1. Install Node.js 22 LTS from nodejs.org.
+2. Download this repo (Code → Download ZIP) and extract, e.g. to `C:\lakeshore-one`.
+3. Test: `node C:\lakeshore-one\server\server.js` → open `http://localhost:8080`.
+4. Auto-start: Task Scheduler → Create Task → trigger "At startup" →
+   action `node.exe` with argument `C:\lakeshore-one\server\server.js`
+   (or install NSSM to run it as a proper Windows service).
+5. Reserve the machine's IP in the router/DHCP so the address never changes.
+
+**Known limitation on plain LAN HTTP:** browsers only offer the full PWA
+install over HTTPS, so staff get a home-screen shortcut instead of the
+installed-app experience. Fixes: Tailscale HTTPS (per-device), or internal
+DNS + internal CA certificates from hospital IT. Data never leaves the
+building, and the system keeps working if the internet link drops.
+
+**Moving between PC and VPS later:** install Node on the new machine and copy
+`server/data/` across. That's the entire migration.
