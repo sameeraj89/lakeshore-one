@@ -116,6 +116,18 @@
     background:rgba(255,255,255,0.06); border:1px dashed rgba(255,255,255,0.3); border-radius:12px; padding:12px 14px; max-width:360px; margin-inline:auto}
   .lhint b{color:#fff}
   .lhint code{background:rgba(255,255,255,0.14); padding:1px 6px; border-radius:5px; font-size:11px; color:#fff}
+  .alt-div{display:flex; align-items:center; gap:12px; max-width:360px; margin:20px auto 14px;
+    color:#8FA9DC; font-size:10.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase}
+  .alt-div::before, .alt-div::after{content:""; flex:1; height:1px; background:rgba(255,255,255,0.25)}
+  #gWrap{max-width:360px; margin:0 auto 12px; display:none}
+  #gBtn{display:flex; justify-content:center}
+  .quick-row{display:flex; gap:8px; max-width:360px; margin:0 auto}
+  .qbtn{flex:1; padding:12px 6px; border-radius:12px; border:1.5px solid rgba(255,255,255,0.32);
+    background:rgba(255,255,255,0.08); color:#fff; font-family:'Figtree',sans-serif; font-weight:700;
+    font-size:12.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px}
+  .qbtn svg{width:19px; height:19px; opacity:.9}
+  .qbtn small{display:block; font-weight:500; font-size:10px; color:#8FA9DC; letter-spacing:0.2px}
+  .qnote{max-width:360px; margin:10px auto 0; font-size:11px; color:#8FA9DC; line-height:1.6; text-align:center}
 
   /* ---------- raise flow ---------- */
   .mods{display:grid; grid-template-columns:1fr 1fr; gap:9px}
@@ -332,8 +344,22 @@
       <button class="submit" id="liGo">Continue</button>
       <div class="lerr" id="liErr"></div>
     </div>
+    <div class="alt-div"><span>or continue with</span></div>
+    <div id="gWrap"><div id="gBtn"></div></div>
+    <div class="quick-row">
+      <button class="qbtn" id="qGuest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>
+        Guest<small>Visitor, no account</small></button>
+      <button class="qbtn" id="qPatient">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21C7 16.5 3.5 13.2 3.5 9.4 3.5 6.6 5.6 4.5 8.3 4.5c1.5 0 3 .8 3.7 2 .7-1.2 2.2-2 3.7-2 2.7 0 4.8 2.1 4.8 4.9 0 3.8-3.5 7.1-8.5 11.6Z"/></svg>
+        Patient<small>Inpatient / attendant</small></button>
+      <button class="qbtn" id="qNurse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6.5v5c0 4.4 3.2 7.4 7.5 9.5 4.3-2.1 7.5-5.1 7.5-9.5v-5L12 3Z"/><path d="M12 8.5v6M9 11.5h6"/></svg>
+        Nurse<small>Demo account</small></button>
+    </div>
+    <div class="qnote" id="qNote">Guests &amp; patients can raise facility, housekeeping and security requests and track them &mdash; no account needed.</div>
     <div class="lhint"><b>Pilot accounts</b> (PIN is set on first login):<br>
-      <code>LH-DOC01</code> doctor &middot; <code>LH-IT01</code> IT agent &middot; <code>LH-FM01</code> facility &middot;
+      <code>LH-DOC01</code> doctor &middot; <code>LH-NUR01</code> nurse &middot; <code>LH-IT01</code> IT agent &middot; <code>LH-FM01</code> facility &middot;
       <code>LH-HK01</code> housekeeping &middot; <code>LH-BM01</code> biomedical &middot; <code>LH-SEC01</code> security &middot;
       <code>LH-MGT01</code> management &middot; <code>LH-ADMIN</code> admin (adds real users)</div>
   </section>
@@ -496,6 +522,8 @@
     <select id="uRole"></select>
     <label class="fl" for="uDept">Department</label>
     <input id="uDept" maxlength="60" placeholder="Cardiology / IT / Nursing&hellip;">
+    <label class="fl" for="uEmail">Google email (optional)</label>
+    <input id="uEmail" type="email" maxlength="80" placeholder="name@lakeshorehospital.org &mdash; enables Sign in with Google">
     <button class="submit" id="uSave">Save user</button>
     <button class="submit" id="uCancel" style="background:var(--neutral-bg); color:var(--ink-2); margin-top:8px">Cancel</button>
   </div>
@@ -533,6 +561,7 @@
  {"empId":"LH-BM01","name":"Rahul Menon","role":"biomedical_agent","dept":"Biomedical Engineering","pinHash":null,"active":true},
  {"empId":"LH-SEC01","name":"Vinod PS","role":"security_agent","dept":"Security","pinHash":null,"active":true},
  {"empId":"LH-DOC01","name":"Dr. Anitha Menon","role":"doctor","dept":"Cardiology","pinHash":null,"active":true},
+ {"empId":"LH-NUR01","name":"Nisha Varghese","role":"nurse","dept":"Nursing","pinHash":null,"active":true},
  {"empId":"LH-MGT01","name":"Hospital Director","role":"management","dept":"Administration","pinHash":null,"active":true}
 ],
 "tickets":[]}
@@ -559,10 +588,14 @@ const ROLES = {
   it_agent:{label:'IT Agent', mod:'it'}, facility_agent:{label:'Facility Agent', mod:'fac'},
   housekeeping_agent:{label:'Housekeeping', mod:'hk'}, biomedical_agent:{label:'Biomedical', mod:'bm'},
   security_agent:{label:'Security Agent', mod:'sec'},
-  management:{label:'Management'}, quality:{label:'Quality'}, admin:{label:'Admin'}
+  management:{label:'Management'}, quality:{label:'Quality'}, admin:{label:'Admin'},
+  guest:{label:'Guest'}, patient:{label:'Patient'}
 };
 const isAgent = r => !!(ROLES[r] && ROLES[r].mod);
 const canSeeAll = r => ['management','quality','admin'].includes(r);
+/* guests & patients: visitor-facing desks only, no ops boards / queue / dash */
+const isLimited = r => ['guest','patient'].includes(r);
+const GUEST_MODS = ['fac','hk','sec'];
 
 const MODS = {
   it:  { label:'IT & Systems', color:'#2B7CBE', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
@@ -674,6 +707,7 @@ function seedDemoOT(){
 /* ---------- state ---------- */
 const SEED = JSON.parse($('seed').textContent);
 let db = null, artifactNS = null, mode = 'loading', session = null;
+let srvConfig = {};   // /api/config in server mode: { googleClientId, demoLogin }
 let ui = { tab:'raise', mod:null, type:'incident', cat:null, pri:'P3',
            qStatus:'active', qMod:'all', expanded:new Set(),
            opsView:'beds', ward:'3A', qMine:false, qSearch:'' };
@@ -750,6 +784,7 @@ async function bootData(){
     if (r.ok && (await r.json()).service === 'lakeshore-one'){
       mode = 'server';
       db = { seq:0, ops:[], users:[], tickets:[], beds:null, bedlog:[], ot:{cases:[]}, audit:[] };
+      try{ const c = await fetch('/api/config', { cache:'no-store' }); if (c.ok) srvConfig = await c.json(); }catch(e){}
       return;
     }
   }catch(e){}
@@ -951,9 +986,9 @@ async function doLogin(){
   startSession(empId);
 }
 function rememberEmp(empId){ try{ localStorage.setItem('l1-last-emp', empId); }catch(e){} }
-function startSession(empId){
+function startSession(empId, remember){
   session = empId;
-  rememberEmp(empId);
+  if (remember !== false) rememberEmp(empId);
   try{ sessionStorage.setItem('l1-session', empId); }catch(e){}
   enterApp();
 }
@@ -969,6 +1004,64 @@ $('liEmp').addEventListener('input', () => {   // reset to pin stage when ID cha
   $('liGo').textContent = 'Continue'; $('liErr').textContent = '';
 });
 
+/* ---------- quick sign-in: guest / patient / demo nurse ---------- */
+async function quickSignIn(as){
+  const err = $('liErr'); err.textContent = '';
+  if (mode === 'server'){
+    const r = await api('guest', { as });
+    if (!r.ok){ err.textContent = r.error || 'Sign-in failed.'; return; }
+    token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+    await fetchState(); session = r.empId; enterApp(); startSSE(); return;
+  }
+  if (as === 'nurse'){
+    /* demo nurse is a dedicated account so real nurse logins are never bypassed */
+    let u = db.users.find(x => x.empId === 'LH-NURSE');
+    if (!u){
+      u = { empId:'LH-NURSE', name:'Demo Nurse', role:'nurse', dept:'Nursing', pinHash:'locked', active:true };
+      const ok = await commit({ uid:uid(), kind:'user_add', by:'LH-NURSE', byName:u.name, at:new Date().toISOString(), user:u });
+      if (!ok && mode === 'readonly'){ err.textContent = 'This link is view-only — demo sign-in unavailable.'; return; }
+    }
+    if (!u.active){ err.textContent = 'Demo nurse account is deactivated.'; return; }
+    startSession('LH-NURSE', false); return;
+  }
+  const empId = (as === 'patient' ? 'PAT-' : 'GST-') + Math.random().toString(36).slice(2,6).toUpperCase();
+  const user = { empId, name:(as === 'patient' ? 'Patient · ' : 'Guest · ') + empId.slice(4),
+    role:as, dept:'Visitor', pinHash:'locked', active:true };
+  const ok = await commit({ uid:uid(), kind:'user_add', by:empId, byName:user.name, at:new Date().toISOString(), user });
+  if (!ok && mode === 'readonly'){ err.textContent = 'This link is view-only — guest sign-in unavailable.'; return; }
+  startSession(empId, false);
+}
+$('qGuest').onclick = () => quickSignIn('guest');
+$('qPatient').onclick = () => quickSignIn('patient');
+$('qNurse').onclick = () => quickSignIn('nurse');
+
+/* ---------- Google SSO (server mode, when the server has a client ID) ---------- */
+function initGoogleSignIn(clientId){
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.defer = true;
+  s.onload = () => {
+    try{
+      google.accounts.id.initialize({ client_id: clientId, callback: onGoogleCredential });
+      google.accounts.id.renderButton($('gBtn'), { theme:'outline', size:'large', shape:'pill', width:300, text:'signin_with' });
+      $('gWrap').style.display = 'block';
+    }catch(e){}
+  };
+  document.head.appendChild(s);
+}
+async function onGoogleCredential(resp){
+  const err = $('liErr'); err.textContent = '';
+  const r = await api('google-login', { credential: resp.credential });
+  if (!r.ok){ err.textContent = r.error || 'Google sign-in failed.'; return; }
+  token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+  await fetchState(); session = r.empId; enterApp(); startSSE();
+}
+function setupAltSignin(){
+  if (mode === 'server'){
+    if (srvConfig.googleClientId) initGoogleSignIn(srvConfig.googleClientId);
+    if (!srvConfig.demoLogin) $('qNurse').style.display = 'none';
+  }
+}
+
 /* ---------- app shell ---------- */
 const NAV_ICONS = {
   raise:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
@@ -980,6 +1073,7 @@ const NAV_ICONS = {
 };
 function tabsForRole(){
   const r = me().role;
+  if (isLimited(r)) return [['raise','Raise'],['mine','Mine']];
   const t = [['raise','Raise'],['mine','Mine'],['ops','Ops']];
   if (isAgent(r) || canSeeAll(r)) t.push(['queue','Queue']);
   if (canSeeAll(r)) t.push(['dash','Dash']);
@@ -992,7 +1086,8 @@ function enterApp(){
   $('logoImg').src = LOGO;
   const u = me();
   $('meAv').textContent = initials(u.name);
-  $('meName').textContent = u.name.split(' ')[0] + ' · ' + ROLES[u.role].label;
+  const firstName = u.name.split(' ')[0];
+  $('meName').textContent = firstName === ROLES[u.role].label ? u.name : firstName + ' · ' + ROLES[u.role].label;
   $('meChip').onclick = () => { if (confirm('Sign out of Lakeshore One?')) logout(); };
   const nav = $('nav'); nav.className = 'show'; nav.innerHTML = '';
   for (const [key,label] of tabsForRole()){
@@ -1014,8 +1109,11 @@ function setTab(tab){
 
 /* ---------- raise ---------- */
 function renderRaise(){
+  const limited = isLimited(me().role);
+  if (limited && ui.mod && !GUEST_MODS.includes(ui.mod)) ui.mod = null;
   const grid = $('modGrid'); grid.innerHTML = '';
   for (const [key, m] of Object.entries(MODS)){
+    if (limited && !GUEST_MODS.includes(key)) continue;
     const b = document.createElement('button');
     b.className = 'mod'; b.setAttribute('aria-pressed', ui.mod === key);
     b.innerHTML = '<span class="mi" style="background:' + m.color + '1A; color:' + m.color + '">' + m.icon + '</span>' +
@@ -1506,7 +1604,8 @@ function renderAdmin(){
     '<span class="av">' + esc(initials(u.name)) + '</span>' +
     '<div><div class="un">' + esc(u.name) + '</div><div class="um">' + esc(u.empId) + ' · ' +
     esc(ROLES[u.role].label) + ' · ' + esc(u.dept || '—') +
-    (u.pinHash ? '' : ' · <b style="color:var(--warn)">PIN not set</b>') + '</div></div>' +
+    (u.email ? ' · ' + esc(u.email) : '') +
+    (u.pinHash || isLimited(u.role) ? '' : ' · <b style="color:var(--warn)">PIN not set</b>') + '</div></div>' +
     '<div class="ubtns">' +
     (u.pinHash ? '<button class="ubtn" data-act="pin" data-id="' + esc(u.empId) + '">Reset PIN</button>' : '') +
     (u.empId !== me().empId ? '<button class="ubtn" data-act="tog" data-id="' + esc(u.empId) + '">' + (u.active ? 'Deactivate' : 'Activate') + '</button>' : '') +
@@ -1528,8 +1627,9 @@ function renderAdmin(){
 }
 $('addUserBtn').onclick = () => {
   const rs = $('uRole');
-  rs.innerHTML = Object.entries(ROLES).map(([k,r]) => '<option value="' + k + '">' + r.label + '</option>').join('');
-  $('uEmp').value = ''; $('uName').value = ''; $('uDept').value = '';
+  rs.innerHTML = Object.entries(ROLES).filter(([k]) => !isLimited(k))
+    .map(([k,r]) => '<option value="' + k + '">' + r.label + '</option>').join('');
+  $('uEmp').value = ''; $('uName').value = ''; $('uDept').value = ''; $('uEmail').value = '';
   $('userDlg').showModal();
 };
 $('uCancel').onclick = e => { e.preventDefault(); $('userDlg').close(); };
@@ -1537,9 +1637,11 @@ $('uSave').onclick = () => {
   const empId = $('uEmp').value.trim().toUpperCase(), name = $('uName').value.trim();
   if (!empId || !name){ toast('Employee ID and name are required.'); return; }
   if (db.users.some(x => x.empId === empId)){ toast('That employee ID already exists.'); return; }
+  const email = $('uEmail').value.trim().toLowerCase();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('That email doesn’t look right.'); return; }
   const u = me();
   commit({ uid:uid(), kind:'user_add', by:u.empId, byName:u.name, at:new Date().toISOString(),
-    user:{ empId, name, role:$('uRole').value, dept:$('uDept').value.trim(), pinHash:null, active:true } });
+    user:{ empId, name, role:$('uRole').value, dept:$('uDept').value.trim(), email:email || null, pinHash:null, active:true } });
   $('userDlg').close();
   toast(empId + ' added — they set a PIN on first sign-in.');
 };
@@ -1560,6 +1662,7 @@ $('qSearch').addEventListener('input', () => { ui.qSearch = $('qSearch').value; 
 /* ---------- boot ---------- */
 (async function(){
   await bootData();
+  setupAltSignin();
   try{ const le = localStorage.getItem('l1-last-emp'); if (le && !$('liEmp').value) $('liEmp').value = le; }catch(e){}
   if (mode === 'server'){
     if (token){
