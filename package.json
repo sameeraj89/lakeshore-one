@@ -8,8 +8,8 @@
     "node": ">=22.5"
   },
   "scripts": {
-    "start": "node server/server.js",
-    "test": "node server/smoke-test.js"
+    "start": "node --experimental-sqlite server/server.js",
+    "test": "node --experimental-sqlite server/smoke-test.js"
   },
   "repository": {
     "type": "git",

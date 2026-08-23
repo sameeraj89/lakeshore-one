@@ -40,7 +40,7 @@ least P2 — the healthcare-specific rule ITIL guides call out.
 
 `server/server.js` is a zero-dependency Node.js (>= 22.5) backend: sign-in,
 server-enforced roles, SQLite storage, live updates via SSE, and it serves
-this same frontend. `node server/server.js` and the apps switch from demo
+this same frontend. `npm start` and the apps switch from demo
 mode to the real system automatically. See `server/README.md` for the VPS
 deployment guide (systemd + Caddy HTTPS, ~5 minutes) and `Dockerfile`.
 

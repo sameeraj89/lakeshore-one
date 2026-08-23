@@ -53,7 +53,9 @@ async function waitForHealth(ms = 10000){
 }
 
 async function main(){
-  const child = spawn(process.execPath, [SERVER], {
+  // --experimental-sqlite: required on early Node 22.5.x (node:sqlite is flagged
+  // there), a harmless no-op on newer 22.x where it's on by default.
+  const child = spawn(process.execPath, ['--experimental-sqlite', SERVER], {
     env: { ...process.env, PORT: String(PORT), DATA_DIR },
     stdio: ['ignore', 'ignore', 'inherit']
   });
