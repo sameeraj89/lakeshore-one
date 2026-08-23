@@ -233,6 +233,29 @@
   .ubtn{border:1.5px solid var(--line); background:var(--shell); color:var(--ink-2); border-radius:8px;
     padding:6px 10px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Roboto',sans-serif}
 
+  /* ---------- improvements pass ---------- */
+  .search{position:relative; margin-bottom:10px}
+  .search input{padding-left:38px}
+  .search svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--ink-3)}
+  .tcard.overdue{border-left:4px solid var(--crit)}
+  .photo-btn{display:flex; align-items:center; gap:8px; width:100%; margin-top:14px;
+    border:1.5px dashed var(--line); background:var(--shell); color:var(--ink-2);
+    border-radius:12px; padding:12px 14px; font-family:'Roboto',sans-serif; font-size:13px; font-weight:500; cursor:pointer}
+  .photo-btn svg{width:17px; height:17px; flex:none}
+  .photo-btn img{height:42px; border-radius:8px}
+  .photo-btn .px{margin-left:auto; color:var(--crit); font-weight:700}
+  .tphoto{display:block; max-width:100%; border-radius:12px; margin-bottom:12px; cursor:zoom-in}
+  .photo-load{font-size:12px; color:var(--brand); cursor:pointer; margin-bottom:12px; font-weight:700}
+  #photoView{max-width:94vw}
+  #photoView img{display:block; max-width:100%; border-radius:12px}
+  .cols{display:flex; align-items:flex-end; gap:4px; height:90px; padding-top:4px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:22px; border-radius:3px 3px 0 0; background:rgba(43,124,190,0.45)}
+  .col.hot .bar{background:var(--brand)}
+  .col .cl{font-size:8.5px; color:var(--ink-3)}
+  .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  #dashRes .hbar{grid-template-columns:130px 1fr 52px}
+
   /* ---------- ops boards (beds + OT) ---------- */
   .ops-toggle{margin:0 0 14px}
   .legend{display:flex; flex-wrap:wrap; gap:10px 14px; font-size:11.5px; color:var(--ink-2); margin:2px 2px 12px}
@@ -342,6 +365,13 @@
           <select id="fZone"></select>
           <label class="fl" for="fDesc">Details (optional)</label>
           <textarea id="fDesc" maxlength="1500" placeholder="Room number, asset tag, since when, who to contact&hellip;"></textarea>
+          <button type="button" class="photo-btn" id="photoBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="14" rx="2.5"/><circle cx="12" cy="13" r="4"/><path d="M8.5 6 10 3.5h4L15.5 6"/></svg>
+            <span id="photoLabel">Add a photo (optional)</span>
+            <img id="photoThumb" style="display:none" alt="">
+            <span class="px" id="photoClear" style="display:none">&#10005;</span>
+          </button>
+          <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
           <div class="impact">
             <div><div class="it">Patient care affected?</div>
               <div class="is">Turn on if this is delaying or risking care right now &mdash; it raises the priority.</div></div>
@@ -388,6 +418,8 @@
           <div class="kpi prog"><div class="n" id="kProg">0</div><div class="l">In progress</div></div>
           <div class="kpi done"><div class="n" id="kSla">–</div><div class="l">SLA on-track</div></div>
         </div>
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>
+          <input id="qSearch" placeholder="Search title, ID, category, reporter&hellip;"></div>
         <div class="filters" id="qStatus"></div>
         <div class="filters" id="qMod"></div>
         <div id="queueList"></div>
@@ -399,6 +431,8 @@
         <p class="page-sub">Live position across all service desks.</p>
         <div class="kpis" id="dashKpis"></div>
         <div class="dcard"><h3>Open tickets by service desk</h3><div id="dashBars"></div></div>
+        <div class="dcard"><h3>Tickets raised &middot; last 14 days</h3><div class="cols" id="dashTrend"></div></div>
+        <div class="dcard"><h3>Average resolution time &middot; last 7 days</h3><div id="dashRes"></div></div>
         <div class="dcard"><h3>Open incidents on campus</h3>
           <div class="map-wrap" id="mapWrap">
             <svg id="map" viewBox="120 140 860 960" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -466,6 +500,7 @@
   </div>
 </dialog>
 <dialog id="bedDlg"><div class="dlg-in" id="bedDlgIn"></div></dialog>
+<dialog id="photoView" onclick="this.close()"><img alt="Ticket photo"></dialog>
 <dialog id="otDlg">
   <div class="dlg-in">
     <h2>Schedule OT case</h2>
@@ -640,7 +675,7 @@ const SEED = JSON.parse($('seed').textContent);
 let db = null, artifactNS = null, mode = 'loading', session = null;
 let ui = { tab:'raise', mod:null, type:'incident', cat:null, pri:'P3',
            qStatus:'active', qMod:'all', expanded:new Set(),
-           opsView:'beds', ward:'3A' };
+           opsView:'beds', ward:'3A', qMine:false, qSearch:'' };
 
 /* ---------- crypto ---------- */
 async function hashPin(empId, pin){
@@ -668,14 +703,43 @@ async function fetchState(){
   if (r.ok) db = await r.json();
   return r.ok;
 }
-let sseStarted = false;
+let sseStarted = false, lastOwnAction = 0;
 function startSSE(){
   if (sseStarted || !token) return;
   sseStarted = true;
   try{
     const es = new EventSource('/api/events?token=' + encodeURIComponent(token));
-    es.onmessage = async () => { if (await fetchState()) renderAll(); };
+    es.onmessage = async () => {
+      const prev = db;
+      if (await fetchState()){
+        if (Date.now() - lastOwnAction > 2500) notifyDiff(prev, db);
+        renderAll();
+      }
+    };
   }catch(e){}
+}
+/* role-aware toasts computed from state diffs delivered over SSE */
+function notifyDiff(prev, next){
+  if (!prev || !session || !prev.tickets) return;
+  const u = me(); if (!u) return;
+  const prevMap = new Map(prev.tickets.map(t => [t.id, t]));
+  for (const t of next.tickets){
+    const o = prevMap.get(t.id);
+    if (!o){
+      if (isAgent(u.role) && ROLES[u.role].mod === t.mod)
+        toast('New ' + t.pri + ' in your queue: ' + t.title);
+      else if (canSeeAll(u.role) && (t.pri === 'P1' || t.pri === 'P2'))
+        toast('New ' + t.pri + ': ' + t.title);
+      continue;
+    }
+    if (o.status !== t.status && t.reporter === u.empId){
+      toast('Your ticket ' + t.id + ' is now ' + STATUS[t.status].label +
+        (t.assigneeName ? ' (' + t.assigneeName + ')' : '') + '.');
+    } else if (t.updates.length > o.updates.length && (t.reporter === u.empId || t.assignee === u.empId)){
+      const last = t.updates[t.updates.length - 1];
+      if (last.type === 'comment' && last.by !== u.empId) toast(last.byName + ' commented on ' + t.id);
+    }
+  }
 }
 
 /* ---------- persistence (same CAS pattern as Ops Desk) ---------- */
@@ -728,7 +792,7 @@ function apply(op){
     db.seq += 1;
     const p = PRI[op.pri];
     db.tickets.unshift({ id:'LSO-' + db.seq, uid:op.uid, mod:op.mod, type:op.type, cat:op.cat,
-      title:op.title, desc:op.desc, zone:op.zone, pri:op.pri, impact:op.impact,
+      title:op.title, desc:op.desc, photo:op.photo || null, zone:op.zone, pri:op.pri, impact:op.impact,
       status:'open', reporter:op.by, reporterName:op.byName, assignee:null, assigneeName:null,
       createdAt:op.at, respondedAt:null, resolvedAt:null,
       dueRespond:new Date(new Date(op.at).getTime() + p.resp*60e3).toISOString(),
@@ -775,6 +839,7 @@ function apply(op){
 }
 async function commit(op, isReplay){
   if (mode === 'server'){
+    lastOwnAction = Date.now();
     apply(op); renderAll();                 /* optimistic */
     const r = await api('op', { op });
     if (!r.ok) toast(r.error || 'Not allowed.');
@@ -848,6 +913,7 @@ async function doLogin(){
       const r = await api('set-pin', { empId, pin: p1 });
       if (!r.ok){ err.textContent = r.error || 'Could not set PIN.'; return; }
       token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+      rememberEmp(empId);
       await fetchState(); session = empId; enterApp(); startSSE(); return;
     }
     const r = await api('login', { empId, pin: $('liPin').value });
@@ -858,6 +924,7 @@ async function doLogin(){
     }
     if (!r.ok){ err.textContent = r.error || 'Sign-in failed.'; return; }
     token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+    rememberEmp(empId);
     await fetchState(); session = empId; enterApp(); startSSE(); return;
   }
   const u = db.users.find(u => u.empId === empId);
@@ -882,8 +949,10 @@ async function doLogin(){
   if (hash !== u.pinHash){ err.textContent = 'Wrong PIN. Ask an admin to reset it if forgotten.'; return; }
   startSession(empId);
 }
+function rememberEmp(empId){ try{ localStorage.setItem('l1-last-emp', empId); }catch(e){} }
 function startSession(empId){
   session = empId;
+  rememberEmp(empId);
   try{ sessionStorage.setItem('l1-session', empId); }catch(e){}
   enterApp();
 }
@@ -974,6 +1043,43 @@ function renderRaise(){
     (p.res < 1440 ? (p.res/60) + ' h' : (p.res/1440) + ' d') + '</b>.';
   $('fSubmit').disabled = (mode === 'readonly');
 }
+/* --- photo attachment --- */
+let photoData = null;
+function updatePhotoUI(){
+  $('photoThumb').style.display = photoData ? 'block' : 'none';
+  $('photoClear').style.display = photoData ? 'inline' : 'none';
+  if (photoData) $('photoThumb').src = photoData;
+  $('photoLabel').textContent = photoData ? 'Photo attached' : 'Add a photo (optional)';
+}
+function compressImage(file){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 900;
+      const sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL('image/jpeg', 0.65));
+    };
+    img.onerror = () => resolve(null);
+    img.src = URL.createObjectURL(file);
+  });
+}
+$('photoBtn').onclick = e => {
+  if (e.target.id === 'photoClear'){ photoData = null; updatePhotoUI(); return; }
+  $('photoInput').click();
+};
+$('photoInput').onchange = async () => {
+  const f = $('photoInput').files[0];
+  if (!f) return;
+  photoData = await compressImage(f);
+  if (!photoData) toast('Could not read that image.');
+  $('photoInput').value = '';
+  updatePhotoUI();
+};
+
 $('fImpact').onchange = () => {
   if ($('fImpact').checked && (ui.pri === 'P3' || ui.pri === 'P4')){ ui.pri = 'P2'; renderRaise(); toast('Priority raised to P2 — patient care affected.'); }
 };
@@ -983,11 +1089,12 @@ $('fSubmit').onclick = async () => {
   const u = me();
   $('fSubmit').disabled = true;
   const ok = await commit({ uid:uid(), kind:'create', mod:ui.mod, type:(MODS[ui.mod].types ? ui.type : 'incident'),
-    cat:ui.cat, title, desc:$('fDesc').value.trim(), zone:$('fZone').value, pri:ui.pri,
+    cat:ui.cat, title, desc:$('fDesc').value.trim(), photo:photoData, zone:$('fZone').value, pri:ui.pri,
     impact:$('fImpact').checked, by:u.empId, byName:u.name, at:new Date().toISOString() });
   $('fSubmit').disabled = (mode === 'readonly');
   if (ok){
     $('fTitle').value = ''; $('fDesc').value = ''; $('fImpact').checked = false; ui.pri = 'P3';
+    photoData = null; updatePhotoUI();
     toast('Submitted — track it under My tickets.');
     setTab('mine');
   }
@@ -1036,7 +1143,7 @@ function renderTicket(t, ctx){   /* ctx: 'mine' | 'queue' */
     if (t.status === 'open' && mine && !agentFor) actions += '<button class="abtn ghost" data-act="closed">Withdraw</button>';
   }
   const canComment = mode !== 'readonly' && (mine || agentFor || boss);
-  return '<div class="tcard' + (exp ? ' expanded' : '') + '" data-id="' + esc(t.id) + '" data-ctx="' + ctx + '">' +
+  return '<div class="tcard' + (exp ? ' expanded' : '') + (isOverdue(t) ? ' overdue' : '') + '" data-id="' + esc(t.id) + '" data-ctx="' + ctx + '">' +
     '<div class="thead"><div class="trow1"><span class="tid">' + esc(t.id) + '</span>' +
     '<span class="badge ' + st.cls + '">' + st.label + '</span>' +
     ((t.pri === 'P1' || t.pri === 'P2') ? '<span class="badge b-' + t.pri.toLowerCase() + '">' + t.pri + '</span>' : '') +
@@ -1048,6 +1155,8 @@ function renderTicket(t, ctx){   /* ctx: 'mine' | 'queue' */
     esc(t.reporterName) + ' · ' + ago(t.createdAt) +
     (t.assigneeName ? ' · with <b>' + esc(t.assigneeName) + '</b>' : ' · unassigned') + '</div></div>' +
     '<div class="tbody">' +
+    (t.photo ? '<img class="tphoto" src="' + esc(t.photo) + '" alt="Attached photo">'
+      : (t.hasPhoto ? '<div class="photo-load" data-photoid="' + esc(t.id) + '">&#128247; View attached photo</div>' : '')) +
     (t.desc ? '<div class="tdesc">' + esc(t.desc) + '</div>' : '') +
     (tl ? '<div class="timeline">' + tl + '</div>' : '') +
     (canComment ? '<div class="cbox"><input maxlength="500" placeholder="Comment or resolution note…"><button>Send</button></div>' : '') +
@@ -1076,7 +1185,25 @@ function wireTickets(container, ctx){
         else commit({ uid:uid(), kind:'status', ticket:id, to:act, text:note, by:u.empId, byName:u.name, at:new Date().toISOString() });
       };
     }
+    const pl = card.querySelector('[data-photoid]');
+    if (pl) pl.onclick = async e => {
+      e.stopPropagation();
+      const r = await api('photo/' + pl.dataset.photoid);
+      const t = db.tickets.find(t => t.id === pl.dataset.photoid);
+      if (r.ok && r.photo && t){ t.photo = r.photo; renderAll(); }
+      else toast('Could not load the photo.');
+    };
+    const ph = card.querySelector('.tphoto');
+    if (ph) ph.onclick = e => {
+      e.stopPropagation();
+      $('photoView').querySelector('img').src = ph.src;
+      $('photoView').showModal();
+    };
   }
+}
+function isOverdue(t){
+  if (t.status === 'resolved' || t.status === 'closed') return false;
+  return Date.now() > new Date(t.respondedAt ? t.dueResolve : t.dueRespond).getTime();
 }
 
 /* ---------- my tickets ---------- */
@@ -1105,8 +1232,17 @@ function renderQueue(){
   const onTrack = act.length ? Math.round(100 * act.filter(t =>
     new Date(t.respondedAt ? t.dueResolve : t.dueRespond) > new Date()).length / act.length) + '%' : '–';
   $('kOpen').textContent = open; $('kProg').textContent = prog; $('kSla').textContent = onTrack;
-  seg($('qStatus'), [['active','Active'],['open','Open'],['in_progress','In progress'],['resolved','Resolved'],['closed','Closed'],['all','All']],
-    ui.qStatus, v => { ui.qStatus = v; renderQueue(); });
+  const sf = $('qStatus'); sf.innerHTML = '';
+  for (const [key,label] of [['active','Active'],['open','Open'],['in_progress','In progress'],['resolved','Resolved'],['closed','Closed'],['all','All']]){
+    const b = document.createElement('button'); b.className = 'fchip';
+    b.setAttribute('aria-pressed', ui.qStatus === key); b.textContent = label;
+    b.onclick = () => { ui.qStatus = key; renderQueue(); };
+    sf.appendChild(b);
+  }
+  const mb = document.createElement('button'); mb.className = 'fchip';
+  mb.setAttribute('aria-pressed', !!ui.qMine); mb.textContent = 'Assigned to me';
+  mb.onclick = () => { ui.qMine = !ui.qMine; renderQueue(); };
+  sf.appendChild(mb);
   const modChips = [['all','All desks'], ...Object.entries(MODS).map(([k,m]) => [k, m.label])];
   $('qMod').style.display = myMod ? 'none' : 'flex';
   if (!myMod) seg($('qMod'), modChips, ui.qMod, v => { ui.qMod = v; renderQueue(); });
@@ -1114,8 +1250,13 @@ function renderQueue(){
   if (!myMod && ui.qMod !== 'all') list = list.filter(t => t.mod === ui.qMod);
   if (ui.qStatus === 'active') list = list.filter(t => t.status === 'open' || t.status === 'in_progress');
   else if (ui.qStatus !== 'all') list = list.filter(t => t.status === ui.qStatus);
+  if (ui.qMine) list = list.filter(t => t.assignee === u.empId);
+  const q = (ui.qSearch || '').toLowerCase().trim();
+  if (q) list = list.filter(t =>
+    [t.title, t.id, t.cat, t.reporterName, t.zone, t.assigneeName].some(v => v && v.toLowerCase().includes(q)));
   const order = { P1:0, P2:1, P3:2, P4:3 };
-  list = list.slice().sort((a,b) => (order[a.pri] - order[b.pri]) || (a.createdAt < b.createdAt ? -1 : 1));
+  list = list.slice().sort((a,b) =>
+    (isOverdue(b) - isOverdue(a)) || (order[a.pri] - order[b.pri]) || (a.createdAt < b.createdAt ? -1 : 1));
   const el = $('queueList');
   el.innerHTML = list.length ? list.map(t => renderTicket(t, 'queue')).join('')
     : '<div class="empty">Queue is clear.</div>';
@@ -1139,6 +1280,32 @@ function renderDash(){
   $('dashBars').innerHTML = byMod.map(([l,v]) =>
     '<div class="hbar"><span class="hl">' + esc(l) + '</span><span class="tr"><i style="width:' +
     Math.round(100*v/mx) + '%"></i></span><span class="hv">' + v + '</span></div>').join('');
+  /* 14-day raised trend */
+  const days = [];
+  for (let i = 13; i >= 0; i--){
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    const next = new Date(d.getTime() + 86400e3);
+    const c = db.tickets.filter(t => { const ct = new Date(t.createdAt); return ct >= d && ct < next; }).length;
+    days.push([d.getDate(), c, i === 0]);
+  }
+  const dmx = Math.max(1, ...days.map(x => x[1]));
+  $('dashTrend').innerHTML = days.map(([lbl, v, hot]) =>
+    '<div class="col' + (hot ? ' hot' : '') + '"><span class="cv">' + (v || '') + '</span>' +
+    '<span class="bar" style="height:' + Math.max(3, Math.round(88*v/dmx)) + '%"></span>' +
+    '<span class="cl">' + lbl + '</span></div>').join('');
+  /* avg resolution by desk, 7 days */
+  const fmtDur = m => m < 60 ? Math.round(m) + ' min' : m < 1440 ? (Math.round(m/6)/10) + ' h' : (Math.round(m/144)/10) + ' d';
+  const resRows = Object.entries(MODS).map(([k,m]) => {
+    const done = closed7.filter(t => t.mod === k);
+    if (!done.length) return [m.label, null];
+    const avg = done.reduce((a,t) => a + (new Date(t.resolvedAt) - new Date(t.createdAt))/6e4, 0) / done.length;
+    return [m.label, avg];
+  });
+  const rmx = Math.max(1, ...resRows.map(x => x[1] || 0));
+  $('dashRes').innerHTML = resRows.map(([l, v]) =>
+    '<div class="hbar"><span class="hl">' + esc(l) + '</span><span class="tr"><i style="width:' +
+    (v ? Math.max(4, Math.round(100*v/rmx)) : 0) + '%"></i></span><span class="hv" style="min-width:44px">' +
+    (v ? fmtDur(v) : '&ndash;') + '</span></div>').join('');
   /* map pills */
   const host = $('zpills'); host.innerHTML = '';
   requestAnimationFrame(() => {
@@ -1387,10 +1554,12 @@ function renderAll(){
   if (ui.tab === 'admin') renderAdmin();
 }
 window.addEventListener('resize', () => { if (ui.tab === 'dash') renderDash(); });
+$('qSearch').addEventListener('input', () => { ui.qSearch = $('qSearch').value; renderQueue(); });
 
 /* ---------- boot ---------- */
 (async function(){
   await bootData();
+  try{ const le = localStorage.getItem('l1-last-emp'); if (le && !$('liEmp').value) $('liEmp').value = le; }catch(e){}
   if (mode === 'server'){
     if (token){
       const meR = await api('me');

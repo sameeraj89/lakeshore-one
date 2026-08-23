@@ -77,6 +77,10 @@ CREATE TABLE IF NOT EXISTS audit (
 );
 CREATE TABLE IF NOT EXISTS applied_ops (uid TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+`);
+/* migration: photo column on tickets (added after first release) */
+try{ db.exec('ALTER TABLE tickets ADD COLUMN photo TEXT'); }catch(e){ /* exists */ }
+db.exec(`
 CREATE INDEX IF NOT EXISTS idx_tickets_queue ON tickets (module, status, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_updates ON ticket_updates (ticket_id, at);
 CREATE INDEX IF NOT EXISTS idx_bed_events ON bed_events (bed_id, at);
@@ -205,12 +209,15 @@ function applyOp(op, u){
       if (!MODS.includes(op.mod) || !PRI[op.pri] || !op.title) return { ok:false, error:'invalid ticket' };
       const seq = nextSeq(), id = 'LSO-' + seq;
       const p = PRI[op.pri];
+      let photo = null;
+      if (typeof op.photo === 'string' && op.photo.startsWith('data:image/jpeg;base64,') && op.photo.length <= 900000)
+        photo = op.photo;
       db.prepare(`INSERT INTO tickets (id,module,type,category,title,descr,zone,priority,patient_impact,status,
-        reporter,reporter_name,created_at,due_respond,due_resolve)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+        reporter,reporter_name,created_at,due_respond,due_resolve,photo)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
         id, op.mod, op.type === 'request' ? 'request' : 'incident', s(op.cat,60), s(op.title,160), s(op.desc,2000),
         s(op.zone,60), op.pri, op.impact ? 1 : 0, 'open', empId, name, at,
-        new Date(Date.now() + p.resp*60e3).toISOString(), new Date(Date.now() + p.res*60e3).toISOString());
+        new Date(Date.now() + p.resp*60e3).toISOString(), new Date(Date.now() + p.res*60e3).toISOString(), photo);
       audit(empId, `raised ${id} (${op.mod} · ${s(op.cat,60)} · ${op.pri})`);
       return { ok:true, id };
     }
@@ -339,7 +346,7 @@ function buildState(u){
     tickets = db.prepare('SELECT * FROM tickets WHERE reporter=? ORDER BY created_at DESC LIMIT 200').all(u.emp_id);
   const updStmt = db.prepare('SELECT * FROM ticket_updates WHERE ticket_id=? ORDER BY at');
   const tix = tickets.map(t => ({
-    id:t.id, uid:t.id, mod:t.module, type:t.type, cat:t.category, title:t.title, desc:t.descr,
+    id:t.id, uid:t.id, hasPhoto:!!t.photo, mod:t.module, type:t.type, cat:t.category, title:t.title, desc:t.descr,
     zone:t.zone, pri:t.priority, impact:!!t.patient_impact, status:t.status,
     reporter:t.reporter, reporterName:t.reporter_name, assignee:t.assignee, assigneeName:t.assignee_name,
     createdAt:t.created_at, respondedAt:t.responded_at, resolvedAt:t.resolved_at,
@@ -379,7 +386,7 @@ function json(res, code, obj){
 function readBody(req){
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', c => { data += c; if (data.length > 1e6) req.destroy(); });
+    req.on('data', c => { data += c; if (data.length > 2e6) req.destroy(); });
     req.on('end', () => { try{ resolve(data ? JSON.parse(data) : {}); }catch(e){ reject(e); } });
     req.on('error', reject);
   });
@@ -435,6 +442,13 @@ const server = http.createServer(async (req, res) => {
 
       if (p === '/api/me') return json(res, 200, { empId:u.emp_id, name:u.name, role:u.role, dept:u.dept });
       if (p === '/api/state') return json(res, 200, buildState(u));
+      if (p.startsWith('/api/photo/')){
+        const t = db.prepare('SELECT module,reporter,photo FROM tickets WHERE id=?').get(p.slice(11));
+        if (!t || !t.photo) return json(res, 404, { error:'no photo' });
+        const visible = t.reporter === u.emp_id || canSeeAll(u.role) || RESPONDER[u.role] === t.module;
+        if (!visible) return json(res, 403, { error:'not allowed' });
+        return json(res, 200, { photo: t.photo });
+      }
       if (p === '/api/op' && req.method === 'POST'){
         const { op } = await readBody(req);
         if (!op || typeof op !== 'object') return json(res, 400, { error:'missing op' });
