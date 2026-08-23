@@ -1,0 +1,18 @@
+{
+  "name": "lakeshore-one",
+  "version": "1.0.0",
+  "description": "Hospital operations suite for VPS Lakeshore — unified service desk, bed board, OT board, with a zero-dependency Node/SQLite backend.",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node server/smoke-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sameeraj89/lakeshore-one"
+  }
+}

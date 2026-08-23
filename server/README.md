@@ -14,7 +14,14 @@ all in one file, nothing to `npm install`.
 ```bash
 node server/server.js               # http://localhost:8080
 PORT=3000 node server/server.js     # custom port
+npm start                           # same as node server/server.js
+npm test                            # zero-dependency smoke test (spawns a throwaway DB)
 ```
+
+The smoke test (`server/smoke-test.js`) starts the server on a temp database
+and checks the security- and correctness-critical paths — patient-impact
+priority escalation, idempotent-op dedup, OT/admin role guards, single-use SSE
+ticket auth, and PIN-reset token invalidation. Run it before deploying.
 
 On first run it creates `server/data/` containing:
 - `lakeshore-one.db` — the SQLite database (WAL mode). **Back this file up.**
@@ -31,7 +38,14 @@ served by this process. Updates stream to all open sessions over SSE.
 ## What the server enforces (not the browser)
 
 - Sign-in: employee ID + PIN (scrypt-hashed, never stored in plain text),
-  signed 12-hour bearer tokens, 5-attempts / 15-minute login throttle.
+  signed 12-hour bearer tokens, 5-attempts / 15-minute login throttle. An
+  admin PIN reset bumps a per-user token epoch, so any live session for that
+  user is invalidated immediately.
+- The live-update stream (SSE) authenticates with a short-lived, single-use
+  ticket minted from the bearer token — the long-lived token never appears in
+  a URL (and therefore never in access logs).
+- The patient-care-affected rule (auto-raise to at least P2) is enforced here,
+  not just in the browser.
 - Every operation is role-checked server-side: staff can act only on their
   own tickets; agents only on their desk's queue; bed transitions follow the
   housekeeping lifecycle; OT milestones must advance in order; admin-only

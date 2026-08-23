@@ -78,12 +78,33 @@ CREATE TABLE IF NOT EXISTS audit (
 CREATE TABLE IF NOT EXISTS applied_ops (uid TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
-/* migration: photo column on tickets (added after first release) */
-try{ db.exec('ALTER TABLE tickets ADD COLUMN photo TEXT'); }catch(e){ /* exists */ }
+/* ---------- schema migrations ----------
+   Versioned via PRAGMA user_version so each column change runs once and only
+   once, on both fresh and existing pilot databases. Each step is written to be
+   idempotent (a column an older build already added is tolerated), so a pilot
+   DB that predates this runner still upgrades cleanly. Append new steps to the
+   end of MIGRATIONS — never reorder or delete existing ones. */
+function addColumn(table, def){
+  try{ db.exec(`ALTER TABLE ${table} ADD COLUMN ${def}`); }
+  catch(e){ if (!/duplicate column/i.test(e.message)) throw e; }   /* already applied */
+}
+const MIGRATIONS = [
+  () => addColumn('tickets', 'photo TEXT'),                          /* v1: ticket photo */
+  () => addColumn('users', 'tok_epoch INTEGER NOT NULL DEFAULT 0'),  /* v2: token epoch for session invalidation */
+];
+function migrate(){
+  let v = db.prepare('PRAGMA user_version').get().user_version;
+  for (; v < MIGRATIONS.length; v++){
+    MIGRATIONS[v]();
+    db.exec('PRAGMA user_version = ' + (v + 1));
+  }
+}
+migrate();
 db.exec(`
 CREATE INDEX IF NOT EXISTS idx_tickets_queue ON tickets (module, status, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_updates ON ticket_updates (ticket_id, at);
 CREATE INDEX IF NOT EXISTS idx_bed_events ON bed_events (bed_id, at);
+CREATE INDEX IF NOT EXISTS idx_ot_ms ON ot_milestones (case_id, at);
 `);
 
 /* ---------- domain config (mirrors the frontend) ---------- */
@@ -98,6 +119,9 @@ const OT_STAGES = ['scheduled','in_ot','anaesthesia','incision','closure','out',
 const OT_SUITES = ['OT-1 · Cardiac','OT-2 · Neuro','OT-3 · Ortho','OT-4 · Gen & GI','OT-5 · Onco','OT-6 · Uro & Gyn'];
 const canSeeAll = r => ['management','quality','admin'].includes(r);
 const isClinical = r => ['doctor','nurse','staff'].includes(r);
+/* OT board authority — kept identical to the client's canRunOT() so the UI and
+   the API agree on who may schedule / advance cases. */
+const canRunOT = r => ['doctor','nurse','management','admin'].includes(r);
 
 /* ---------- seed ---------- */
 function seed(){
@@ -153,8 +177,8 @@ function verifyPin(pin, stored){
   const want = Buffer.from(h, 'hex');
   return calc.length === want.length && crypto.timingSafeEqual(calc, want);
 }
-function sign(empId){
-  const payload = Buffer.from(JSON.stringify({ e: empId, x: Date.now() + 12*3600e3 })).toString('base64url');
+function sign(empId, epoch){
+  const payload = Buffer.from(JSON.stringify({ e: empId, v: epoch | 0, x: Date.now() + 12*3600e3 })).toString('base64url');
   const mac = crypto.createHmac('sha256', SECRET).update(payload).digest('base64url');
   return payload + '.' + mac;
 }
@@ -168,47 +192,96 @@ function verifyToken(token){
     const p = JSON.parse(Buffer.from(payload, 'base64url').toString());
     if (p.x < Date.now()) return null;
     const u = db.prepare('SELECT * FROM users WHERE emp_id=? AND active=1').get(p.e);
-    return u || null;
+    if (!u) return null;
+    if ((u.tok_epoch | 0) !== (p.v | 0)) return null;   /* PIN reset / forced sign-out bumps the epoch */
+    return u;
   }catch(e){ return null; }
 }
 
-/* ---------- login rate limiting ---------- */
-const attempts = new Map();   // empId -> {n, until}
+/* ---------- login rate limiting ----------
+   Keyed by attempted employee ID (including unknown IDs), so it is pruned on
+   write to stop a spray of random IDs from growing the map without bound. */
+const attempts = new Map();   // empId -> {n, until, seen}
+const ATTEMPT_TTL = 30*60e3;  // forget an ID this long after its last attempt
+function pruneAttempts(){
+  const now = Date.now();
+  for (const [k, a] of attempts) if (a.until <= now && (now - a.seen) > ATTEMPT_TTL) attempts.delete(k);
+}
 function throttled(empId){
   const a = attempts.get(empId);
-  if (a && a.until > Date.now()) return true;
-  return false;
+  return !!(a && a.until > Date.now());
 }
 function noteFailure(empId){
-  const a = attempts.get(empId) || { n: 0, until: 0 };
-  a.n += 1;
+  if (attempts.size > 5000) pruneAttempts();   // opportunistic cleanup under pressure
+  const a = attempts.get(empId) || { n: 0, until: 0, seen: 0 };
+  a.n += 1; a.seen = Date.now();
   if (a.n >= 5){ a.until = Date.now() + 15*60e3; a.n = 0; }
   attempts.set(empId, a);
 }
+setInterval(pruneAttempts, 10*60e3).unref();
 
-/* ---------- SSE ---------- */
+/* ---------- SSE ----------
+   The event payload names what changed (ticket | bed | ot | user) so clients
+   can coalesce refreshes; older clients treat any message as "refetch". */
 const sseClients = new Set();
-function broadcast(){
+function broadcast(kind){
+  const msg = 'data: ' + (kind || 'changed') + '\n\n';
   for (const res of sseClients){
-    try{ res.write('data: changed\n\n'); }catch(e){ sseClients.delete(res); }
+    try{ res.write(msg); }catch(e){ sseClients.delete(res); }
   }
+}
+/* map an op kind to the entity that changed, for the SSE payload */
+function opChangeKind(k){
+  if (k === 'bed') return 'bed';
+  if (k === 'ot_add' || k === 'ot_move') return 'ot';
+  if (k === 'user_add' || k === 'user_toggle' || k === 'pin_reset') return 'user';
+  return 'ticket';
+}
+
+/* Short-lived, single-use tickets let EventSource authenticate without putting
+   a 12-hour bearer token in the URL (which would leak into access logs). */
+const sseTickets = new Map();   // ticket -> { empId, exp }
+function issueSseTicket(empId){
+  const now = Date.now();
+  if (sseTickets.size > 5000) for (const [k, v] of sseTickets) if (v.exp <= now) sseTickets.delete(k);
+  const t = crypto.randomBytes(18).toString('base64url');
+  sseTickets.set(t, { empId, exp: now + 30e3 });
+  return t;
+}
+function redeemSseTicket(t){
+  if (!t) return null;
+  const rec = sseTickets.get(t);
+  if (!rec) return null;
+  sseTickets.delete(t);                            /* single use */
+  if (rec.exp < Date.now()) return null;
+  return db.prepare('SELECT * FROM users WHERE emp_id=? AND active=1').get(rec.empId) || null;
 }
 
 /* ---------- operations (server-authoritative, role-checked) ---------- */
 function applyOp(op, u){
+  const uidKey = op.uid ? String(op.uid).slice(0, 40) : null;
+  /* Idempotency: a replayed op is a no-op, but we only record it as applied
+     AFTER it succeeds — a failed op must not poison a later legitimate retry. */
+  if (uidKey && db.prepare('SELECT uid FROM applied_ops WHERE uid=?').get(uidKey))
+    return { ok:true, dedup:true };
+  const result = runOp(op, u);
+  if (result.ok && uidKey)
+    db.prepare('INSERT OR IGNORE INTO applied_ops (uid,at) VALUES (?,?)').run(uidKey, new Date().toISOString());
+  return result;
+}
+function runOp(op, u){
   const at = new Date().toISOString();
   const role = u.role, empId = u.emp_id, name = u.name;
-  if (op.uid){
-    if (db.prepare('SELECT uid FROM applied_ops WHERE uid=?').get(op.uid)) return { ok:true, dedup:true };
-    db.prepare('INSERT INTO applied_ops (uid,at) VALUES (?,?)').run(String(op.uid).slice(0,40), at);
-  }
   const s = (v, n) => String(v ?? '').slice(0, n);
 
   switch (op.kind){
     case 'create': {
       if (!MODS.includes(op.mod) || !PRI[op.pri] || !op.title) return { ok:false, error:'invalid ticket' };
+      const impact = op.impact ? 1 : 0;
+      /* Healthcare rule, enforced server-side: patient care affected → at least P2. */
+      const pri = (impact && (op.pri === 'P3' || op.pri === 'P4')) ? 'P2' : op.pri;
       const seq = nextSeq(), id = 'LSO-' + seq;
-      const p = PRI[op.pri];
+      const p = PRI[pri];
       let photo = null;
       if (typeof op.photo === 'string' && op.photo.startsWith('data:image/jpeg;base64,') && op.photo.length <= 900000)
         photo = op.photo;
@@ -216,9 +289,9 @@ function applyOp(op, u){
         reporter,reporter_name,created_at,due_respond,due_resolve,photo)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
         id, op.mod, op.type === 'request' ? 'request' : 'incident', s(op.cat,60), s(op.title,160), s(op.desc,2000),
-        s(op.zone,60), op.pri, op.impact ? 1 : 0, 'open', empId, name, at,
+        s(op.zone,60), pri, impact, 'open', empId, name, at,
         new Date(Date.now() + p.resp*60e3).toISOString(), new Date(Date.now() + p.res*60e3).toISOString(), photo);
-      audit(empId, `raised ${id} (${op.mod} · ${s(op.cat,60)} · ${op.pri})`);
+      audit(empId, `raised ${id} (${op.mod} · ${s(op.cat,60)} · ${pri})`);
       return { ok:true, id };
     }
     case 'comment': {
@@ -281,7 +354,7 @@ function applyOp(op, u){
       return { ok:true };
     }
     case 'ot_add': {
-      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      if (!canRunOT(role)) return { ok:false, error:'not allowed' };
       if (!OT_SUITES.includes(op.suite) || !op.procedure || !op.surgeon) return { ok:false, error:'invalid case' };
       const seq = nextSeq(), id = 'OTC-' + seq;
       db.prepare('INSERT INTO ot_cases (id,suite,case_date,planned,dur_min,procedure_name,surgeon,status,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
@@ -291,7 +364,7 @@ function applyOp(op, u){
       return { ok:true, id };
     }
     case 'ot_move': {
-      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      if (!canRunOT(role)) return { ok:false, error:'not allowed' };
       const c = db.prepare('SELECT * FROM ot_cases WHERE id=?').get(String(op.case));
       if (!c || c.status === op.to) return { ok:false, error:'no such case' };
       const validNext = op.to === 'cancelled'
@@ -323,7 +396,8 @@ function applyOp(op, u){
     }
     case 'pin_reset': {
       if (role !== 'admin') return { ok:false, error:'admin only' };
-      db.prepare('UPDATE users SET pin_hash=NULL WHERE emp_id=?').run(String(op.empId));
+      /* Bump the token epoch so any live session for this user is invalidated. */
+      db.prepare('UPDATE users SET pin_hash=NULL, tok_epoch=tok_epoch+1 WHERE emp_id=?').run(String(op.empId));
       audit(empId, 'reset PIN for ' + op.empId);
       return { ok:true };
     }
@@ -344,26 +418,47 @@ function buildState(u){
       .all(RESPONDER[role], u.emp_id);
   else
     tickets = db.prepare('SELECT * FROM tickets WHERE reporter=? ORDER BY created_at DESC LIMIT 200').all(u.emp_id);
-  const updStmt = db.prepare('SELECT * FROM ticket_updates WHERE ticket_id=? ORDER BY at');
+  /* One batched query for every visible ticket's updates, grouped in memory —
+     avoids an N+1 pass (one query per ticket) on each state build. */
+  const tids = tickets.map(t => t.id);
+  const updByTicket = new Map();
+  if (tids.length){
+    const rows = db.prepare(
+      `SELECT * FROM ticket_updates WHERE ticket_id IN (${tids.map(() => '?').join(',')}) ORDER BY at`).all(...tids);
+    for (const x of rows){
+      let arr = updByTicket.get(x.ticket_id);
+      if (!arr){ arr = []; updByTicket.set(x.ticket_id, arr); }
+      arr.push({ uid:String(x.id), type:x.kind, from:x.from_status, to:x.to_status,
+        by:x.author, byName:x.author_name, text:x.body || '', at:x.at });
+    }
+  }
   const tix = tickets.map(t => ({
     id:t.id, uid:t.id, hasPhoto:!!t.photo, mod:t.module, type:t.type, cat:t.category, title:t.title, desc:t.descr,
     zone:t.zone, pri:t.priority, impact:!!t.patient_impact, status:t.status,
     reporter:t.reporter, reporterName:t.reporter_name, assignee:t.assignee, assigneeName:t.assignee_name,
     createdAt:t.created_at, respondedAt:t.responded_at, resolvedAt:t.resolved_at,
     dueRespond:t.due_respond, dueResolve:t.due_resolve,
-    updates: updStmt.all(t.id).map(x => ({ uid:String(x.id), type:x.kind, from:x.from_status, to:x.to_status,
-      by:x.author, byName:x.author_name, text:x.body || '', at:x.at }))
+    updates: updByTicket.get(t.id) || []
   }));
   const beds = {};
   for (const b of db.prepare('SELECT * FROM beds').all())
     beds[b.bed_id] = { status:b.status, since:b.since, by:b.updated_by };
   const bedlog = db.prepare('SELECT bed_id bed, from_st "from", to_st "to", at FROM bed_events ORDER BY id DESC LIMIT 600').all().reverse();
   const cutoff = new Date(Date.now() - 2*86400e3).toISOString().slice(0,10);
-  const msStmt = db.prepare('SELECT * FROM ot_milestones WHERE case_id=? ORDER BY at');
-  const cases = db.prepare('SELECT * FROM ot_cases WHERE case_date>=? ORDER BY case_date, planned').all(cutoff)
-    .map(c => ({ id:c.id, suite:c.suite, date:c.case_date, planned:c.planned, durMin:c.dur_min,
-      procedure:c.procedure_name, surgeon:c.surgeon, status:c.status,
-      milestones: msStmt.all(c.id).map(m => ({ to:m.stage, at:m.at, by:m.actor_name })) }));
+  const rawCases = db.prepare('SELECT * FROM ot_cases WHERE case_date>=? ORDER BY case_date, planned').all(cutoff);
+  const msByCase = new Map();
+  if (rawCases.length){
+    const cids = rawCases.map(c => c.id);
+    const rows = db.prepare(
+      `SELECT * FROM ot_milestones WHERE case_id IN (${cids.map(() => '?').join(',')}) ORDER BY at`).all(...cids);
+    for (const m of rows){
+      let arr = msByCase.get(m.case_id);
+      if (!arr){ arr = []; msByCase.set(m.case_id, arr); }
+      arr.push({ to:m.stage, at:m.at, by:m.actor_name });
+    }
+  }
+  const cases = rawCases.map(c => ({ id:c.id, suite:c.suite, date:c.case_date, planned:c.planned, durMin:c.dur_min,
+      procedure:c.procedure_name, surgeon:c.surgeon, status:c.status, milestones: msByCase.get(c.id) || [] }));
   let users;
   if (role === 'admin')
     users = db.prepare('SELECT * FROM users ORDER BY emp_id').all()
@@ -419,7 +514,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 401, { error:'Wrong PIN. Ask an admin to reset it if forgotten.' });
       }
       attempts.delete(eid);
-      return json(res, 200, { token:sign(eid), empId:eid });
+      return json(res, 200, { token:sign(eid, u.tok_epoch), empId:eid });
     }
 
     if (p === '/api/set-pin' && req.method === 'POST'){
@@ -431,8 +526,21 @@ const server = http.createServer(async (req, res) => {
       if (!/^\d{4,6}$/.test(String(pin || ''))) return json(res, 400, { error:'PIN must be 4–6 digits.' });
       db.prepare('UPDATE users SET pin_hash=? WHERE emp_id=?').run(hashPin(String(pin)), eid);
       audit(eid, 'set their PIN');
-      broadcast();
-      return json(res, 200, { token:sign(eid), empId:eid });
+      broadcast('user');
+      return json(res, 200, { token:sign(eid, u.tok_epoch), empId:eid });
+    }
+
+    /* SSE stream — authenticated by a short-lived single-use ticket in the
+       query string, so the long-lived bearer token never lands in a URL/log. */
+    if (p === '/api/events'){
+      const u = redeemSseTicket(url.searchParams.get('ticket'));
+      if (!u) return json(res, 401, { error:'Sign in required.' });
+      res.writeHead(200, { 'Content-Type':'text/event-stream', 'Cache-Control':'no-store', Connection:'keep-alive' });
+      res.write('retry: 3000\n\n');
+      sseClients.add(res);
+      const ping = setInterval(() => { try{ res.write(': ping\n\n'); }catch(e){} }, 25000);
+      req.on('close', () => { clearInterval(ping); sseClients.delete(res); });
+      return;
     }
 
     /* authenticated routes */
@@ -449,20 +557,13 @@ const server = http.createServer(async (req, res) => {
         if (!visible) return json(res, 403, { error:'not allowed' });
         return json(res, 200, { photo: t.photo });
       }
+      if (p === '/api/sse-ticket') return json(res, 200, { ticket: issueSseTicket(u.emp_id) });
       if (p === '/api/op' && req.method === 'POST'){
         const { op } = await readBody(req);
         if (!op || typeof op !== 'object') return json(res, 400, { error:'missing op' });
         const result = applyOp(op, u);
-        if (result.ok) broadcast();
+        if (result.ok) broadcast(opChangeKind(op.kind));
         return json(res, result.ok ? 200 : 403, result);
-      }
-      if (p === '/api/events'){
-        res.writeHead(200, { 'Content-Type':'text/event-stream', 'Cache-Control':'no-store', Connection:'keep-alive' });
-        res.write('retry: 3000\n\n');
-        sseClients.add(res);
-        const ping = setInterval(() => { try{ res.write(': ping\n\n'); }catch(e){} }, 25000);
-        req.on('close', () => { clearInterval(ping); sseClients.delete(res); });
-        return;
       }
       return json(res, 404, { error:'not found' });
     }
