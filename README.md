@@ -9,6 +9,7 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 | Folder | App | What it does |
 |---|---|---|
 | `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, management dashboard with campus map, admin user management + audit trail |
+| `intranet/` | Intranet | Staff portal: announcements & circulars (HR / IT / Clinical / Quality / Admin, with read tracking), quick links to the other apps + HIS/webmail/ESS stubs, employee directory with key extensions, policy & document library, events / CME / training calendar, cafeteria menu of the day — seeded demo content |
 | `it-pulse/` | IT Pulse | Live campus IT monitoring map (network / Wi-Fi / servers / power / CCTV layers, 12-h zone trends) — simulated telemetry, adapter point documented in-page |
 | `ops-desk/` | Ops Desk | Earlier shared incident board (superseded by Lakeshore One) |
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
