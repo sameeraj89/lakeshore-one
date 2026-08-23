@@ -319,6 +319,15 @@ function applyOp(op, u){
       audit(empId, `praised ${forName} (${value})`);
       return { ok:true };
     }
+    case 'praise_del': {
+      if (!canSeeAll(role)) return { ok:false, error:'management only' };
+      const pid = parseInt(String(op.id || '').replace(/^PRS-/, ''), 10);
+      const row = Number.isInteger(pid) ? db.prepare('SELECT * FROM praise WHERE id=?').get(pid) : null;
+      if (!row) return { ok:false, error:'no such praise' };
+      db.prepare('DELETE FROM praise WHERE id=?').run(pid);
+      audit(empId, `removed praise PRS-${pid} for ${row.for_name} (from ${row.author_name})`);
+      return { ok:true };
+    }
     case 'user_add': {
       if (role !== 'admin') return { ok:false, error:'admin only' };
       const nu = op.user || {};
