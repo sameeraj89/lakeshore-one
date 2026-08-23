@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lakeshore Ops Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#2B7CBE; --brand-ink:#1B5A8E; --maroon:#8B1A4A;
+    --brand-tint:rgba(43,124,190,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --dark-card:#1E272E; --dark-ink:#F2F6F9;
+    --map-land:#F2EFE4; --map-water:#A9D2E8; --map-green:#DCE9D0;
+    --map-road:#FFFFFF; --map-road-major:#F7DE9C;
+    --map-bldg:#E7E2D2; --map-bldg-line:#D4CDB8; --map-label:#8F998F;
+    --shadow:0 8px 24px rgba(22,35,46,0.14);
+    --shadow-sm:0 2px 8px rgba(22,35,46,0.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --maroon:#D66A97;
+      --brand-tint:rgba(95,164,218,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --dark-card:#10161B; --dark-ink:#F2F6F9;
+      --map-land:#222A30; --map-water:#1C3D52; --map-green:#24352A;
+      --map-road:#37424B; --map-road-major:#4A4636;
+      --map-bldg:#2E3941; --map-bldg-line:#3C4954; --map-label:#5F7079;
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --maroon:#D66A97;
+    --brand-tint:rgba(95,164,218,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --dark-card:#10161B; --dark-ink:#F2F6F9;
+    --map-land:#222A30; --map-water:#1C3D52; --map-green:#24352A;
+    --map-road:#37424B; --map-road-major:#4A4636;
+    --map-bldg:#2E3941; --map-bldg-line:#3C4954; --map-label:#5F7079;
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--ink); font-family:'Roboto',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
+
+  header{padding:14px 16px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark{font-family:'Montserrat',sans-serif; font-weight:800; font-size:17px; line-height:1.1}
+  .wordmark .vps{color:var(--maroon)} .wordmark .lks{color:var(--brand)}
+  .wordmark small{display:block; font-family:'Roboto',sans-serif; font-weight:500; font-size:10px;
+    letter-spacing:2.2px; color:var(--ink-3); text-transform:uppercase; margin-top:2px}
+  .me-chip{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+    border-radius:999px; padding:5px 12px 5px 6px; font-size:12px; font-weight:500; color:var(--ink-2);
+    cursor:pointer; max-width:190px}
+  .me-chip .av{width:26px; height:26px; border-radius:50%; background:var(--brand); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex:none}
+  .me-chip .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+  .banner{margin:0 16px 10px; padding:9px 13px; border-radius:12px; font-size:12px; line-height:1.5;
+    background:var(--warn-bg); color:var(--warn); display:none}
+  .banner.show{display:block}
+  .banner.info{background:var(--info-bg); color:var(--info)}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:4px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-family:'Montserrat',sans-serif; font-weight:800; font-size:21px; margin:6px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px}
+
+  /* ---- form ---- */
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm)}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  input[type=text], select, textarea{
+    width:100%; background:var(--shell); border:1.5px solid var(--line); border-radius:10px;
+    padding:11px 12px; font-family:'Roboto',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus, textarea:focus{border-color:var(--brand)}
+  textarea{min-height:88px; resize:vertical}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1; min-width:70px; padding:9px 4px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--shell); color:var(--ink-2); font-size:12.5px; font-weight:700; cursor:pointer;
+    font-family:'Roboto',sans-serif}
+  .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
+  .seg button.p-urgent[aria-pressed="true"]{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
+  .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Montserrat',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  .submit:disabled{opacity:.55; cursor:default}
+  .as-note{font-size:12px; color:var(--ink-2); margin-top:10px; text-align:center}
+  .as-note b{color:var(--ink)}
+  .as-note a{color:var(--brand); cursor:pointer; text-decoration:underline}
+
+  /* ---- KPI row ---- */
+  .kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+  .kpi .n{font-family:'Montserrat',sans-serif; font-weight:800; font-size:22px; font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:2px}
+  .kpi.open .n{color:var(--crit)} .kpi.prog .n{color:var(--brand)} .kpi.done .n{color:var(--good)}
+
+  /* ---- filters ---- */
+  .filters{display:flex; gap:7px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .fchip{flex:none; border:1.5px solid var(--line); background:var(--card); color:var(--ink-2);
+    border-radius:999px; padding:7px 14px; font-size:12.5px; font-weight:500; cursor:pointer;
+    font-family:'Roboto',sans-serif; display:flex; gap:6px; align-items:center}
+  .fchip[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink); font-weight:700}
+  .fchip .ct{font-variant-numeric:tabular-nums; background:var(--neutral-bg); border-radius:999px;
+    padding:1px 7px; font-size:11px; font-weight:700}
+
+  /* ---- ticket cards ---- */
+  .tcard{background:var(--card); border:1px solid var(--line); border-radius:16px; margin-bottom:10px;
+    overflow:hidden; box-shadow:var(--shadow-sm)}
+  .thead{padding:13px 14px; cursor:pointer}
+  .trow1{display:flex; align-items:center; gap:8px; margin-bottom:6px}
+  .tid{font-size:11px; font-weight:700; color:var(--ink-3); font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px;
+    font-size:11px; font-weight:700}
+  .badge svg{width:11px; height:11px}
+  .b-open{background:var(--crit-bg); color:var(--crit)}
+  .b-prog{background:var(--info-bg); color:var(--info)}
+  .b-res{background:var(--good-bg); color:var(--good)}
+  .b-closed{background:var(--neutral-bg); color:var(--neutral)}
+  .b-urgent{background:var(--crit-bg); color:var(--crit)}
+  .b-high{background:var(--warn-bg); color:var(--warn)}
+  .b-sample{background:var(--neutral-bg); color:var(--neutral)}
+  .ttitle{font-size:14.5px; font-weight:700; line-height:1.35}
+  .tmeta{font-size:12px; color:var(--ink-2); margin-top:4px}
+  .tbody{border-top:1px solid var(--line); padding:12px 14px 14px; display:none}
+  .tcard.expanded .tbody{display:block}
+  .tdesc{font-size:13.5px; line-height:1.55; color:var(--ink); white-space:pre-wrap; margin-bottom:12px}
+
+  .timeline{display:flex; flex-direction:column; gap:9px; margin-bottom:12px}
+  .tl{display:flex; gap:9px}
+  .tl .dot{width:8px; height:8px; border-radius:50%; margin-top:5px; flex:none; background:var(--ink-3)}
+  .tl.c-status .dot{background:var(--brand)}
+  .tl .tx{font-size:12.5px; line-height:1.5; color:var(--ink)}
+  .tl .tx .who{font-weight:700}
+  .tl .tx .when{color:var(--ink-3); font-size:11px}
+  .tl .tx .note{white-space:pre-wrap}
+
+  .cbox{display:flex; gap:8px}
+  .cbox input{flex:1}
+  .cbox button{border:none; border-radius:10px; background:var(--brand); color:#fff; font-weight:700;
+    padding:0 16px; cursor:pointer; font-family:'Roboto',sans-serif; font-size:13px}
+  .actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+  .abtn{flex:1; min-width:120px; padding:11px 8px; border-radius:10px; font-family:'Montserrat',sans-serif;
+    font-weight:700; font-size:12.5px; cursor:pointer; border:1.5px solid var(--line); background:var(--shell); color:var(--ink)}
+  .abtn.primary{background:var(--brand); border-color:var(--brand); color:#fff}
+  .abtn.success{background:var(--good); border-color:var(--good); color:#fff}
+  .abtn.ghost{color:var(--ink-2)}
+  .empty{padding:26px; text-align:center; color:var(--ink-2); font-size:13.5px;
+    background:var(--card); border:1px dashed var(--line); border-radius:16px}
+
+  /* ---- map tab ---- */
+  .map-wrap{position:relative; height:52vh; min-height:380px; border-radius:16px; overflow:hidden;
+    border:1px solid var(--line); background:var(--map-land); touch-action:none}
+  #map{position:absolute; inset:0; width:100%; height:100%}
+  .zpill{position:absolute; z-index:10; transform:translate(-50%,-50%); display:flex; align-items:center; gap:6px;
+    padding:6px 12px 6px 9px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap;
+    box-shadow:var(--shadow-sm); border:1px solid rgba(22,35,46,0.06); cursor:pointer; user-select:none}
+  .zpill svg{width:13px; height:13px}
+  .zpill.clear{background:var(--card); color:var(--ink-3)}
+  .zpill.warn{background:var(--warn-bg); color:var(--warn)}
+  .zpill.crit{background:var(--crit); color:#fff}
+  .map-note{font-size:11.5px; color:var(--ink-3); margin-top:8px; text-align:center}
+
+  /* ---- bottom nav ---- */
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50;
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Roboto',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:0.4px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:22px; height:22px}
+  nav button[aria-pressed="true"]{color:var(--brand)}
+  nav .nbadge{position:absolute; margin-left:26px; margin-top:-4px; background:var(--crit); color:#fff;
+    font-size:10px; border-radius:999px; padding:1px 6px; font-variant-numeric:tabular-nums}
+
+  /* ---- profile dialog ---- */
+  dialog{border:none; border-radius:18px; padding:0; max-width:380px; width:calc(100% - 40px);
+    background:var(--card); color:var(--ink); box-shadow:var(--shadow)}
+  dialog::backdrop{background:rgba(10,16,20,0.5)}
+  .dlg-in{padding:20px}
+  .dlg-in h2{font-family:'Montserrat',sans-serif; font-weight:800; font-size:18px; margin-bottom:4px}
+  .dlg-in p{font-size:12.5px; color:var(--ink-2); margin-bottom:6px; line-height:1.5}
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:60;
+    background:var(--dark-card); color:var(--dark-ink); border-radius:12px; padding:10px 18px;
+    font-size:13px; font-weight:500; box-shadow:var(--shadow); display:none}
+</style>
+
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><span class="vps">vps</span> <span class="lks">lakeshore</span>
+      <small>Ops Desk &middot; Incident Reporting</small></div>
+    <button class="me-chip" id="meChip" aria-label="Your profile">
+      <span class="av" id="meAv">?</span><span class="nm" id="meName">Set up profile</span>
+    </button>
+  </header>
+  <div class="banner" id="banner"></div>
+
+  <main>
+    <!-- REPORT -->
+    <section class="tab active" id="tab-report">
+      <h1 class="page">Report an incident</h1>
+      <p class="page-sub">Anything broken, unsafe or not working &mdash; IT, biomedical, facility, housekeeping or security. The right team is notified on this board.</p>
+      <div class="fcard">
+        <label class="fl" for="fTitle">What happened?</label>
+        <input type="text" id="fTitle" maxlength="120" placeholder="e.g. HIS terminal not booting in ICU nursing station">
+        <label class="fl">Category</label>
+        <div class="seg" id="fCat"></div>
+        <label class="fl" for="fZone">Location</label>
+        <select id="fZone"></select>
+        <label class="fl">Priority</label>
+        <div class="seg" id="fPri"></div>
+        <label class="fl" for="fDesc">Details (optional)</label>
+        <textarea id="fDesc" maxlength="1500" placeholder="Anything that helps the responding team &mdash; asset number, room, since when&hellip;"></textarea>
+        <button class="submit" id="fSubmit">Submit incident</button>
+        <div class="as-note" id="asNote"></div>
+      </div>
+    </section>
+
+    <!-- TICKETS -->
+    <section class="tab" id="tab-tickets">
+      <h1 class="page">Tickets</h1>
+      <p class="page-sub" id="boardSub">All reported incidents, live for everyone viewing this page.</p>
+      <div class="kpis">
+        <div class="kpi open"><div class="n" id="kOpen">0</div><div class="l">Open</div></div>
+        <div class="kpi prog"><div class="n" id="kProg">0</div><div class="l">In progress</div></div>
+        <div class="kpi done"><div class="n" id="kRes">0</div><div class="l">Resolved &middot; 7d</div></div>
+      </div>
+      <div class="filters" id="statusFilters"></div>
+      <div class="filters" id="catFilters"></div>
+      <div id="ticketList"></div>
+    </section>
+
+    <!-- MAP -->
+    <section class="tab" id="tab-map">
+      <h1 class="page">Incident map</h1>
+      <p class="page-sub">Open incidents by campus zone. Tap a zone to see its tickets.</p>
+      <div class="map-wrap" id="mapWrap">
+        <svg id="map" viewBox="120 140 860 960" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect x="-400" y="-400" width="1800" height="2100" fill="var(--map-land)"/>
+          <path d="M -400 -400 L 150 -400 C 120 -150 190 60 150 300 C 115 520 190 700 150 930 C 120 1090 175 1250 150 1700 L -400 1700 Z" fill="var(--map-water)"/>
+          <ellipse cx="330" cy="150" rx="150" ry="80" fill="var(--map-green)"/>
+          <ellipse cx="240" cy="1080" rx="130" ry="70" fill="var(--map-green)"/>
+          <ellipse cx="620" cy="1120" rx="170" ry="72" fill="var(--map-green)"/>
+          <rect x="880" y="-400" width="56" height="2100" fill="var(--map-road-major)"/>
+          <line x1="908" y1="-400" x2="908" y2="1700" stroke="rgba(255,255,255,0.8)" stroke-width="3" stroke-dasharray="26 20"/>
+          <path d="M 880 980 L 620 980 C 520 980 470 930 470 860 L 470 300 C 470 250 500 220 560 220 L 760 220" fill="none" stroke="var(--map-road)" stroke-width="26" stroke-linecap="round"/>
+          <path d="M 470 620 L 250 620 C 215 620 195 640 195 680 L 195 860" fill="none" stroke="var(--map-road)" stroke-width="20" stroke-linecap="round"/>
+          <path d="M 470 430 L 700 430 L 700 760 L 470 760" fill="none" stroke="var(--map-road)" stroke-width="18" stroke-linecap="round"/>
+          <g fill="var(--map-bldg)" stroke="var(--map-bldg-line)" stroke-width="2">
+            <rect x="300" y="480" width="150" height="200" rx="10"/><rect x="330" y="700" width="130" height="90" rx="10"/>
+            <rect x="500" y="470" width="120" height="110" rx="10"/><rect x="360" y="330" width="100" height="100" rx="10"/>
+            <rect x="560" y="300" width="110" height="90" rx="10"/><rect x="640" y="450" width="130" height="100" rx="10"/>
+            <rect x="690" y="330" width="110" height="80" rx="10"/><rect x="230" y="240" width="130" height="110" rx="10"/>
+            <rect x="560" y="590" width="120" height="100" rx="10"/><rect x="590" y="710" width="100" height="70" rx="10"/>
+            <rect x="640" y="800" width="130" height="90" rx="10"/><rect x="200" y="640" width="110" height="80" rx="10"/>
+            <rect x="215" y="750" width="110" height="80" rx="10"/><rect x="230" y="480" width="60" height="70" rx="10"/>
+            <rect x="740" y="920" width="120" height="80" rx="10"/>
+          </g>
+        </svg>
+        <div id="zpills"></div>
+      </div>
+      <p class="map-note">Schematic campus map &middot; not to scale</p>
+    </section>
+  </main>
+
+  <footer>
+    <b style="color:var(--ink-2)">Lakeshore Ops Desk &mdash; prototype.</b><br>
+    Tickets live in this page&rsquo;s shared store and update for every viewer.
+    Profiles are self-declared until this moves behind hospital sign-on.
+  </footer>
+
+  <nav>
+    <button id="nav-report" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      Report</button>
+    <button id="nav-tickets" aria-pressed="false">
+      <span class="nbadge" id="navBadge" style="display:none">0</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Tickets</button>
+    <button id="nav-map" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
+      Map</button>
+  </nav>
+</div>
+
+<dialog id="profileDlg">
+  <div class="dlg-in">
+    <h2>Who are you?</h2>
+    <p>Saved on this device and stamped on your reports and comments. Your role decides which actions you see.</p>
+    <label class="fl" for="pName">Name</label>
+    <input type="text" id="pName" maxlength="60" placeholder="Dr. Anitha Menon">
+    <label class="fl">Role</label>
+    <div class="seg" id="pRole"></div>
+    <label class="fl" for="pDept">Department</label>
+    <input type="text" id="pDept" maxlength="60" placeholder="Cardiology / IT / Nursing&hellip;">
+    <button class="submit" id="pSave">Save profile</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script id="seed" type="application/json">
+{"seq":1003,"ops":[],"tickets":[
+ {"id":"OPS-1001","uid":"seed1","sample":true,"title":"HIS terminal frozen at ICU nursing station 2","cat":"IT & Systems","zone":"ICU Complex","pri":"High","status":"in_progress","reporter":{"name":"Dr. Sample","role":"Doctor","dept":"Critical Care"},"createdAt":"2026-08-23T04:05:00Z","updates":[{"uid":"seed1a","type":"status","from":"open","to":"in_progress","by":{"name":"Ajith (IT)","role":"IT"},"text":"Taking a look — remote session started.","at":"2026-08-23T04:25:00Z"}]},
+ {"id":"OPS-1002","uid":"seed2","sample":true,"title":"AC dripping over corridor near Radiology waiting","cat":"Facility & Engineering","zone":"Radiology & Imaging","pri":"Medium","status":"open","reporter":{"name":"Nurse Sample","role":"Nurse","dept":"Radiology"},"createdAt":"2026-08-23T05:40:00Z","updates":[]},
+ {"id":"OPS-1003","uid":"seed3","sample":true,"title":"Washroom near OP Block lift not cleaned","cat":"Housekeeping","zone":"OP Block","pri":"Low","status":"resolved","reporter":{"name":"Dr. Sample","role":"Doctor","dept":"Medicine"},"createdAt":"2026-08-22T11:00:00Z","updates":[{"uid":"seed3a","type":"status","from":"open","to":"in_progress","by":{"name":"Housekeeping Desk","role":"Facility"},"text":"","at":"2026-08-22T11:20:00Z"},{"uid":"seed3b","type":"status","from":"in_progress","to":"resolved","by":{"name":"Housekeeping Desk","role":"Facility"},"text":"Cleaned and restocked. Supervisor round added at 4 pm.","at":"2026-08-22T12:05:00Z"}]}
+]}
+</script>
+
+<script>
+'use strict';
+/* ============================================================
+   Lakeshore Ops Desk — shared incident board.
+   Storage: data/tickets.json inside this artifact, written via
+   the `artifact` capability with each viewer's own identity.
+   Falls back to local-only mode (this device) when unavailable.
+   ============================================================ */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const CATS = ['IT & Systems','Biomedical','Facility & Engineering','Housekeeping','Security'];
+const PRIS = ['Low','Medium','High','Urgent'];
+const ROLES = ['Doctor','Nurse','IT','Management','Facility','Other staff'];
+const RESPONDER_ROLES = ['IT','Management','Facility'];
+const STATUS = {
+  open:        { label:'Open',        cls:'b-open',   icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="7"/></svg>' },
+  in_progress: { label:'In progress', cls:'b-prog',   icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5a7 7 0 1 1-7 7"/><path d="M12 8v4l3 2"/></svg>' },
+  resolved:    { label:'Resolved',    cls:'b-res',    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg>' },
+  closed:      { label:'Closed',      cls:'b-closed', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><rect x="5" y="5" width="14" height="14" rx="3"/></svg>' }
+};
+const ZONES = [
+  ['Data Centre',270,790],['Reception & Billing',395,745],['Wards Tower',375,560],
+  ['ICU Complex',560,525],['OT Complex',410,380],['Cath Lab',615,345],
+  ['Radiology & Imaging',705,500],['Central Lab',745,370],['Oncology Block',295,295],
+  ['OP Block',620,640],['Pharmacy',640,745],['Emergency & Trauma',705,845],
+  ['Admin Block',255,680],['Cafeteria',260,515],['Main Gate & Parking',800,960],['Other / Not sure',500,1050]
+];
+
+/* ---------- state ---------- */
+let state = null;                 // {seq, ops:[uids], tickets:[]}
+let artifactNS = null;            // claude.use('artifact') result
+let mode = 'loading';             // 'shared' | 'readonly' | 'local'
+let me = null;                    // {name, role, dept}
+let ui = { tab:'report', status:'active', cat:'All', zone:null, expanded:new Set(), cat_sel:CATS[0], pri_sel:'Medium' };
+
+function loadProfile(){ try{ me = JSON.parse(localStorage.getItem('opsdesk-profile')) || null; }catch(e){ me = null; } }
+function saveProfile(p){ me = p; try{ localStorage.setItem('opsdesk-profile', JSON.stringify(p)); }catch(e){} renderMe(); }
+
+/* ---------- shared store ---------- */
+const SEED = JSON.parse($('seed').textContent);
+
+async function boot(){
+  loadProfile();
+  // load current tickets: the served data file for this artifact version
+  try{
+    const r = await fetch('data/tickets.json', { cache:'no-store' });
+    state = r.ok ? await r.json() : structuredClone(SEED);
+  }catch(e){ state = structuredClone(SEED); }
+  if (!state.ops) state.ops = [];
+
+  artifactNS = window.claude && window.claude.use ? await window.claude.use('artifact') : null;
+  if (artifactNS){
+    mode = 'shared';
+  } else {
+    mode = 'local';
+    try{
+      const local = JSON.parse(localStorage.getItem('opsdesk-local'));
+      if (local && local.seq >= state.seq) state = local;
+    }catch(e){}
+    showBanner('Running in single-device demo mode — submissions are saved only in this browser. Open the Claude artifact link for the shared board.', 'info');
+  }
+
+  // replay an op that was interrupted by a concurrent-publish reload
+  try{
+    const pending = JSON.parse(sessionStorage.getItem('opsdesk-pending'));
+    if (pending){ sessionStorage.removeItem('opsdesk-pending'); await commit(pending, true); }
+  }catch(e){}
+
+  renderMe(); renderAll();
+  if (me === null) { /* first visit: leave form usable; profile asked on submit */ }
+}
+
+/* apply an op to state (idempotent via op.uid) */
+function apply(op){
+  if (state.ops.includes(op.uid)) return false;
+  state.ops.push(op.uid); if (state.ops.length > 200) state.ops = state.ops.slice(-200);
+  if (op.kind === 'create'){
+    state.seq += 1;
+    state.tickets.unshift({ id:'OPS-' + state.seq, uid:op.uid, title:op.title, cat:op.cat, zone:op.zone,
+      pri:op.pri, status:'open', reporter:op.by, createdAt:op.at, updates:[], desc:op.desc || '' });
+  } else {
+    const t = state.tickets.find(t => t.id === op.ticket);
+    if (!t) return false;
+    if (op.kind === 'comment'){
+      t.updates.push({ uid:op.uid, type:'comment', by:op.by, text:op.text, at:op.at });
+    } else if (op.kind === 'status'){
+      t.updates.push({ uid:op.uid, type:'status', from:t.status, to:op.to, by:op.by, text:op.text || '', at:op.at });
+      t.status = op.to;
+    }
+  }
+  return true;
+}
+
+/* apply + persist. On conflict the shell reloads this view; the op is
+   stashed first and replayed by boot() against the fresh state. */
+async function commit(op, isReplay){
+  const changed = apply(op);
+  if (changed) renderAll();
+  if (mode === 'local'){
+    try{ localStorage.setItem('opsdesk-local', JSON.stringify(state)); }catch(e){}
+    return true;
+  }
+  if (mode !== 'shared') return false;
+  try{
+    sessionStorage.setItem('opsdesk-pending', JSON.stringify(op));
+    await artifactNS.publish({ 'data/tickets.json': JSON.stringify(state) });
+    sessionStorage.removeItem('opsdesk-pending');
+    return true;
+  }catch(err){
+    const code = err && err.code;
+    if (code === 'conflict'){ return true; /* reload incoming; pending op replays */ }
+    sessionStorage.removeItem('opsdesk-pending');
+    if (code === 'not_writer' || code === 'not_granted'){
+      mode = 'readonly';
+      showBanner('You have view-only access to this board. Ask IT to share it with you with edit access to file tickets.');
+      renderAll();
+    } else if (code === 'capability_disabled'){
+      mode = 'local';
+      try{ localStorage.setItem('opsdesk-local', JSON.stringify(state)); }catch(e){}
+      showBanner('Shared saving is not available on this link — running in single-device demo mode.', 'info');
+    } else if (code === 'rate_limited'){
+      toast('Saving too fast — wait a moment and try again.');
+    } else if (!isReplay){
+      // one retry for transient failure
+      try{
+        await new Promise(r => setTimeout(r, 800 + Math.random()*600));
+        await artifactNS.publish({ 'data/tickets.json': JSON.stringify(state) });
+        return true;
+      }catch(e2){ toast('Could not save — check connection and retry.'); }
+    }
+    return false;
+  }
+}
+
+/* ---------- rendering ---------- */
+function showBanner(msg, kind){
+  const b = $('banner'); b.textContent = msg;
+  b.className = 'banner show' + (kind === 'info' ? ' info' : '');
+}
+let toastT = null;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 3200);
+}
+function initials(n){ return (n || '?').trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase(); }
+function renderMe(){
+  $('meAv').textContent = me ? initials(me.name) : '?';
+  $('meName').textContent = me ? me.name : 'Set up profile';
+  $('asNote').innerHTML = me
+    ? 'Reporting as <b>' + esc(me.name) + '</b> (' + esc(me.role) + (me.dept ? ' &middot; ' + esc(me.dept) : '') + ') &mdash; <a id="editMe">change</a>'
+    : 'You&rsquo;ll be asked for your name and role on first submit &mdash; <a id="editMe">set up now</a>';
+  const a = $('editMe'); if (a) a.onclick = openProfile;
+}
+function ago(iso){
+  const s = (Date.now() - new Date(iso).getTime()) / 1e3;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + ' min ago';
+  if (s < 86400) return Math.floor(s/3600) + ' h ago';
+  return Math.floor(s/86400) + ' d ago';
+}
+function isResponder(){ return me && RESPONDER_ROLES.includes(me.role); }
+
+function seg(el, items, sel, onPick, clsFn){
+  el.innerHTML = '';
+  for (const it of items){
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = it;
+    if (clsFn) b.className = clsFn(it);
+    b.setAttribute('aria-pressed', it === sel);
+    b.onclick = () => { onPick(it); };
+    el.appendChild(b);
+  }
+}
+function renderForm(){
+  seg($('fCat'), CATS, ui.cat_sel, v => { ui.cat_sel = v; renderForm(); });
+  seg($('fPri'), PRIS, ui.pri_sel, v => { ui.pri_sel = v; renderForm(); }, p => p === 'Urgent' ? 'p-urgent' : '');
+  const zs = $('fZone');
+  if (!zs.options.length) zs.innerHTML = ZONES.map(z => '<option>' + esc(z[0]) + '</option>').join('');
+  $('fSubmit').disabled = (mode === 'readonly');
+}
+
+function counts(){
+  const open = state.tickets.filter(t => t.status === 'open').length;
+  const prog = state.tickets.filter(t => t.status === 'in_progress').length;
+  const wk = Date.now() - 7*86400e3;
+  const res = state.tickets.filter(t => (t.status === 'resolved' || t.status === 'closed') &&
+    t.updates.some(u => u.type === 'status' && (u.to === 'resolved') && new Date(u.at).getTime() > wk)).length;
+  return { open, prog, res };
+}
+
+function renderBoard(){
+  const c = counts();
+  $('kOpen').textContent = c.open; $('kProg').textContent = c.prog; $('kRes').textContent = c.res;
+  const badge = $('navBadge');
+  badge.style.display = c.open ? 'block' : 'none'; badge.textContent = c.open;
+
+  const sFilters = [['active','Active'],['open','Open'],['in_progress','In progress'],['resolved','Resolved'],['closed','Closed'],['all','All']];
+  const sf = $('statusFilters'); sf.innerHTML = '';
+  for (const [key,label] of sFilters){
+    const b = document.createElement('button'); b.className = 'fchip';
+    b.setAttribute('aria-pressed', ui.status === key);
+    b.textContent = label;
+    b.onclick = () => { ui.status = key; renderBoard(); };
+    sf.appendChild(b);
+  }
+  const cf = $('catFilters'); cf.innerHTML = '';
+  for (const cat of ['All', ...CATS]){
+    const b = document.createElement('button'); b.className = 'fchip';
+    b.setAttribute('aria-pressed', ui.cat === cat);
+    b.textContent = cat;
+    b.onclick = () => { ui.cat = cat; renderBoard(); };
+    cf.appendChild(b);
+  }
+  $('boardSub').textContent = ui.zone
+    ? 'Showing tickets in ' + ui.zone + ' — tap Map to change.'
+    : 'All reported incidents, live for everyone viewing this page.';
+
+  let list = state.tickets.slice();
+  if (ui.status === 'active') list = list.filter(t => t.status === 'open' || t.status === 'in_progress');
+  else if (ui.status !== 'all') list = list.filter(t => t.status === ui.status);
+  if (ui.cat !== 'All') list = list.filter(t => t.cat === ui.cat);
+  if (ui.zone) list = list.filter(t => t.zone === ui.zone);
+
+  const wrap = $('ticketList');
+  if (!list.length){
+    wrap.innerHTML = '<div class="empty">No tickets here. ' + (ui.zone ? 'This zone is clear.' : 'All quiet.') + '</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(renderTicket).join('');
+  // wire events
+  for (const card of wrap.querySelectorAll('.tcard')){
+    const id = card.dataset.id;
+    card.querySelector('.thead').onclick = () => {
+      ui.expanded.has(id) ? ui.expanded.delete(id) : ui.expanded.add(id);
+      renderBoard();
+    };
+    const cin = card.querySelector('.cbox input');
+    const send = card.querySelector('.cbox button');
+    if (send) send.onclick = () => submitComment(id, cin);
+    if (cin) cin.onkeydown = e => { if (e.key === 'Enter') submitComment(id, cin); };
+    for (const btn of card.querySelectorAll('[data-to]')){
+      btn.onclick = () => changeStatus(id, btn.dataset.to, card.querySelector('.cbox input'));
+    }
+  }
+}
+
+function badge(cls, icon, label){ return '<span class="badge ' + cls + '">' + icon + esc(label) + '</span>'; }
+
+function renderTicket(t){
+  const st = STATUS[t.status];
+  const exp = ui.expanded.has(t.id);
+  const priB = t.pri === 'Urgent' ? badge('b-urgent','',t.pri) : t.pri === 'High' ? badge('b-high','',t.pri) : '';
+  const tl = t.updates.map(u => {
+    if (u.type === 'status'){
+      return '<div class="tl c-status"><span class="dot"></span><div class="tx"><span class="who">' + esc(u.by.name) +
+        '</span> (' + esc(u.by.role) + ') moved to <b>' + STATUS[u.to].label + '</b>' +
+        (u.text ? ' &mdash; <span class="note">' + esc(u.text) + '</span>' : '') +
+        ' <span class="when">' + ago(u.at) + '</span></div></div>';
+    }
+    return '<div class="tl"><span class="dot"></span><div class="tx"><span class="who">' + esc(u.by.name) +
+      '</span> (' + esc(u.by.role) + '): <span class="note">' + esc(u.text) + '</span> <span class="when">' + ago(u.at) + '</span></div></div>';
+  }).join('');
+
+  let actions = '';
+  if (mode !== 'readonly'){
+    const resp = isResponder();
+    const mine = me && t.reporter.name === me.name;
+    if (t.status === 'open' && resp)
+      actions += '<button class="abtn primary" data-to="in_progress">Acknowledge &amp; start</button>';
+    if (t.status === 'in_progress' && resp)
+      actions += '<button class="abtn success" data-to="resolved">Mark resolved</button>';
+    if (t.status === 'resolved' && (resp || mine))
+      actions += '<button class="abtn primary" data-to="closed">Confirm &amp; close</button>' +
+                 '<button class="abtn ghost" data-to="open">Reopen</button>';
+    if (t.status === 'open' && !resp && mine)
+      actions += '<button class="abtn ghost" data-to="closed">Withdraw</button>';
+  }
+
+  return '<div class="tcard' + (exp ? ' expanded' : '') + '" data-id="' + esc(t.id) + '">' +
+    '<div class="thead"><div class="trow1"><span class="tid">' + esc(t.id) + '</span>' +
+    badge(st.cls, st.icon, st.label) + priB + (t.sample ? badge('b-sample','','sample') : '') + '</div>' +
+    '<div class="ttitle">' + esc(t.title) + '</div>' +
+    '<div class="tmeta">' + esc(t.zone) + ' &middot; ' + esc(t.cat) + ' &middot; ' + esc(t.reporter.name) +
+    ' (' + esc(t.reporter.role) + ') &middot; ' + ago(t.createdAt) + '</div></div>' +
+    '<div class="tbody">' +
+    (t.desc ? '<div class="tdesc">' + esc(t.desc) + '</div>' : '') +
+    (tl ? '<div class="timeline">' + tl + '</div>' : '') +
+    (mode !== 'readonly'
+      ? '<div class="cbox"><input type="text" maxlength="500" placeholder="Add a comment or resolution note&hellip;"><button>Send</button></div>'
+      : '') +
+    (actions ? '<div class="actions">' + actions + '</div>' : '') +
+    '</div></div>';
+}
+
+/* ---------- map tab ---------- */
+function renderMap(){
+  const host = $('zpills'); host.innerHTML = '';
+  const wrapRect = $('mapWrap').getBoundingClientRect();
+  if (!wrapRect.width) return;
+  // projection for the fixed viewBox (120 140 860 960), slice aspect
+  const vb = { x:120, y:140, w:860, h:960 };
+  const s = Math.max(wrapRect.width/vb.w, wrapRect.height/vb.h);
+  const ox = (wrapRect.width - vb.w*s)/2, oy = (wrapRect.height - vb.h*s)/2;
+  const iconAlert = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5"/></svg>';
+  const iconOk = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg>';
+  for (const [name, x, y] of ZONES){
+    if (name.startsWith('Other')) continue;
+    const act = state.tickets.filter(t => t.zone === name && (t.status === 'open' || t.status === 'in_progress'));
+    const worstUrgent = act.some(t => t.pri === 'Urgent' || t.pri === 'High');
+    const el = document.createElement('button');
+    el.className = 'zpill ' + (act.length ? (worstUrgent ? 'crit' : 'warn') : 'clear');
+    el.innerHTML = (act.length ? iconAlert : iconOk) + '<span>' +
+      (act.length ? act.length + ' open' : 'Clear') + '</span>';
+    el.title = name;
+    el.style.left = (ox + (x - vb.x)*s) + 'px';
+    el.style.top = (oy + (y - vb.y)*s) + 'px';
+    el.onclick = () => { ui.zone = name; ui.status = 'active'; setTab('tickets'); };
+    host.appendChild(el);
+  }
+}
+
+/* ---------- actions ---------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function needProfile(cb){
+  if (me) return cb();
+  pendingAfterProfile = cb; openProfile();
+}
+let pendingAfterProfile = null;
+
+async function submitTicket(){
+  const title = $('fTitle').value.trim();
+  if (!title){ toast('Give the incident a one-line title.'); $('fTitle').focus(); return; }
+  needProfile(async () => {
+    $('fSubmit').disabled = true;
+    const ok = await commit({ uid:uid(), kind:'create', title, cat:ui.cat_sel, zone:$('fZone').value,
+      pri:ui.pri_sel, desc:$('fDesc').value.trim(), by:me, at:new Date().toISOString() });
+    $('fSubmit').disabled = (mode === 'readonly');
+    if (ok){
+      $('fTitle').value = ''; $('fDesc').value = '';
+      toast('Reported. The team sees it on the board now.');
+      ui.zone = null; setTab('tickets');
+    }
+  });
+}
+function submitComment(ticketId, input){
+  const text = input.value.trim();
+  if (!text) return;
+  needProfile(async () => {
+    input.value = '';
+    await commit({ uid:uid(), kind:'comment', ticket:ticketId, text, by:me, at:new Date().toISOString() });
+  });
+}
+function changeStatus(ticketId, to, noteInput){
+  needProfile(async () => {
+    const note = noteInput && noteInput.value.trim() ? noteInput.value.trim() : '';
+    if (noteInput) noteInput.value = '';
+    await commit({ uid:uid(), kind:'status', ticket:ticketId, to, text:note, by:me, at:new Date().toISOString() });
+  });
+}
+
+/* ---------- profile dialog ---------- */
+let roleSel = 'Doctor';
+function openProfile(){
+  if (me){ $('pName').value = me.name; roleSel = me.role; $('pDept').value = me.dept || ''; }
+  openProfileSeg();
+  $('profileDlg').showModal();
+}
+function openProfileSeg(){
+  seg($('pRole'), ROLES, roleSel, v => { roleSel = v; openProfileSeg(); });
+}
+$('pSave').onclick = () => {
+  const name = $('pName').value.trim();
+  if (!name){ toast('Enter your name.'); return; }
+  saveProfile({ name, role:roleSel, dept:$('pDept').value.trim() });
+  $('profileDlg').close();
+  renderAll();
+  if (pendingAfterProfile){ const cb = pendingAfterProfile; pendingAfterProfile = null; cb(); }
+};
+$('meChip').onclick = openProfile;
+
+/* ---------- tabs ---------- */
+function setTab(tab){
+  ui.tab = tab;
+  for (const t of ['report','tickets','map']){
+    $('tab-' + t).classList.toggle('active', t === tab);
+    $('nav-' + t).setAttribute('aria-pressed', t === tab);
+  }
+  if (tab !== 'tickets' && tab !== 'map') ui.zone = null;
+  if (tab === 'tickets') renderBoard();
+  if (tab === 'map') requestAnimationFrame(renderMap);
+  window.scrollTo(0, 0);
+}
+$('nav-report').onclick = () => setTab('report');
+$('nav-tickets').onclick = () => { ui.zone = null; setTab('tickets'); };
+$('nav-map').onclick = () => setTab('map');
+$('fSubmit').onclick = submitTicket;
+window.addEventListener('resize', () => { if (ui.tab === 'map') renderMap(); });
+
+function renderAll(){ renderForm(); renderBoard(); if (ui.tab === 'map') renderMap(); }
+
+boot();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lakeshore IT Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<style>
+  /* ---------- Theme tokens ---------- */
+  :root{
+    --bg:#EDF1F5;             /* page ground, cool blue-biased */
+    --shell:#F7F9FB;          /* app column */
+    --card:#FFFFFF;
+    --ink:#16232E;
+    --ink-2:#5B6B78;
+    --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#2B7CBE;          /* VPS lakeshore blue */
+    --brand-ink:#1B5A8E;
+    --maroon:#8B1A4A;         /* VPS maroon, restrained */
+    --dark-card:rgba(30,39,46,0.94);
+    --dark-card-ink:#F2F6F9;
+    --dark-card-sub:#9FB0BC;
+    --chip-bg:rgba(30,39,46,0.72);
+    --chip-ink:#EDF3F8;
+    --chip-active-bg:#1E272E;
+    --pill-ok-bg:#FFFFFF;
+    --pill-ok-ink:#1B5A8E;
+    --pill-warn-bg:#FCF1CE;
+    --pill-warn-ink:#7A5200;
+    --pill-down-bg:#D03B3B;
+    --pill-down-ink:#FFFFFF;
+    --good:#0B7C3E;
+    --warn:#B47B00;
+    --crit:#D03B3B;
+    --map-land:#F2EFE4;
+    --map-water:#A9D2E8;
+    --map-green:#DCE9D0;
+    --map-road:#FFFFFF;
+    --map-road-major:#F7DE9C;
+    --map-bldg:#E7E2D2;
+    --map-bldg-line:#D4CDB8;
+    --map-label:#8F998F;
+    --chart-line:#2B7CBE;
+    --chart-fill:rgba(43,124,190,0.14);
+    --shadow:0 8px 24px rgba(22,35,46,0.14);
+    --shadow-sm:0 2px 8px rgba(22,35,46,0.14);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8;
+      --maroon:#D66A97;
+      --dark-card:rgba(16,22,27,0.94); --dark-card-ink:#F2F6F9; --dark-card-sub:#93A5B1;
+      --chip-bg:rgba(16,22,27,0.78); --chip-ink:#E4ECF2; --chip-active-bg:#345268;
+      --pill-ok-bg:#22303B; --pill-ok-ink:#A9CFEC;
+      --pill-warn-bg:#3D3319; --pill-warn-ink:#F0C75E;
+      --pill-down-bg:#C24444; --pill-down-ink:#FFF3F3;
+      --good:#4FC97E; --warn:#E5B84B; --crit:#F07A6A;
+      --map-land:#222A30; --map-water:#1C3D52; --map-green:#24352A;
+      --map-road:#37424B; --map-road-major:#4A4636;
+      --map-bldg:#2E3941; --map-bldg-line:#3C4954;
+      --map-label:#5F7079;
+      --chart-line:#5FA4DA; --chart-fill:rgba(95,164,218,0.18);
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8;
+    --maroon:#D66A97;
+    --dark-card:rgba(16,22,27,0.94); --dark-card-ink:#F2F6F9; --dark-card-sub:#93A5B1;
+    --chip-bg:rgba(16,22,27,0.78); --chip-ink:#E4ECF2; --chip-active-bg:#345268;
+    --pill-ok-bg:#22303B; --pill-ok-ink:#A9CFEC;
+    --pill-warn-bg:#3D3319; --pill-warn-ink:#F0C75E;
+    --pill-down-bg:#C24444; --pill-down-ink:#FFF3F3;
+    --good:#4FC97E; --warn:#E5B84B; --crit:#F07A6A;
+    --map-land:#222A30; --map-water:#1C3D52; --map-green:#24352A;
+    --map-road:#37424B; --map-road-major:#4A4636;
+    --map-bldg:#2E3941; --map-bldg-line:#3C4954;
+    --map-label:#5F7079;
+    --chart-line:#5FA4DA; --chart-fill:rgba(95,164,218,0.18);
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Roboto', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:480px; margin:0 auto; min-height:100vh;
+    background:var(--shell);
+    box-shadow:0 0 40px rgba(22,35,46,0.08);
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:14px 16px 10px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .wordmark{font-family:'Montserrat',sans-serif; font-weight:800; font-size:17px; letter-spacing:0.2px; line-height:1.1}
+  .wordmark .vps{color:var(--maroon)}
+  .wordmark .lks{color:var(--brand)}
+  .wordmark small{
+    display:block; font-family:'Roboto',sans-serif; font-weight:500; font-size:10px;
+    letter-spacing:2.2px; color:var(--ink-3); text-transform:uppercase; margin-top:2px;
+  }
+  .live{
+    display:flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:500; color:var(--ink-2);
+    background:var(--card); border:1px solid var(--line);
+    padding:5px 10px; border-radius:999px;
+  }
+  .live .dot{width:7px; height:7px; border-radius:50%; background:var(--good); animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @media (prefers-reduced-motion: reduce){ .live .dot{animation:none} }
+  .demo-tag{
+    margin:0 16px 8px; font-size:10.5px; color:var(--ink-3);
+    display:flex; align-items:center; gap:6px;
+  }
+  .demo-tag b{color:var(--warn); font-weight:700; letter-spacing:1px}
+
+  /* ---------- Map & overlays ---------- */
+  .map-wrap{
+    position:relative; height:60vh; min-height:430px; max-height:640px;
+    overflow:hidden; touch-action:none; cursor:grab;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    background:var(--map-land);
+  }
+  .map-wrap.dragging{cursor:grabbing}
+  #map{position:absolute; inset:0; width:100%; height:100%; display:block}
+
+  .overlay-top{
+    position:absolute; top:10px; left:10px; right:10px; z-index:30;
+    display:flex; flex-direction:column; gap:10px; pointer-events:none;
+  }
+  .kpi-card{
+    pointer-events:auto;
+    background:var(--dark-card); color:var(--dark-card-ink);
+    border-radius:16px; padding:14px 16px 15px;
+    display:grid; grid-template-columns:1fr 1fr; gap:4px 18px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(6px);
+  }
+  .kpi .k-label{
+    display:flex; align-items:center; gap:7px;
+    font-size:12.5px; font-weight:500; color:var(--dark-card-ink); opacity:.92;
+  }
+  .kpi .k-label svg{width:15px; height:15px; flex:none}
+  .kpi .k-value{
+    font-family:'Montserrat',sans-serif; font-weight:700; font-size:21px;
+    font-variant-numeric:tabular-nums; margin:5px 0 8px;
+  }
+  .kpi .k-value small{font-size:12px; font-weight:600; color:var(--dark-card-sub); margin-left:3px}
+  .k-bar{height:3px; border-radius:2px; background:rgba(255,255,255,0.18); overflow:hidden}
+  .k-bar i{display:block; height:100%; border-radius:2px; background:#E8EEF3; transition:width .6s ease}
+
+  .chips{
+    pointer-events:auto;
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:2px;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:none; display:flex; align-items:center; gap:7px;
+    background:var(--chip-bg); color:var(--chip-ink);
+    border:none; border-radius:999px; padding:9px 15px;
+    font-family:'Roboto',sans-serif; font-size:13px; font-weight:500;
+    cursor:pointer; backdrop-filter:blur(4px);
+  }
+  .chip svg{width:15px; height:15px}
+  .chip[aria-pressed="true"]{background:var(--chip-active-bg); box-shadow:var(--shadow-sm); font-weight:700}
+  .chip:focus-visible{outline:2px solid #fff; outline-offset:2px}
+
+  /* status pills over the map */
+  .pin{
+    position:absolute; z-index:20; transform:translate(-50%,-50%);
+    display:flex; align-items:center; gap:6px;
+    padding:6px 12px 6px 9px; border-radius:999px;
+    font-size:12.5px; font-weight:700; white-space:nowrap;
+    box-shadow:var(--shadow-sm); border:1px solid rgba(22,35,46,0.06);
+    cursor:pointer; user-select:none; -webkit-user-select:none;
+  }
+  .pin svg{width:15px; height:15px; flex:none}
+  .pin.ok{background:var(--pill-ok-bg); color:var(--pill-ok-ink)}
+  .pin.warn{background:var(--pill-warn-bg); color:var(--pill-warn-ink)}
+  .pin.down{background:var(--pill-down-bg); color:var(--pill-down-ink)}
+  .pin.selected{outline:2.5px solid var(--brand); outline-offset:1.5px}
+  .pin:focus-visible{outline:2.5px solid var(--brand); outline-offset:1.5px}
+
+  .callout{
+    position:absolute; z-index:25; transform:translate(-50%,-100%);
+    background:#1E272E; color:#fff; font-size:13px; font-weight:700;
+    padding:7px 14px; border-radius:10px; white-space:nowrap;
+    pointer-events:none; box-shadow:var(--shadow-sm);
+  }
+  .callout::after{
+    content:""; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%);
+    border:6px solid transparent; border-top-color:#1E272E; border-bottom:none;
+  }
+
+  .map-controls{
+    position:absolute; right:12px; bottom:14px; z-index:30;
+    display:flex; align-items:center; gap:10px;
+  }
+  .zoom-group{
+    display:flex; background:var(--card); border-radius:12px;
+    box-shadow:var(--shadow-sm); overflow:hidden; border:1px solid var(--line);
+  }
+  .zoom-group button, .locate{
+    width:44px; height:42px; border:none; background:transparent;
+    color:var(--brand); font-size:22px; font-weight:500; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .zoom-group button + button{border-left:1px solid var(--line)}
+  .locate{
+    background:var(--card); border-radius:12px; box-shadow:var(--shadow-sm);
+    border:1px solid var(--line);
+  }
+  .locate svg{width:20px; height:20px}
+  .map-credit{
+    position:absolute; left:10px; bottom:8px; z-index:15;
+    font-size:9.5px; color:var(--map-label); pointer-events:none;
+  }
+
+  /* ---------- Trends card ---------- */
+  .sheet{padding:16px 16px 26px; display:flex; flex-direction:column; gap:16px}
+  .trends{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:18px 16px 14px; box-shadow:var(--shadow-sm);
+  }
+  .trends h2{
+    font-family:'Montserrat',sans-serif; font-weight:800; font-size:21px;
+    letter-spacing:-0.2px; text-wrap:balance;
+  }
+  .trends .sub{font-size:12.5px; color:var(--ink-2); margin-top:4px}
+  .statrow{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 6px;
+  }
+  .stat{
+    background:rgba(43,124,190,0.06); border:1px solid var(--line);
+    border-radius:12px; padding:9px 10px;
+  }
+  .stat .s-label{font-size:10.5px; letter-spacing:1.1px; text-transform:uppercase; color:var(--ink-3); font-weight:500}
+  .stat .s-value{
+    font-family:'Montserrat',sans-serif; font-weight:700; font-size:17px;
+    font-variant-numeric:tabular-nums; margin-top:3px;
+  }
+  .stat .s-value small{font-size:11px; font-weight:600; color:var(--ink-2)}
+  .chart-box{position:relative; margin-top:6px}
+  #chart{display:block; width:100%; height:160px; overflow:visible}
+  .tooltip{
+    position:absolute; z-index:5; pointer-events:none; display:none;
+    background:#1E272E; color:#fff; border-radius:8px; padding:6px 9px;
+    font-size:11.5px; line-height:1.4; white-space:nowrap; box-shadow:var(--shadow-sm);
+  }
+  .tooltip b{font-variant-numeric:tabular-nums}
+
+  /* incidents */
+  .incidents{display:flex; flex-direction:column; gap:2px}
+  .incidents h3{
+    font-family:'Roboto',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:1.6px; text-transform:uppercase; color:var(--ink-3);
+    margin:2px 2px 8px;
+  }
+  .inc{
+    display:flex; align-items:center; gap:11px;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:11px 13px; margin-bottom:8px;
+  }
+  .inc .sev{width:10px; height:10px; border-radius:50%; flex:none}
+  .inc .sev.warn{background:var(--warn)} .inc .sev.crit{background:var(--crit)}
+  .inc .sev.good{background:var(--good)}
+  .inc .body{flex:1; min-width:0}
+  .inc .t{font-size:13.5px; font-weight:500}
+  .inc .m{font-size:11.5px; color:var(--ink-2); margin-top:2px}
+  .inc .id{font-size:11px; font-weight:700; color:var(--ink-3); font-variant-numeric:tabular-nums; flex:none}
+  .allclear{
+    text-align:center; color:var(--ink-2); font-size:13px;
+    padding:14px; background:var(--card); border:1px dashed var(--line); border-radius:14px;
+  }
+
+  footer{
+    padding:0 20px 30px; font-size:11px; line-height:1.6; color:var(--ink-3);
+    text-align:center;
+  }
+  footer b{color:var(--ink-2)}
+</style>
+
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark">
+      <span class="vps">vps</span> <span class="lks">lakeshore</span>
+      <small>IT Pulse &middot; Campus Monitor</small>
+    </div>
+    <div class="live"><span class="dot"></span><span id="clock">--:--</span></div>
+  </header>
+  <p class="demo-tag"><b>DEMO</b> Simulated telemetry &mdash; prototype for the IT team</p>
+
+  <div class="map-wrap" id="mapWrap" aria-label="Campus map with live IT status">
+    <svg id="map" viewBox="0 0 1000 1240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect x="-400" y="-400" width="1800" height="2100" fill="var(--map-land)"/>
+      <!-- Kundannoor backwater along the west edge -->
+      <path d="M -400 -400 L 150 -400 C 120 -150 190 60 150 300 C 115 520 190 700 150 930 C 120 1090 175 1250 150 1700 L -400 1700 Z" fill="var(--map-water)"/>
+      <path d="M 150 340 C 140 420 165 480 152 560" stroke="rgba(255,255,255,0.35)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 145 760 C 138 830 160 880 150 950" stroke="rgba(255,255,255,0.35)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <text x="55" y="620" fill="var(--map-label)" font-size="24" font-family="Roboto,sans-serif" transform="rotate(-90 55 620)" letter-spacing="4">KUNDANNOOR&nbsp;&nbsp;BACKWATER</text>
+      <!-- jetty -->
+      <rect x="120" y="820" width="80" height="12" rx="5" fill="var(--map-bldg)" stroke="var(--map-bldg-line)"/>
+      <!-- green cover -->
+      <ellipse cx="330" cy="150" rx="150" ry="80" fill="var(--map-green)"/>
+      <ellipse cx="760" cy="140" rx="120" ry="70" fill="var(--map-green)"/>
+      <ellipse cx="240" cy="1080" rx="130" ry="70" fill="var(--map-green)"/>
+      <ellipse cx="620" cy="1120" rx="170" ry="72" fill="var(--map-green)"/>
+      <!-- NH-66 bypass on the east -->
+      <rect x="880" y="-400" width="56" height="2100" fill="var(--map-road-major)"/>
+      <line x1="908" y1="-400" x2="908" y2="1700" stroke="rgba(255,255,255,0.8)" stroke-width="3" stroke-dasharray="26 20"/>
+      <text x="955" y="600" fill="var(--map-label)" font-size="22" font-family="Roboto,sans-serif" transform="rotate(90 955 600)" letter-spacing="4">NH-66 BYPASS</text>
+      <!-- access + internal roads -->
+      <path d="M 880 980 L 620 980 C 520 980 470 930 470 860 L 470 300 C 470 250 500 220 560 220 L 760 220" fill="none" stroke="var(--map-road)" stroke-width="26" stroke-linecap="round"/>
+      <path d="M 470 620 L 250 620 C 215 620 195 640 195 680 L 195 860" fill="none" stroke="var(--map-road)" stroke-width="20" stroke-linecap="round"/>
+      <path d="M 470 430 L 700 430 L 700 760 L 470 760" fill="none" stroke="var(--map-road)" stroke-width="18" stroke-linecap="round"/>
+      <!-- buildings -->
+      <g fill="var(--map-bldg)" stroke="var(--map-bldg-line)" stroke-width="2">
+        <rect x="300" y="480" width="150" height="200" rx="10"/>   <!-- main block / wards tower -->
+        <rect x="330" y="700" width="130" height="90" rx="10"/>    <!-- reception & billing -->
+        <rect x="500" y="470" width="120" height="110" rx="10"/>   <!-- ICU -->
+        <rect x="360" y="330" width="100" height="100" rx="10"/>   <!-- OT -->
+        <rect x="560" y="300" width="110" height="90" rx="10"/>    <!-- cath lab -->
+        <rect x="640" y="450" width="130" height="100" rx="10"/>   <!-- radiology -->
+        <rect x="690" y="330" width="110" height="80" rx="10"/>    <!-- central lab -->
+        <rect x="230" y="240" width="130" height="110" rx="10"/>   <!-- oncology -->
+        <rect x="560" y="590" width="120" height="100" rx="10"/>   <!-- OP block -->
+        <rect x="590" y="710" width="100" height="70" rx="10"/>    <!-- pharmacy -->
+        <rect x="640" y="800" width="130" height="90" rx="10"/>    <!-- emergency -->
+        <rect x="200" y="640" width="110" height="80" rx="10"/>    <!-- admin -->
+        <rect x="215" y="750" width="110" height="80" rx="10"/>    <!-- data centre -->
+        <rect x="230" y="480" width="60" height="70" rx="10"/>     <!-- cafeteria -->
+        <rect x="740" y="920" width="120" height="80" rx="10"/>    <!-- gate & parking -->
+      </g>
+      <!-- helipad accent -->
+      <circle cx="800" cy="700" r="34" fill="none" stroke="var(--map-bldg-line)" stroke-width="3"/>
+      <text x="800" y="710" text-anchor="middle" fill="var(--map-label)" font-size="26" font-weight="bold" font-family="Roboto,sans-serif">H</text>
+    </svg>
+
+    <div class="overlay-top">
+      <div class="kpi-card" id="kpiCard">
+        <div class="kpi">
+          <div class="k-label"><span id="kpi1Icon"></span><span id="kpi1Label"></span></div>
+          <div class="k-value" id="kpi1Value"></div>
+          <div class="k-bar"><i id="kpi1Bar"></i></div>
+        </div>
+        <div class="kpi">
+          <div class="k-label"><span id="kpi2Icon"></span><span id="kpi2Label"></span></div>
+          <div class="k-value" id="kpi2Value"></div>
+          <div class="k-bar"><i id="kpi2Bar"></i></div>
+        </div>
+      </div>
+      <div class="chips" id="chips" role="tablist" aria-label="Monitoring layers"></div>
+    </div>
+
+    <div id="pins"></div>
+    <div class="callout" id="callout" style="display:none"></div>
+
+    <div class="map-controls">
+      <div class="zoom-group">
+        <button id="zoomOut" aria-label="Zoom out">&minus;</button>
+        <button id="zoomIn" aria-label="Zoom in">+</button>
+      </div>
+      <button class="locate" id="recenter" aria-label="Recenter map">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      </button>
+    </div>
+    <div class="map-credit">Schematic campus map &middot; not to scale</div>
+  </div>
+
+  <div class="sheet">
+    <section class="trends" aria-live="polite">
+      <h2 id="trendTitle">IT trends in &mdash;</h2>
+      <div class="sub" id="trendSub">Data for last 12 hours</div>
+      <div class="statrow">
+        <div class="stat"><div class="s-label">Now</div><div class="s-value" id="statNow">&ndash;</div></div>
+        <div class="stat"><div class="s-label">12-h avg</div><div class="s-value" id="statAvg">&ndash;</div></div>
+        <div class="stat"><div class="s-label">12-h peak</div><div class="s-value" id="statPeak">&ndash;</div></div>
+      </div>
+      <div class="chart-box">
+        <svg id="chart" role="img" aria-label="12 hour trend chart"></svg>
+        <div class="tooltip" id="tip"></div>
+      </div>
+    </section>
+
+    <section class="incidents">
+      <h3>Open incidents &middot; <span id="incLayer"></span></h3>
+      <div id="incList"></div>
+    </section>
+  </div>
+
+  <footer>
+    <b>Prototype &mdash; VPS Lakeshore IT Command Centre.</b><br>
+    All statuses and trends on this page are simulated. To go live, replace the
+    <code>DEMO</code> object in the page source with a feed from the monitoring stack
+    (PRTG / Zabbix / UniFi / NVR APIs) &mdash; the render layer needs no changes.
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* =========================================================================
+   DATA LAYER — everything below `DEMO` is simulated.
+   To wire real telemetry: have your collector emit the same shape
+   { zones, layers } and replace DEMO (or fetch it on an interval).
+   ========================================================================= */
+
+const ICONS = {
+  net:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="5" rx="1.2"/><rect x="2" y="16" width="6" height="5" rx="1.2"/><rect x="16" y="16" width="6" height="5" rx="1.2"/><path d="M12 8v4M5 16v-2.5h14V16"/></svg>',
+  wifi:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9.5a13.5 13.5 0 0 1 18 0"/><path d="M6.5 13.2a8.5 8.5 0 0 1 11 0"/><path d="M9.8 16.7a4 4 0 0 1 4.4 0"/><circle cx="12" cy="19.4" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  srv:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="1.6"/><rect x="3" y="13" width="18" height="7" rx="1.6"/><circle cx="7" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  bolt:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H13L13 2Z"/></svg>',
+  cam:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="13" height="10" rx="2"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r="0.9" fill="currentColor" stroke="none"/></svg>',
+  cross: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  gauge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 17a8.5 8.5 0 1 1 16 0"/><path d="M12 15.5 16 9"/><circle cx="12" cy="16" r="1.4" fill="currentColor" stroke="none"/></svg>',
+  tick:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.4 2.4 4.6-5"/></svg>'
+};
+
+/* campus zones — x,y in map coordinates (viewBox 0 0 1000 1240) */
+const ZONES = [
+  { id:'dc',    name:'Data Centre',            x:270, y:790 },
+  { id:'recep', name:'Reception & Billing',    x:395, y:745 },
+  { id:'wards', name:'Wards Tower (L3–L7)', x:375, y:560 },
+  { id:'icu',   name:'ICU Complex',            x:560, y:525 },
+  { id:'ot',    name:'OT Complex',             x:410, y:380 },
+  { id:'cath',  name:'Cath Lab',               x:615, y:345 },
+  { id:'radio', name:'Radiology & Imaging',    x:705, y:500 },
+  { id:'lab',   name:'Central Lab',            x:745, y:370 },
+  { id:'onco',  name:'Oncology Block',         x:295, y:295 },
+  { id:'op',    name:'OP Block',               x:620, y:640 },
+  { id:'pharm', name:'Pharmacy',               x:640, y:745 },
+  { id:'er',    name:'Emergency & Trauma',     x:705, y:845 },
+  { id:'admin', name:'Admin Block',            x:255, y:680 },
+  { id:'cafe',  name:'Cafeteria',              x:260, y:515 },
+  { id:'gate',  name:'Main Gate & Parking',    x:800, y:960 }
+];
+
+/* Per-layer config: KPIs, per-zone status + trend behaviour.
+   status: ok | warn | down. metric drives the 12-h trend chart. */
+const DEMO = {
+  layers: {
+    net: {
+      label:'Network', icon:'net',
+      kpi1:{ icon:'gauge', label:'Core uptime',   value:'99.96', unit:'%',  bar:99.96 },
+      kpi2:{ icon:'net',   label:'Links healthy', value:'45',    unit:'/48', bar:93.7 },
+      metric:{ name:'Switch uplink latency', unit:'ms', base:4, vol:1.2, warnBase:26, downBase:0 },
+      statusText:{ ok:'Online', warn:'High latency', down:'Link down' },
+      zones:{ dc:'ok', recep:'ok', wards:'warn', icu:'ok', ot:'ok', cath:'ok', radio:'warn',
+              lab:'ok', onco:'ok', op:'ok', pharm:'ok', er:'ok', admin:'ok', cafe:'down', gate:'ok' }
+    },
+    wifi: {
+      label:'Wi-Fi', icon:'wifi',
+      kpi1:{ icon:'wifi',  label:'APs online',  value:'142', unit:'/147', bar:96.6 },
+      kpi2:{ icon:'gauge', label:'Clients now', value:'1,286', unit:'',   bar:64 },
+      metric:{ name:'Connected clients', unit:'', base:88, vol:22, warnBase:160, downBase:0 },
+      statusText:{ ok:'Good signal', warn:'Congested', down:'AP offline' },
+      zones:{ dc:'ok', recep:'ok', wards:'warn', icu:'ok', ot:'ok', cath:'ok', radio:'ok',
+              lab:'ok', onco:'ok', op:'warn', pharm:'ok', er:'ok', admin:'ok', cafe:'down', gate:'ok' }
+    },
+    srv: {
+      label:'Servers & Apps', icon:'srv',
+      kpi1:{ icon:'srv',   label:'Services up', value:'34', unit:'/36', bar:94.4 },
+      kpi2:{ icon:'gauge', label:'DC CPU peak', value:'71', unit:'%',   bar:71 },
+      metric:{ name:'Host CPU', unit:'%', base:34, vol:9, warnBase:78, downBase:0 },
+      statusText:{ ok:'Healthy', warn:'Degraded', down:'Service down' },
+      zones:{ dc:'ok', recep:'ok', radio:'warn', lab:'ok', pharm:'ok', er:'ok', admin:'warn', op:'ok' }
+    },
+    pwr: {
+      label:'Power & UPS', icon:'bolt',
+      kpi1:{ icon:'bolt',  label:'UPS load',      value:'62', unit:'%',    bar:62 },
+      kpi2:{ icon:'gauge', label:'Battery runtime', value:'41', unit:' min', bar:82 },
+      metric:{ name:'UPS load', unit:'%', base:55, vol:8, warnBase:84, downBase:0 },
+      statusText:{ ok:'On mains', warn:'Fluctuating', down:'On battery' },
+      zones:{ dc:'ok', wards:'ok', icu:'ok', ot:'ok', cath:'ok', radio:'ok',
+              lab:'ok', onco:'ok', op:'ok', er:'ok', admin:'ok', gate:'warn' }
+    },
+    cctv: {
+      label:'CCTV', icon:'cam',
+      kpi1:{ icon:'cam',   label:'Cameras up',  value:'214', unit:'/220', bar:97.3 },
+      kpi2:{ icon:'gauge', label:'NVR storage', value:'78',  unit:'%',    bar:78 },
+      metric:{ name:'Cameras online', unit:'', base:26, vol:1, warnBase:20, downBase:0 },
+      statusText:{ ok:'Recording', warn:'Feed gaps', down:'Offline' },
+      zones:{ recep:'ok', wards:'ok', icu:'ok', op:'ok', pharm:'ok', er:'ok',
+              admin:'ok', cafe:'down', gate:'warn', onco:'ok' }
+    }
+  },
+  incidents: [
+    { layer:'net',  zone:'cafe',  sev:'crit', id:'INC-4821', title:'Cafeteria access switch unreachable', age:'38 min' },
+    { layer:'net',  zone:'radio', sev:'warn', id:'INC-4818', title:'PACS uplink latency above 25 ms',     age:'1 h 12 min' },
+    { layer:'net',  zone:'wards', sev:'warn', id:'INC-4809', title:'Wards L5 distribution port flapping', age:'2 h 40 min' },
+    { layer:'wifi', zone:'cafe',  sev:'crit', id:'INC-4821', title:'3 APs down on cafeteria cluster',     age:'38 min' },
+    { layer:'wifi', zone:'wards', sev:'warn', id:'INC-4812', title:'Channel utilisation >70% on L4–L5', age:'2 h' },
+    { layer:'wifi', zone:'op',    sev:'warn', id:'INC-4816', title:'OP waiting-area congestion at peak',  age:'1 h 30 min' },
+    { layer:'srv',  zone:'radio', sev:'warn', id:'INC-4818', title:'PACS store latency — disk queue high', age:'1 h 12 min' },
+    { layer:'srv',  zone:'admin', sev:'warn', id:'INC-4790', title:'ERP report node memory at 88%',       age:'5 h' },
+    { layer:'pwr',  zone:'gate',  sev:'warn', id:'INC-4820', title:'Voltage fluctuation on gate feeder',  age:'55 min' },
+    { layer:'cctv', zone:'cafe',  sev:'crit', id:'INC-4821', title:'Cafeteria cameras on failed switch',  age:'38 min' },
+    { layer:'cctv', zone:'gate',  sev:'warn', id:'INC-4815', title:'2 ANPR cameras dropping frames',      age:'1 h 45 min' }
+  ]
+};
+
+/* =========================================================================
+   RENDER LAYER — no demo assumptions below this line.
+   ========================================================================= */
+
+const $ = id => document.getElementById(id);
+const mapWrap = $('mapWrap'), mapSvg = $('map'), pinsEl = $('pins'), calloutEl = $('callout');
+
+/* --- deterministic pseudo-random series (stable across renders) --- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+
+const N_POINTS = 49; // 12 h at 15-min samples
+function genSeries(layerKey, zoneId){
+  const L = DEMO.layers[layerKey], st = L.zones[zoneId], m = L.metric;
+  const rnd = mulberry32(hashStr(layerKey + ':' + zoneId));
+  const base = st === 'warn' ? m.warnBase : m.base;
+  const out = []; let v = base;
+  for (let i = 0; i < N_POINTS; i++){
+    v += (rnd() - 0.5) * m.vol * 2;
+    v = Math.max(0, v + (base - v) * 0.12);          // mean-revert
+    let val = v;
+    if (st === 'down' && i > N_POINTS * 0.68) val = 0; // outage began ~4 h ago
+    out.push(val);
+  }
+  return out;
+}
+
+/* --- map viewport state --- */
+const VB = { w:1000, h:1240 };
+const view = { cx:500, cy:620, z:1 };
+const HOME = { ...view };
+
+function applyView(){
+  const vw = VB.w / view.z, vh = VB.h / view.z;
+  view.cx = Math.min(VB.w - vw*0.2, Math.max(vw*0.2, view.cx));
+  view.cy = Math.min(VB.h - vh*0.2, Math.max(vh*0.2, view.cy));
+  mapSvg.setAttribute('viewBox', `${view.cx-vw/2} ${view.cy-vh/2} ${vw} ${vh}`);
+  positionPins();
+}
+
+/* project map coords -> CSS px inside mapWrap (slice-aspect aware) */
+function project(x, y){
+  const r = mapWrap.getBoundingClientRect();
+  const vw = VB.w/view.z, vh = VB.h/view.z;
+  const s = Math.max(r.width/vw, r.height/vh);           // preserveAspectRatio slice
+  const cx = r.width/2 + (x - view.cx) * s;
+  const cy = r.height/2 + (y - view.cy) * s;
+  return [cx, cy];
+}
+
+let state = { layer:'net', zone:'dc' };
+
+function positionPins(){
+  for (const el of pinsEl.children){
+    const z = ZONES.find(z => z.id === el.dataset.zone);
+    const [px, py] = project(z.x, z.y);
+    el.style.left = px + 'px'; el.style.top = py + 'px';
+  }
+  placeCallout();
+}
+function placeCallout(){
+  const z = ZONES.find(z => z.id === state.zone);
+  const L = DEMO.layers[state.layer];
+  if (!z || !(z.id in L.zones)){ calloutEl.style.display = 'none'; return; }
+  const [px, py] = project(z.x, z.y);
+  calloutEl.style.display = 'block';
+  calloutEl.textContent = z.name;
+  calloutEl.style.left = px + 'px';
+  calloutEl.style.top = (py - 26) + 'px';
+}
+
+function pinIcon(layerKey, st){
+  if (st === 'down') return ICONS.cross;
+  if (st === 'warn') return ICONS.alert;
+  return ICONS[DEMO.layers[layerKey].icon];
+}
+
+function renderPins(){
+  const L = DEMO.layers[state.layer];
+  pinsEl.innerHTML = '';
+  for (const z of ZONES){
+    const st = L.zones[z.id];
+    if (!st) continue;
+    const el = document.createElement('button');
+    el.className = 'pin ' + st + (z.id === state.zone ? ' selected' : '');
+    el.dataset.zone = z.id;
+    el.setAttribute('aria-label', `${z.name}: ${L.statusText[st]}`);
+    el.innerHTML = pinIcon(state.layer, st) + '<span>' + L.statusText[st] + '</span>';
+    el.addEventListener('click', e => { e.stopPropagation(); selectZone(z.id); });
+    pinsEl.appendChild(el);
+  }
+  positionPins();
+}
+
+function renderKpis(){
+  const L = DEMO.layers[state.layer];
+  for (const [n, k] of [['1', L.kpi1], ['2', L.kpi2]]){
+    $('kpi'+n+'Icon').innerHTML = ICONS[k.icon];
+    $('kpi'+n+'Label').textContent = k.label;
+    $('kpi'+n+'Value').innerHTML = k.value + '<small>' + k.unit + '</small>';
+    $('kpi'+n+'Bar').style.width = Math.min(100, k.bar) + '%';
+  }
+}
+
+function renderChips(){
+  const wrap = $('chips');
+  wrap.innerHTML = '';
+  for (const [key, L] of Object.entries(DEMO.layers)){
+    const b = document.createElement('button');
+    b.className = 'chip'; b.setAttribute('role','tab');
+    b.setAttribute('aria-pressed', key === state.layer);
+    b.innerHTML = ICONS[L.icon] + '<span>' + L.label + '</span>';
+    b.addEventListener('click', () => {
+      state.layer = key;
+      const L2 = DEMO.layers[key];
+      if (!(state.zone in L2.zones)) state.zone = Object.keys(L2.zones)[0];
+      renderAll();
+    });
+    wrap.appendChild(b);
+  }
+}
+
+/* --- trends card + chart --- */
+let series = [], chartGeom = null;
+function renderTrends(){
+  const L = DEMO.layers[state.layer];
+  const z = ZONES.find(z => z.id === state.zone);
+  const st = L.zones[state.zone];
+  series = genSeries(state.layer, state.zone);
+  $('trendTitle').textContent = 'IT trends in ' + z.name.replace(/\s*\(.*\)/, '');
+  $('trendSub').innerHTML = L.label + ' &middot; ' + L.metric.name +
+    ' &middot; data for last 12 hours &middot; status: <b style="color:var(--' +
+    (st === 'ok' ? 'good' : st === 'warn' ? 'warn' : 'crit') + ')">' + L.statusText[st] + '</b>';
+  const nz = series.filter(v => v > 0);
+  const now = series[series.length - 1];
+  const avg = nz.length ? nz.reduce((a,b) => a+b, 0) / nz.length : 0;
+  const peak = Math.max(...series);
+  const u = L.metric.unit;
+  $('statNow').innerHTML  = now === 0 && st === 'down' ? '<small>offline</small>' : fmtNum(now)  + unitTag(u);
+  $('statAvg').innerHTML  = fmtNum(avg)  + unitTag(u);
+  $('statPeak').innerHTML = fmtNum(peak) + unitTag(u);
+  drawChart();
+}
+function fmtNum(v){ return (v >= 100 ? Math.round(v) : Math.round(v*10)/10).toLocaleString('en-IN'); }
+function unitTag(u){ return u ? ' <small>' + u + '</small>' : ''; }
+
+function drawChart(){
+  const svg = $('chart');
+  const W = svg.clientWidth || 360, H = 160;
+  const padL = 34, padR = 10, padT = 12, padB = 22;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const max = Math.max(...series) * 1.15 || 1;
+  const xs = i => padL + (W - padL - padR) * i / (N_POINTS - 1);
+  const ys = v => padT + (H - padT - padB) * (1 - v / max);
+  chartGeom = { xs, ys, W, H, padL, padR };
+
+  let grid = '', labels = '';
+  for (let g = 0; g <= 3; g++){
+    const v = max * g / 3, y = ys(v);
+    grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    labels += `<text x="${padL-6}" y="${y+3.5}" text-anchor="end" font-size="9.5" fill="var(--ink-3)" font-family="Roboto,sans-serif">${fmtNum(v)}</text>`;
+  }
+  const nowD = new Date();
+  for (const hAgo of [12, 8, 4, 0]){
+    const i = N_POINTS - 1 - hAgo * 4, x = xs(i);
+    const t = new Date(nowD.getTime() - hAgo * 3600e3);
+    const lbl = hAgo === 0 ? 'now' : String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+    labels += `<text x="${x}" y="${H-6}" text-anchor="${hAgo===0?'end':'middle'}" font-size="9.5" fill="var(--ink-3)" font-family="Roboto,sans-serif">${lbl}</text>`;
+  }
+  let line = '', area = `M ${xs(0)} ${ys(0)}`;
+  series.forEach((v, i) => {
+    line += (i ? ' L ' : 'M ') + xs(i).toFixed(1) + ' ' + ys(v).toFixed(1);
+  });
+  area = line + ` L ${xs(N_POINTS-1).toFixed(1)} ${ys(0)} L ${xs(0).toFixed(1)} ${ys(0)} Z`;
+  const lastX = xs(N_POINTS-1), lastY = ys(series[N_POINTS-1]);
+
+  svg.innerHTML = grid + labels +
+    `<path d="${area}" fill="var(--chart-fill)"/>` +
+    `<path d="${line}" fill="none" stroke="var(--chart-line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<line id="xhair" x1="0" y1="${padT}" x2="0" y2="${H-padB}" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>` +
+    `<circle id="hoverDot" r="4.5" fill="var(--chart-line)" stroke="var(--card)" stroke-width="2" style="display:none"/>` +
+    `<circle cx="${lastX}" cy="${lastY}" r="4" fill="var(--chart-line)" stroke="var(--card)" stroke-width="2"/>`;
+}
+
+/* chart hover / touch tooltip */
+(function(){
+  const box = document.querySelector('.chart-box'), tip = $('tip'), svg = $('chart');
+  function onMove(e){
+    if (!chartGeom) return;
+    const r = svg.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    const { xs, ys } = chartGeom;
+    const t = (x - xs(0)) / (xs(N_POINTS-1) - xs(0));
+    const i = Math.round(Math.min(1, Math.max(0, t)) * (N_POINTS - 1));
+    const px = xs(i), py = ys(series[i]);
+    const xh = svg.querySelector('#xhair'), dot = svg.querySelector('#hoverDot');
+    xh.style.display = dot.style.display = 'block';
+    xh.setAttribute('x1', px); xh.setAttribute('x2', px);
+    dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+    const mins = (N_POINTS - 1 - i) * 15;
+    const t2 = new Date(Date.now() - mins * 60e3);
+    const L = DEMO.layers[state.layer];
+    tip.style.display = 'block';
+    tip.innerHTML = String(t2.getHours()).padStart(2,'0') + ':' + String(t2.getMinutes()).padStart(2,'0') +
+      ' &middot; <b>' + fmtNum(series[i]) + (L.metric.unit ? ' ' + L.metric.unit : '') + '</b>';
+    const bw = tip.offsetWidth;
+    tip.style.left = Math.min(chartGeom.W - bw - 4, Math.max(0, px - bw/2)) + 'px';
+    tip.style.top = (py - 38) + 'px';
+  }
+  function onLeave(){
+    tip.style.display = 'none';
+    const xh = svg.querySelector('#xhair'), dot = svg.querySelector('#hoverDot');
+    if (xh) xh.style.display = 'none';
+    if (dot) dot.style.display = 'none';
+  }
+  box.addEventListener('pointermove', onMove);
+  box.addEventListener('pointerleave', onLeave);
+  box.addEventListener('touchmove', e => { onMove(e); e.preventDefault(); }, { passive:false });
+  box.addEventListener('touchend', onLeave);
+})();
+
+function renderIncidents(){
+  const L = DEMO.layers[state.layer];
+  $('incLayer').textContent = L.label;
+  const list = DEMO.incidents.filter(i => i.layer === state.layer);
+  const el = $('incList');
+  if (!list.length){
+    el.innerHTML = '<div class="allclear">' + ICONS.tick.replace('<svg','<svg style="width:15px;height:15px;vertical-align:-3px;color:var(--good)"') + ' All clear on this layer</div>';
+    return;
+  }
+  el.innerHTML = list.map(i => {
+    const z = ZONES.find(z => z.id === i.zone);
+    return `<div class="inc">
+      <span class="sev ${i.sev}"></span>
+      <div class="body"><div class="t">${i.title}</div>
+      <div class="m">${z.name} &middot; open ${i.age}</div></div>
+      <span class="id">${i.id}</span></div>`;
+  }).join('');
+}
+
+function selectZone(id){
+  state.zone = id;
+  for (const el of pinsEl.children) el.classList.toggle('selected', el.dataset.zone === id);
+  placeCallout();
+  renderTrends();
+}
+
+function renderAll(){
+  renderChips(); renderKpis(); renderPins(); renderTrends(); renderIncidents();
+}
+
+/* --- pan / zoom --- */
+$('zoomIn').addEventListener('click', () => { view.z = Math.min(3.2, view.z * 1.35); applyView(); });
+$('zoomOut').addEventListener('click', () => { view.z = Math.max(0.85, view.z / 1.35); applyView(); });
+$('recenter').addEventListener('click', () => { Object.assign(view, HOME); applyView(); });
+
+(function(){
+  let drag = null;
+  mapWrap.addEventListener('pointerdown', e => {
+    if (e.target.closest('.pin, .chip, .kpi-card, .map-controls')) return;
+    drag = { x:e.clientX, y:e.clientY, cx:view.cx, cy:view.cy };
+    mapWrap.classList.add('dragging');
+    mapWrap.setPointerCapture(e.pointerId);
+  });
+  mapWrap.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const r = mapWrap.getBoundingClientRect();
+    const s = Math.max(r.width/(VB.w/view.z), r.height/(VB.h/view.z));
+    view.cx = drag.cx - (e.clientX - drag.x) / s;
+    view.cy = drag.cy - (e.clientY - drag.y) / s;
+    applyView();
+  });
+  const end = () => { drag = null; mapWrap.classList.remove('dragging'); };
+  mapWrap.addEventListener('pointerup', end);
+  mapWrap.addEventListener('pointercancel', end);
+})();
+
+window.addEventListener('resize', () => { applyView(); drawChart(); });
+
+/* clock */
+function tickClock(){
+  const d = new Date();
+  $('clock').textContent = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+tickClock(); setInterval(tickClock, 15e3);
+
+/* boot */
+renderAll();
+applyView();
+requestAnimationFrame(() => { applyView(); drawChart(); });
+</script>
+
+</body>
+</html>

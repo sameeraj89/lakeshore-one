@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lakeshore SafeReport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --bg:#F2EFF1; --shell:#FAF8F9; --card:#FFFFFF;
+    --ink:#241820; --ink-2:#6B5A63; --ink-3:#98878F;
+    --line:rgba(36,24,32,0.10);
+    --accent:#8B1A4A; --accent-ink:#6E123A; --accent-tint:rgba(139,26,74,0.07);
+    --blue:#2B7CBE; --blue-ink:#1B5A8E; --blue-tint:rgba(43,124,190,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#6B5A63; --neutral-bg:#EFEAEC;
+    --dark-card:#2A1E26; --dark-ink:#F6F1F3;
+    --chart:#8B1A4A; --chart-2:rgba(139,26,74,0.45); --chart-fill:rgba(139,26,74,0.12);
+    --shadow:0 8px 24px rgba(36,24,32,0.14); --shadow-sm:0 2px 8px rgba(36,24,32,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#151013; --shell:#1B1519; --card:#241C21;
+      --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#83717A;
+      --line:rgba(240,231,235,0.12);
+      --accent:#E0759F; --accent-ink:#EC9DBB; --accent-tint:rgba(224,117,159,0.12);
+      --blue:#5FA4DA; --blue-ink:#8FC1E8; --blue-tint:rgba(95,164,218,0.12);
+      --good:#4FC97E; --good-bg:#1B3626;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#B39FA9; --neutral-bg:#31262C;
+      --dark-card:#120D10; --dark-ink:#F6F1F3;
+      --chart:#E0759F; --chart-2:rgba(224,117,159,0.5); --chart-fill:rgba(224,117,159,0.14);
+      --shadow:0 8px 24px rgba(0,0,0,0.5); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#151013; --shell:#1B1519; --card:#241C21;
+    --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#83717A;
+    --line:rgba(240,231,235,0.12);
+    --accent:#E0759F; --accent-ink:#EC9DBB; --accent-tint:rgba(224,117,159,0.12);
+    --blue:#5FA4DA; --blue-ink:#8FC1E8; --blue-tint:rgba(95,164,218,0.12);
+    --good:#4FC97E; --good-bg:#1B3626;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#B39FA9; --neutral-bg:#31262C;
+    --dark-card:#120D10; --dark-ink:#F6F1F3;
+    --chart:#E0759F; --chart-2:rgba(224,117,159,0.5); --chart-fill:rgba(224,117,159,0.14);
+    --shadow:0 8px 24px rgba(0,0,0,0.5); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:'Roboto',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(36,24,32,0.08); display:flex; flex-direction:column}
+
+  header{padding:14px 16px 8px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark{font-family:'Montserrat',sans-serif; font-weight:800; font-size:17px; line-height:1.1}
+  .wordmark .vps{color:var(--accent)} .wordmark .lks{color:var(--blue)}
+  .wordmark small{display:block; font-family:'Roboto',sans-serif; font-weight:500; font-size:10px;
+    letter-spacing:2.2px; color:var(--ink-3); text-transform:uppercase; margin-top:2px}
+  .mock-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn);
+    background:var(--warn-bg); border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  .trustbar{margin:6px 16px 12px; background:var(--accent-tint); border:1px solid var(--line);
+    border-radius:14px; padding:11px 14px; font-size:12px; line-height:1.55; color:var(--ink-2)}
+  .trustbar b{color:var(--accent-ink)}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:2px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-family:'Montserrat',sans-serif; font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--blue-ink); background:var(--blue-tint);
+    border-radius:999px; padding:4px 11px; margin:0 0 10px}
+
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm)}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:15px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  input[type=text], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-family:'Roboto',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus, textarea:focus{border-color:var(--accent)}
+  textarea{min-height:80px; resize:vertical}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1 1 30%; min-width:88px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer; font-family:'Roboto',sans-serif; line-height:1.3}
+  .seg button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink)}
+  .seg.harm button[aria-pressed="true"].h-sev{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
+  .anon{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--shell); border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:2px}
+  .anon .at{font-size:13.5px; font-weight:700}
+  .anon .as{font-size:11.5px; color:var(--ink-2); margin-top:2px; line-height:1.4}
+  .switch{position:relative; width:46px; height:26px; flex:none; cursor:pointer}
+  .switch input{opacity:0; width:0; height:0}
+  .switch .tr{position:absolute; inset:0; border-radius:999px; background:var(--neutral-bg); transition:.2s}
+  .switch .tr::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+    background:#fff; box-shadow:var(--shadow-sm); transition:.2s}
+  .switch input:checked + .tr{background:var(--accent)}
+  .switch input:checked + .tr::after{transform:translateX(20px)}
+  .checks{display:flex; flex-wrap:wrap; gap:7px}
+  .checks button{border:1.5px solid var(--line); background:var(--shell); color:var(--ink-2); border-radius:999px;
+    padding:7px 13px; font-size:12px; font-weight:500; cursor:pointer; font-family:'Roboto',sans-serif}
+  .checks button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink); font-weight:700}
+  .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--accent);
+    color:#fff; font-family:'Montserrat',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:6px; line-height:1.5}
+
+  /* confirmation */
+  .confirm{display:none; text-align:center; padding:30px 18px}
+  .confirm.show{display:block}
+  .confirm .big{width:64px; height:64px; border-radius:50%; background:var(--good-bg); color:var(--good);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px}
+  .confirm .big svg{width:30px; height:30px}
+  .confirm h2{font-family:'Montserrat',sans-serif; font-weight:800; font-size:20px; margin-bottom:6px}
+  .confirm .irno{font-family:'Montserrat',sans-serif; font-weight:800; font-size:15px; color:var(--accent-ink);
+    background:var(--accent-tint); display:inline-block; border-radius:999px; padding:6px 16px; margin:6px 0 14px}
+  .confirm p{font-size:13px; color:var(--ink-2); line-height:1.6; max-width:320px; margin:0 auto 6px}
+  .confirm .steps{text-align:left; margin:16px auto 0; max-width:330px}
+
+  /* queue */
+  .qcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px;
+    margin-bottom:10px; box-shadow:var(--shadow-sm); cursor:pointer}
+  .qrow{display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap}
+  .irid{font-size:11px; font-weight:700; color:var(--ink-3); font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
+  .b-nearmiss{background:var(--info-bg); color:var(--info)}
+  .b-noharm{background:var(--neutral-bg); color:var(--neutral)}
+  .b-mild{background:var(--warn-bg); color:var(--warn)}
+  .b-mod{background:var(--warn-bg); color:var(--warn)}
+  .b-sev{background:var(--crit-bg); color:var(--crit)}
+  .b-anon{background:var(--neutral-bg); color:var(--neutral)}
+  .b-sla-ok{background:var(--good-bg); color:var(--good)}
+  .b-sla-due{background:var(--warn-bg); color:var(--warn)}
+  .b-sla-late{background:var(--crit-bg); color:var(--crit)}
+  .b-stage{background:var(--blue-tint); color:var(--blue-ink)}
+  .qtitle{font-size:14px; font-weight:700; line-height:1.35}
+  .qmeta{font-size:12px; color:var(--ink-2); margin-top:4px; line-height:1.5}
+
+  /* workflow strip */
+  .flow{display:flex; gap:0; margin:4px 0 16px; overflow-x:auto; scrollbar-width:none; padding:2px}
+  .flow::-webkit-scrollbar{display:none}
+  .step{flex:none; display:flex; align-items:center}
+  .step .node{display:flex; flex-direction:column; align-items:center; gap:5px; width:74px}
+  .step .ic{width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--neutral-bg); color:var(--ink-3); border:2px solid transparent}
+  .step .ic svg{width:16px; height:16px}
+  .step.done .ic{background:var(--good-bg); color:var(--good)}
+  .step.now .ic{background:var(--accent-tint); color:var(--accent-ink); border-color:var(--accent)}
+  .step .lb{font-size:9.5px; font-weight:700; letter-spacing:0.4px; text-transform:uppercase; color:var(--ink-3); text-align:center; line-height:1.3}
+  .step.done .lb, .step.now .lb{color:var(--ink)}
+  .step .link{width:18px; height:2px; background:var(--line); margin-top:-16px}
+  .step.done .link{background:var(--good)}
+
+  .dcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px; box-shadow:var(--shadow-sm)}
+  .dcard h3{font-family:'Montserrat',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.8px;
+    text-transform:uppercase; color:var(--accent-ink); margin-bottom:10px}
+  .dcard p{font-size:13px; line-height:1.6; color:var(--ink)}
+  .kv{display:grid; grid-template-columns:110px 1fr; gap:7px 10px; font-size:12.5px}
+  .kv dt{color:var(--ink-3); font-weight:500}
+  .kv dd{color:var(--ink); font-weight:500}
+  .why{border-left:3px solid var(--accent); padding:2px 0 2px 12px; margin-bottom:10px}
+  .why .q{font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3)}
+  .why .a{font-size:13px; line-height:1.5; margin-top:2px}
+  .capa{border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-bottom:8px}
+  .capa .ct{font-size:13px; font-weight:700; line-height:1.4}
+  .capa .cm{font-size:11.5px; color:var(--ink-2); margin-top:4px}
+  .capa .cs{margin-top:7px}
+  .tlx{display:flex; gap:10px; margin-bottom:11px}
+  .tlx .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); margin-top:5px; flex:none}
+  .tlx .tx{font-size:12.5px; line-height:1.5}
+  .tlx .tx .who{font-weight:700}
+  .tlx .tx .when{color:var(--ink-3); font-size:11px}
+
+  /* analytics */
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px}
+  .kpi .n{font-family:'Montserrat',sans-serif; font-weight:800; font-size:24px; font-variant-numeric:tabular-nums}
+  .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
+  .kpi .delta{font-size:11px; font-weight:700; margin-top:4px}
+  .delta.up-good{color:var(--good)} .delta.down-bad{color:var(--crit)}
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px}
+  .chart-card h3{font-size:13.5px; font-weight:700; margin-bottom:2px}
+  .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
+  .hbar{display:grid; grid-template-columns:150px 1fr 30px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
+  .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--accent-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--chart)}
+  .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
+  .cols{display:flex; align-items:flex-end; gap:5px; height:110px; padding-top:6px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:26px; border-radius:4px 4px 0 0; background:var(--chart-2)}
+  .col.hot .bar{background:var(--chart)}
+  .col .cl{font-size:9px; color:var(--ink-3); font-weight:500}
+  .col .cv{font-size:10px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin-top:10px}
+  .legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+  .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
+  .stack i{display:block; height:100%}
+
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Roboto',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:21px; height:21px}
+  nav button[aria-pressed="true"]{color:var(--accent)}
+</style>
+
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><span class="vps">vps</span> <span class="lks">lakeshore</span>
+      <small>SafeReport &middot; Patient Safety IR</small></div>
+    <span class="mock-tag">Mockup</span>
+  </header>
+  <div class="trustbar"><b>Confidential &amp; non-punitive.</b> Reports go only to the Quality &amp; Patient Safety team.
+    The goal is fixing systems, not blaming people &mdash; anonymous reporting is always available.</div>
+
+  <main>
+    <!-- ============ REPORT ============ -->
+    <section class="tab active" id="tab-report">
+      <div id="reportForm">
+        <h1 class="page">Report a patient safety incident</h1>
+        <p class="page-sub">Incidents, adverse events and near misses. Takes under two minutes &mdash; every field except the description is one tap.</p>
+        <div class="fcard">
+          <div class="anon">
+            <div><div class="at">Report anonymously</div>
+              <div class="as">Your name is never recorded. Quality can&rsquo;t follow up with you, but the report is treated identically.</div></div>
+            <label class="switch"><input type="checkbox" id="anonTgl"><span class="tr"></span></label>
+          </div>
+          <label class="fl">Type of incident</label>
+          <div class="seg" id="irType"></div>
+          <label class="fl">Outcome for the patient</label>
+          <div class="seg harm" id="irHarm"></div>
+          <p class="hint" id="harmHint"></p>
+          <label class="fl" for="irZone">Where did it happen?</label>
+          <select id="irZone"></select>
+          <label class="fl" for="irWhen">When?</label>
+          <select id="irWhen">
+            <option>In the last hour</option><option>Today</option><option>Yesterday</option><option>Earlier this week</option><option>More than a week ago</option>
+          </select>
+          <label class="fl" for="irUhid">Patient UHID <span style="font-weight:500; text-transform:none; letter-spacing:0">(optional &middot; visible only to Quality)</span></label>
+          <input type="text" id="irUhid" placeholder="e.g. LH0482913" maxlength="20">
+          <label class="fl" for="irDesc">What happened?</label>
+          <textarea id="irDesc" placeholder="Describe the event factually — what was expected, what actually happened, what was done immediately&hellip;"></textarea>
+          <label class="fl">Contributing factors <span style="font-weight:500; text-transform:none; letter-spacing:0">(optional, pick any)</span></label>
+          <div class="checks" id="irFactors"></div>
+          <button class="submit" id="irSubmit">Submit confidential report</button>
+          <p class="hint" style="text-align:center; margin-top:10px">You&rsquo;ll get an IR number to track the outcome. Reporting a near miss is as valuable as reporting harm.</p>
+        </div>
+      </div>
+      <div class="confirm" id="confirm">
+        <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg></div>
+        <h2>Report received</h2>
+        <div class="irno" id="irNo">IR-2608-114</div>
+        <p>Thank you for speaking up. Your report is now with the Quality &amp; Patient Safety team only.</p>
+        <div class="steps fcard">
+          <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Within 24 h</span> &mdash; Quality triages: confirms type &amp; harm level, informs the department head.</div></div>
+          <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Within 7 days</span> &mdash; department review; serious events get a root-cause analysis.</div></div>
+          <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Then</span> &mdash; corrective &amp; preventive actions with owners and due dates; you can check the outcome with your IR number.</div></div>
+          <div class="tlx" style="margin-bottom:0"><span class="dot"></span><div class="tx"><span class="who">Monthly</span> &mdash; de-identified learnings are shared in the patient safety huddle.</div></div>
+        </div>
+        <button class="submit" style="max-width:330px; margin:18px auto 0; display:block" id="again">Report another incident</button>
+      </div>
+    </section>
+
+    <!-- ============ QUEUE ============ -->
+    <section class="tab" id="tab-queue">
+      <span class="viewtag">Quality team view</span>
+      <h1 class="page">Triage queue</h1>
+      <p class="page-sub">New and in-review incident reports. Triage SLA: 24 h from submission; RCA required for moderate harm and above.</p>
+      <div id="queueList"></div>
+    </section>
+
+    <!-- ============ CASE ============ -->
+    <section class="tab" id="tab-case">
+      <span class="viewtag">Quality team view &middot; worked example</span>
+      <h1 class="page">IR-2608-104</h1>
+      <p class="page-sub">Medication error &middot; moderate harm &middot; Wards Tower L4 &middot; reported 6 days ago by a staff nurse (named report)</p>
+
+      <div class="flow" id="flowStrip"></div>
+
+      <div class="dcard">
+        <h3>Incident</h3>
+        <p>Patient (UHID &bull;&bull;&bull;&bull;2913) prescribed <b>enoxaparin 40 mg OD</b> received <b>60 mg</b> for two consecutive doses.
+        Prescription was modified in HIS but the ward&rsquo;s printed MAR was not reprinted. Identified at pharmacist reconciliation;
+        physician informed, anti-Xa monitored, no bleeding event. Patient and family informed per disclosure policy.</p>
+      </div>
+
+      <div class="dcard">
+        <h3>Triage &mdash; Quality, day 0</h3>
+        <dl class="kv">
+          <dt>Classification</dt><dd>Medication error &mdash; administration (wrong dose)</dd>
+          <dt>Harm level</dt><dd>Moderate &mdash; monitoring required, no lasting harm</dd>
+          <dt>RCA required</dt><dd>Yes (moderate+) &mdash; assigned to Nursing + Pharmacy + IT</dd>
+          <dt>Immediate action</dt><dd>Ward advisory: reprint MAR on every HIS prescription edit</dd>
+        </dl>
+      </div>
+
+      <div class="dcard">
+        <h3>Root cause analysis &mdash; 5 whys</h3>
+        <div class="why"><div class="q">Why 1 &mdash; wrong dose given?</div><div class="a">Nurse followed the printed MAR, which still showed 60 mg.</div></div>
+        <div class="why"><div class="q">Why 2 &mdash; MAR outdated?</div><div class="a">Dose was changed in HIS after the morning MAR print run.</div></div>
+        <div class="why"><div class="q">Why 3 &mdash; change not communicated?</div><div class="a">HIS prescription edits don&rsquo;t alert the ward; reprint depends on the prescriber remembering to inform.</div></div>
+        <div class="why"><div class="q">Why 4 &mdash; why does the ward run on printed MAR?</div><div class="a">Bedside eMAR rollout incomplete on L4; only 2 of 6 medication trolleys have tablets.</div></div>
+        <div class="why" style="margin-bottom:0"><div class="q">Why 5 &mdash; root cause</div><div class="a"><b>Hybrid paper/digital medication process without a forcing function</b> when prescriptions change after print.</div></div>
+      </div>
+
+      <div class="dcard">
+        <h3>CAPA &mdash; corrective &amp; preventive actions</h3>
+        <div class="capa"><div class="ct">HIS: prescription-edit alert to ward dashboard &amp; auto-flag stale MAR prints</div>
+          <div class="cm">Owner: IT (HIS team) &middot; due 15 Sep</div><div class="cs"><span class="badge b-stage">In progress</span></div></div>
+        <div class="capa"><div class="ct">Complete eMAR trolley rollout on L4 &amp; L5</div>
+          <div class="cm">Owner: Nursing + IT &middot; due 30 Sep</div><div class="cs"><span class="badge b-stage">In progress</span></div></div>
+        <div class="capa"><div class="ct">Pharmacist double-check for anticoagulant dose changes</div>
+          <div class="cm">Owner: Pharmacy &middot; done 20 Aug</div><div class="cs"><span class="badge b-sla-ok">Done</span></div></div>
+        <div class="capa" style="margin-bottom:0"><div class="ct">Ward safety briefing: high-alert medication double-checks</div>
+          <div class="cm">Owner: Nursing Education &middot; done 19 Aug</div><div class="cs"><span class="badge b-sla-ok">Done</span></div></div>
+      </div>
+
+      <div class="dcard">
+        <h3>Effectiveness check &mdash; scheduled</h3>
+        <p>Quality re-audits L4 medication administration 30 days after CAPA completion (target: zero stale-MAR administrations
+        in audit sample). IR closes only after the check passes; reporter is notified of the outcome.</p>
+      </div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="tab" id="tab-trends">
+      <span class="viewtag">Quality team view</span>
+      <h1 class="page">Safety trends</h1>
+      <p class="page-sub">De-identified, for the monthly patient safety committee. A rising report count with a rising near-miss share is a <b>healthy</b> reporting culture, not a worsening hospital.</p>
+      <div class="kpis">
+        <div class="kpi"><div class="n">38</div><div class="l">IRs this month</div><div class="delta up-good">&#9650; 12% vs Jul &mdash; reporting up</div></div>
+        <div class="kpi"><div class="n">4.1<small> /1000 pt-days</small></div><div class="l">IR rate</div><div class="delta up-good">&#9650; from 3.4</div></div>
+        <div class="kpi"><div class="n">58%</div><div class="l">Near-miss share</div><div class="delta up-good">&#9650; target &gt;50%</div></div>
+        <div class="kpi"><div class="n">92%</div><div class="l">Triaged within 24 h</div><div class="delta down-bad">&#9660; 3 breaches</div></div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Incident reports per month</h3>
+        <div class="cs">Last 8 months &middot; count of submitted IRs</div>
+        <div class="cols">
+          <div class="col"><span class="cv">21</span><span class="bar" style="height:42%"></span><span class="cl">Jan</span></div>
+          <div class="col"><span class="cv">24</span><span class="bar" style="height:48%"></span><span class="cl">Feb</span></div>
+          <div class="col"><span class="cv">19</span><span class="bar" style="height:38%"></span><span class="cl">Mar</span></div>
+          <div class="col"><span class="cv">27</span><span class="bar" style="height:54%"></span><span class="cl">Apr</span></div>
+          <div class="col"><span class="cv">25</span><span class="bar" style="height:50%"></span><span class="cl">May</span></div>
+          <div class="col"><span class="cv">31</span><span class="bar" style="height:62%"></span><span class="cl">Jun</span></div>
+          <div class="col"><span class="cv">34</span><span class="bar" style="height:68%"></span><span class="cl">Jul</span></div>
+          <div class="col hot"><span class="cv">38</span><span class="bar" style="height:76%"></span><span class="cl">Aug</span></div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>By incident type &mdash; Aug</h3>
+        <div class="cs">Count of IRs, all harm levels</div>
+        <div class="hbar"><span class="hl">Medication error</span><span class="tr"><i style="width:100%"></i></span><span class="hv">11</span></div>
+        <div class="hbar"><span class="hl">Patient fall</span><span class="tr"><i style="width:64%"></i></span><span class="hv">7</span></div>
+        <div class="hbar"><span class="hl">Needle-stick / sharps</span><span class="tr"><i style="width:45%"></i></span><span class="hv">5</span></div>
+        <div class="hbar"><span class="hl">Equipment-related</span><span class="tr"><i style="width:45%"></i></span><span class="hv">5</span></div>
+        <div class="hbar"><span class="hl">Lab / sample ID</span><span class="tr"><i style="width:36%"></i></span><span class="hv">4</span></div>
+        <div class="hbar"><span class="hl">Pressure injury</span><span class="tr"><i style="width:27%"></i></span><span class="hv">3</span></div>
+        <div class="hbar" style="margin-bottom:0"><span class="hl">Other</span><span class="tr"><i style="width:27%"></i></span><span class="hv">3</span></div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Outcome mix &mdash; Aug</h3>
+        <div class="cs">Share of 38 IRs by harm level</div>
+        <div class="stack">
+          <i style="width:58%; background:var(--info)" title="Near miss 58%"></i>
+          <i style="width:21%; background:var(--neutral)" title="No harm 21%"></i>
+          <i style="width:13%; background:var(--warn)" title="Mild 13%"></i>
+          <i style="width:6%; background:var(--crit)" title="Moderate 6%"></i>
+          <i style="width:2%; background:var(--ink)" title="Severe 2%"></i>
+        </div>
+        <div class="legend">
+          <span><b style="background:var(--info)"></b>Near miss 58%</span>
+          <span><b style="background:var(--neutral)"></b>No harm 21%</span>
+          <span><b style="background:var(--warn)"></b>Mild 13%</span>
+          <span><b style="background:var(--crit)"></b>Moderate 6%</span>
+          <span><b style="background:var(--ink)"></b>Severe 2%</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <b style="color:var(--ink-2)">Design mockup &mdash; all data is fictional.</b><br>
+    Built to show the workflow: confidential report &rarr; 24-h Quality triage &rarr; RCA for moderate+ harm &rarr;
+    CAPA with owners &rarr; effectiveness check &rarr; closure &amp; de-identified learning. Maps to NABH patient-safety
+    incident reporting requirements. Production build needs hospital sign-on, a restricted Quality workspace and an audit trail.
+  </footer>
+
+  <nav>
+    <button id="nav-report" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7v5.5c0 4.6 3.4 7.6 8.5 8.5 5.1-.9 8.5-3.9 8.5-8.5V7L12 3Z"/><path d="M12 8.5v5M9.5 11h5"/></svg>
+      Report</button>
+    <button id="nav-queue" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Queue</button>
+    <button id="nav-case" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+      Case</button>
+    <button id="nav-trends" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+      Trends</button>
+  </nav>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+const TYPES = ['Medication error','Patient fall','Needle-stick / sharps','Wrong patient / site','Transfusion-related','Hospital-acquired infection','Pressure injury','Equipment-related','Lab / sample ID','Other / not sure'];
+const HARM = [
+  ['Near miss','Caught before it reached the patient'],
+  ['No harm','Reached the patient, no harm done'],
+  ['Mild','Minor, no extra treatment needed'],
+  ['Moderate','Needed treatment or monitoring'],
+  ['Severe','Lasting harm or life-threatening'],
+  ['Death / sentinel','Report immediately by phone too']
+];
+const ZONES = ['Wards Tower','ICU Complex','OT Complex','Emergency & Trauma','OP Block','Cath Lab','Radiology & Imaging','Central Lab','Oncology Block','Pharmacy','Other'];
+const FACTORS = ['Workload / staffing','Communication gap','Handover','Look-alike drug / label','Equipment issue','Protocol unclear','Protocol not followed','New staff / training','IT / system issue','Environment'];
+
+let typeSel = TYPES[0], harmSel = 'Near miss';
+const factorSel = new Set();
+
+function seg(el, items, sel, onPick, clsFn){
+  el.innerHTML = '';
+  for (const it of items){
+    const label = Array.isArray(it) ? it[0] : it;
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    if (clsFn) b.className = clsFn(label);
+    b.setAttribute('aria-pressed', label === sel);
+    b.onclick = () => onPick(label);
+    el.appendChild(b);
+  }
+}
+function renderForm(){
+  seg($('irType'), TYPES, typeSel, v => { typeSel = v; renderForm(); });
+  seg($('irHarm'), HARM, harmSel, v => { harmSel = v; renderForm(); },
+      l => (l === 'Severe' || l === 'Death / sentinel') ? 'h-sev' : '');
+  const h = HARM.find(h => h[0] === harmSel);
+  $('harmHint').textContent = h ? h[1] : '';
+  const zs = $('irZone');
+  if (!zs.options.length) zs.innerHTML = ZONES.map(z => '<option>' + z + '</option>').join('');
+  const f = $('irFactors'); f.innerHTML = '';
+  for (const fac of FACTORS){
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = fac;
+    b.setAttribute('aria-pressed', factorSel.has(fac));
+    b.onclick = () => { factorSel.has(fac) ? factorSel.delete(fac) : factorSel.add(fac); renderForm(); };
+    f.appendChild(b);
+  }
+}
+$('irSubmit').onclick = () => {
+  const d = new Date();
+  $('irNo').textContent = 'IR-' + String(d.getDate()).padStart(2,'0') + '0' + (d.getMonth()+1) + '-' + (100 + Math.floor(Math.random()*99));
+  $('reportForm').style.display = 'none';
+  $('confirm').classList.add('show');
+  window.scrollTo(0,0);
+};
+$('again').onclick = () => {
+  $('confirm').classList.remove('show');
+  $('reportForm').style.display = 'block';
+  $('irDesc').value = ''; $('irUhid').value = ''; factorSel.clear(); harmSel = 'Near miss'; renderForm();
+};
+
+/* queue (fictional) */
+const QUEUE = [
+  { id:'IR-2608-118', title:'Near miss: look-alike vials — potassium chloride beside sodium chloride in ER trolley', harm:'Near miss', hcls:'b-nearmiss', zone:'Emergency & Trauma', when:'2 h ago', anon:true, sla:'ok', slaTx:'Triage due in 22 h', stage:'New' },
+  { id:'IR-2608-117', title:'Patient fall in washroom, Wards L6 — assisted, no injury on assessment', harm:'No harm', hcls:'b-noharm', zone:'Wards Tower', when:'6 h ago', anon:false, sla:'ok', slaTx:'Triage due in 18 h', stage:'New' },
+  { id:'IR-2608-116', title:'Needle-stick during recapping, phlebotomy — PEP protocol started', harm:'Mild', hcls:'b-mild', zone:'Central Lab', when:'20 h ago', anon:false, sla:'due', slaTx:'Triage due in 4 h', stage:'New' },
+  { id:'IR-2608-114', title:'Sample mislabel caught at barcode scan — repeat draw done', harm:'Near miss', hcls:'b-nearmiss', zone:'Oncology Block', when:'2 d ago', anon:true, sla:'ok', slaTx:'Dept review due in 5 d', stage:'Dept review' },
+  { id:'IR-2608-104', title:'Enoxaparin dose discrepancy between HIS and printed MAR (worked example — see Case tab)', harm:'Moderate', hcls:'b-mod', zone:'Wards Tower', when:'6 d ago', anon:false, sla:'ok', slaTx:'CAPA on track', stage:'CAPA' },
+  { id:'IR-2608-097', title:'Infusion pump free-flow alarm failure — device quarantined', harm:'Mild', hcls:'b-mild', zone:'ICU Complex', when:'9 d ago', anon:false, sla:'late', slaTx:'RCA overdue 2 d', stage:'RCA' }
+];
+$('queueList').innerHTML = QUEUE.map(q =>
+  '<div class="qcard"><div class="qrow"><span class="irid">' + q.id + '</span>' +
+  '<span class="badge ' + q.hcls + '">' + q.harm + '</span>' +
+  '<span class="badge b-stage">' + q.stage + '</span>' +
+  (q.anon ? '<span class="badge b-anon">anonymous</span>' : '') +
+  '<span class="badge b-sla-' + q.sla + '">' + q.slaTx + '</span></div>' +
+  '<div class="qtitle">' + q.title + '</div>' +
+  '<div class="qmeta">' + q.zone + ' &middot; reported ' + q.when + (q.anon ? '' : ' &middot; named report') + '</div></div>'
+).join('');
+
+/* workflow strip */
+const FLOW = [
+  ['Reported','done','<path d="M12 3 3.5 7v5.5c0 4.6 3.4 7.6 8.5 8.5 5.1-.9 8.5-3.9 8.5-8.5V7L12 3Z"/>'],
+  ['Triage 24h','done','<path d="M4 7h16M4 12h16M4 17h9"/>'],
+  ['RCA','done','<circle cx="11" cy="11" r="6"/><path d="m15.5 15.5 4 4"/>'],
+  ['CAPA','now','<path d="M12 4v16M4 12h16"/>'],
+  ['Verify','todo','<path d="M4.5 12.5 10 18 19.5 6.5"/>'],
+  ['Closed','todo','<rect x="5" y="5" width="14" height="14" rx="3"/>']
+];
+$('flowStrip').innerHTML = FLOW.map((s,i) =>
+  '<div class="step ' + (s[1] === 'todo' ? '' : s[1]) + '"><div class="node">' +
+  '<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + s[2] + '</svg></span>' +
+  '<span class="lb">' + s[0] + '</span></div>' +
+  (i < FLOW.length-1 ? '<span class="link"></span>' : '') + '</div>'
+).join('');
+
+/* anon toggle hides UHID? no — hides nothing, but reporter identity notice */
+$('anonTgl').onchange = e => {
+  // purely visual in the mockup
+};
+
+/* tabs */
+function setTab(t){
+  for (const k of ['report','queue','case','trends']){
+    $('tab-' + k).classList.toggle('active', k === t);
+    $('nav-' + k).setAttribute('aria-pressed', k === t);
+  }
+  window.scrollTo(0,0);
+}
+for (const k of ['report','queue','case','trends']) $('nav-' + k).onclick = () => setTab(k);
+
+renderForm();
+</script>
+
+</body>
+</html>
