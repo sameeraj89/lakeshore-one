@@ -41,7 +41,20 @@ served by this process. Updates stream to all open sessions over SSE.
 
 ## Production deployment (hospital VPS)
 
-Any small VPS works (1 vCPU / 1 GB is plenty). Recommended setup:
+Any small VPS works (1 vCPU / 1 GB is plenty — e.g. DigitalOcean Bangalore
+or AWS Lightsail Mumbai to keep data in India).
+
+**Quick way** — point a DNS A record (e.g. `ops.yourdomain.in`) at the
+server's IP, then on a fresh Ubuntu 24.04 box:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sameeraj89/lakeshore-one/main/server/deploy.sh -o deploy.sh
+sudo bash deploy.sh ops.yourdomain.in
+```
+
+That installs Node 22 + Caddy, sets up the systemd service, HTTPS, and a
+nightly backup to `/var/backups/lakeshore-one`. Re-run it any time to pull
+updates. The equivalent manual steps:
 
 ```bash
 # 1. Node 22+ (Ubuntu 24.04)
@@ -69,7 +82,11 @@ sudo systemctl enable --now lakeshore-one
 sudo apt install -y caddy
 echo 'ops.yourdomain.in {
   reverse_proxy 127.0.0.1:8080
-}' | sudo tee /etc/Caddyfile && sudo systemctl reload caddy
+}' | sudo tee /etc/caddy/Caddyfile && sudo systemctl reload caddy
+
+# 5. Let the service user write the database
+sudo mkdir -p /opt/lakeshore-one/server/data
+sudo chown -R www-data:www-data /opt/lakeshore-one/server/data
 ```
 
 HTTPS is required for the PWA install prompt and the camera (QR) on phones.
