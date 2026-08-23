@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "gstack": true
+  },
+  "_note": "gstack comes from the 'git-workflow' marketplace configured on Sameeraj's machine. To finish wiring it for cloud sessions, run `claude plugin marketplace list` locally, find the git-workflow row, and add its source here as: extraKnownMarketplaces: { \"git-workflow\": { \"source\": { \"source\": \"github\", \"repo\": \"<owner>/<repo>\" } } }"
+}
