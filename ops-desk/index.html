@@ -14,7 +14,7 @@
 <style>
   :root{
     --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
-    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --maroon:#E8146E;
     --brand-tint:rgba(0,30,95,0.07);
@@ -33,7 +33,7 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --maroon:#D66A97;
       --brand-tint:rgba(95,164,218,0.12);
@@ -51,7 +51,7 @@
   }
   :root[data-theme="dark"]{
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --maroon:#D66A97;
     --brand-tint:rgba(95,164,218,0.12);
@@ -215,6 +215,9 @@
   .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:60;
     background:var(--dark-card); color:var(--dark-ink); border-radius:12px; padding:10px 18px;
     font-size:13px; font-weight:500; box-shadow:var(--shadow); display:none}
+  .banner a{color:inherit; font-weight:700; text-decoration:underline}
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
 </style>
 
 
@@ -228,13 +231,17 @@
       <span class="av" id="meAv">?</span><span class="nm" id="meName">Set up profile</span>
     </button>
   </header>
+  <div class="banner info show" id="deprecationBanner" style="margin-top:10px">
+    Ops Desk has been replaced by Lakeshore One. This board is read-only &mdash; raise and track
+    tickets in the new app. <a href="../lakeshore-one/">Open Lakeshore One</a>
+  </div>
   <div class="banner" id="banner"></div>
 
   <main>
     <!-- REPORT -->
-    <section class="tab active" id="tab-report">
+    <section class="tab" id="tab-report">
       <h1 class="page">Report an incident</h1>
-      <p class="page-sub">Anything broken, unsafe or not working &mdash; IT, biomedical, facility, housekeeping or security. The right team is notified on this board.</p>
+      <p class="page-sub">Reporting has moved to Lakeshore One &mdash; this form is disabled. Existing tickets remain viewable on the Tickets tab.</p>
       <div class="fcard">
         <label class="fl" for="fTitle">What happened?</label>
         <input type="text" id="fTitle" maxlength="120" placeholder="e.g. HIS terminal not booting in ICU nursing station">
@@ -252,9 +259,9 @@
     </section>
 
     <!-- TICKETS -->
-    <section class="tab" id="tab-tickets">
+    <section class="tab active" id="tab-tickets">
       <h1 class="page">Tickets</h1>
-      <p class="page-sub" id="boardSub">All reported incidents, live for everyone viewing this page.</p>
+      <p class="page-sub" id="boardSub">Read-only archive of incidents reported before this board was replaced.</p>
       <div class="kpis">
         <div class="kpi open"><div class="n" id="kOpen">0</div><div class="l">Open</div></div>
         <div class="kpi prog"><div class="n" id="kProg">0</div><div class="l">In progress</div></div>
@@ -299,16 +306,16 @@
   </main>
 
   <footer>
-    <b style="color:var(--ink-2)">Lakeshore Ops Desk &mdash; prototype.</b><br>
-    Tickets live in this page&rsquo;s shared store and update for every viewer.
-    Profiles are self-declared until this moves behind hospital sign-on.
+    <b style="color:var(--ink-2)">Lakeshore Ops Desk &mdash; retired.</b><br>
+    This board is a read-only archive of past incidents.
+    New tickets are raised and tracked in <a href="../lakeshore-one/" style="color:var(--brand)">Lakeshore One</a>.
   </footer>
 
   <nav>
-    <button id="nav-report" aria-pressed="true">
+    <button id="nav-report" aria-pressed="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
       Report</button>
-    <button id="nav-tickets" aria-pressed="false">
+    <button id="nav-tickets" aria-pressed="true">
       <span class="nbadge" id="navBadge" style="display:none">0</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
       Tickets</button>
@@ -377,7 +384,7 @@ let state = null;                 // {seq, ops:[uids], tickets:[]}
 let artifactNS = null;            // claude.use('artifact') result
 let mode = 'loading';             // 'shared' | 'readonly' | 'local'
 let me = null;                    // {name, role, dept}
-let ui = { tab:'report', status:'active', cat:'All', zone:null, expanded:new Set(), cat_sel:CATS[0], pri_sel:'Medium' };
+let ui = { tab:'tickets', status:'active', cat:'All', zone:null, expanded:new Set(), cat_sel:CATS[0], pri_sel:'Medium' };
 
 function loadProfile(){ try{ me = JSON.parse(localStorage.getItem('opsdesk-profile')) || null; }catch(e){ me = null; } }
 function saveProfile(p){ me = p; try{ localStorage.setItem('opsdesk-profile', JSON.stringify(p)); }catch(e){} renderMe(); }
@@ -395,16 +402,15 @@ async function boot(){
   if (!state.ops) state.ops = [];
 
   artifactNS = window.claude && window.claude.use ? await window.claude.use('artifact') : null;
-  if (artifactNS){
-    mode = 'shared';
-  } else {
-    mode = 'local';
+  if (!artifactNS){
+    // still surface tickets that were saved locally on this device
     try{
       const local = JSON.parse(localStorage.getItem('opsdesk-local'));
       if (local && local.seq >= state.seq) state = local;
     }catch(e){}
-    showBanner('Running in single-device demo mode — submissions are saved only in this browser. Open the Claude artifact link for the shared board.', 'info');
   }
+  // Ops Desk is superseded by Lakeshore One: frozen read-only, no new submissions.
+  mode = 'readonly';
 
   // replay an op that was interrupted by a concurrent-publish reload
   try{
@@ -440,6 +446,10 @@ function apply(op){
 /* apply + persist. On conflict the shell reloads this view; the op is
    stashed first and replayed by boot() against the fresh state. */
 async function commit(op, isReplay){
+  if (mode === 'readonly'){
+    toast('This board is read-only — raise tickets in Lakeshore One.');
+    return false;
+  }
   const changed = apply(op);
   if (changed) renderAll();
   if (mode === 'local'){
@@ -522,7 +532,10 @@ function renderForm(){
   seg($('fPri'), PRIS, ui.pri_sel, v => { ui.pri_sel = v; renderForm(); }, p => p === 'Urgent' ? 'p-urgent' : '');
   const zs = $('fZone');
   if (!zs.options.length) zs.innerHTML = ZONES.map(z => '<option>' + esc(z[0]) + '</option>').join('');
-  $('fSubmit').disabled = (mode === 'readonly');
+  const ro = (mode === 'readonly');
+  $('fSubmit').disabled = ro;
+  $('fTitle').disabled = ro; $('fZone').disabled = ro; $('fDesc').disabled = ro;
+  $('asNote').style.display = ro ? 'none' : '';
 }
 
 function counts(){
@@ -559,7 +572,7 @@ function renderBoard(){
   }
   $('boardSub').textContent = ui.zone
     ? 'Showing tickets in ' + ui.zone + ' — tap Map to change.'
-    : 'All reported incidents, live for everyone viewing this page.';
+    : 'Read-only archive of incidents reported before this board was replaced.';
 
   let list = state.tickets.slice();
   if (ui.status === 'active') list = list.filter(t => t.status === 'open' || t.status === 'in_progress');
@@ -576,9 +589,18 @@ function renderBoard(){
   // wire events
   for (const card of wrap.querySelectorAll('.tcard')){
     const id = card.dataset.id;
-    card.querySelector('.thead').onclick = () => {
+    const head = card.querySelector('.thead');
+    const toggle = () => {
       ui.expanded.has(id) ? ui.expanded.delete(id) : ui.expanded.add(id);
       renderBoard();
+    };
+    head.onclick = toggle;
+    head.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault(); toggle();
+        const nh = $('ticketList').querySelector('.tcard[data-id="' + id + '"] .thead');
+        if (nh) nh.focus();
+      }
     };
     const cin = card.querySelector('.cbox input');
     const send = card.querySelector('.cbox button');
@@ -623,7 +645,8 @@ function renderTicket(t){
   }
 
   return '<div class="tcard' + (exp ? ' expanded' : '') + '" data-id="' + esc(t.id) + '">' +
-    '<div class="thead"><div class="trow1"><span class="tid">' + esc(t.id) + '</span>' +
+    '<div class="thead" role="button" tabindex="0" aria-expanded="' + exp + '">' +
+    '<div class="trow1"><span class="tid">' + esc(t.id) + '</span>' +
     badge(st.cls, st.icon, st.label) + priB + (t.sample ? badge('b-sample','','sample') : '') + '</div>' +
     '<div class="ttitle">' + esc(t.title) + '</div>' +
     '<div class="tmeta">' + esc(t.zone) + ' &middot; ' + esc(t.cat) + ' &middot; ' + esc(t.reporter.name) +
@@ -683,7 +706,7 @@ async function submitTicket(){
     $('fSubmit').disabled = (mode === 'readonly');
     if (ok){
       $('fTitle').value = ''; $('fDesc').value = '';
-      toast('Reported. The team sees it on the board now.');
+      toast('Recorded on this board.');
       ui.zone = null; setTab('tickets');
     }
   });
