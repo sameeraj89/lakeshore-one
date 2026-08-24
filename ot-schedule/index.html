@@ -291,7 +291,7 @@
     <section class="tab" id="tab-list">
       <span class="viewtag">OT coordinator view</span>
       <h1 class="page">Case list</h1>
-      <p class="page-sub">Confirm bookings the evening before, mark wheel-in and completion on the day, log delays and cancellations with the reason visible to everyone.</p>
+      <p class="page-sub">Confirm bookings the evening before &mdash; on the live system, confirming puts the case (procedure &amp; surgeon only) on the OT stage board in the main app, where wheel-in to cleaning is tracked and reflected back here. Delays and cancellations from this board follow the case there.</p>
       <div class="daynav">
         <button id="lPrev" aria-label="Previous day">&lsaquo;</button>
         <div class="dlabel" id="lLabel"></div>
@@ -403,7 +403,7 @@ async function fetchServer(){
   if (!r.ok) return false;
   db.cases = r.items.map(x => ({ id:x.id, date:x.case_date, ot:x.ot, start:x.start, dur:x.dur_min,
     patient:x.patient, uhid:x.uhid || '', proc:x.procedure_name, surgeon:x.surgeon,
-    anaes:x.anaes || 'GA', prio:x.prio || 'Elective', status:x.status }));
+    anaes:x.anaes || 'GA', prio:x.prio || 'Elective', status:x.status, caseId:x.case_id || null }));
   return true;
 }
 function startSSE(){
@@ -628,12 +628,16 @@ function renderList(){
     '<div class="qcard"><div class="qrow"><span class="refid">' + c.id + '</span>' +
     '<span class="badge b-booked" style="background:var(--neutral-bg); color:var(--neutral)">' + c.ot + '</span>' +
     '<span class="badge b-' + c.status + '">' + ST_LABEL[c.status] + '</span>' +
-    (c.prio === 'Emergency' ? '<span class="badge b-emg">Emergency</span>' : '') + '</div>' +
+    (c.prio === 'Emergency' ? '<span class="badge b-emg">Emergency</span>' : '') +
+    (c.caseId ? '<span class="badge b-confirmed">Live board &middot; ' + c.caseId + '</span>' : '') + '</div>' +
     '<div class="qtitle">' + c.start + '&ndash;' + toHM(toMin(c.start) + c.dur) + ' &middot; ' + esc(c.patient) +
       (c.uhid ? ' <span style="font-weight:500; color:var(--ink-3)">(' + esc(c.uhid) + ')</span>' : '') + '</div>' +
-    '<div class="qmeta">' + esc(c.proc) + ' &middot; ' + esc(c.surgeon) + ' &middot; ' + c.anaes + '</div>' +
+    '<div class="qmeta">' + esc(c.proc) + ' &middot; ' + esc(c.surgeon) + ' &middot; ' + c.anaes +
+      (c.caseId && ['confirmed','delayed','in_ot'].includes(c.status)
+        ? ' &middot; wheel-in &amp; completion are recorded on the live OT board in the main app' : '') + '</div>' +
     '<div class="qact">' +
-    (NEXT[c.status] ? '<button class="primary" data-adv="' + c.id + '">' + NEXT[c.status][0] + '</button>' : '') +
+    (NEXT[c.status] && !(c.caseId && ['confirmed','delayed','in_ot'].includes(c.status))
+      ? '<button class="primary" data-adv="' + c.id + '">' + NEXT[c.status][0] + '</button>' : '') +
     (c.status === 'booked' || c.status === 'confirmed' ?
       '<button data-delay="' + c.id + '">Delay 30 min</button><button class="ghost" data-cancel="' + c.id + '">Cancel</button>' : '') +
     '</div></div>').join('')

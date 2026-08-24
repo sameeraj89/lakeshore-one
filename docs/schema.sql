@@ -197,6 +197,7 @@ CREATE TABLE ot_bookings (                       -- planning board; live stages 
   anaes      varchar(20),
   prio       varchar(12),                        -- Elective / Emergency
   status     otb_status   NOT NULL DEFAULT 'booked',
+  case_id    varchar(16) REFERENCES ot_cases(id),-- set on confirm: the case pushed to the live stage board
   created_by varchar(20) REFERENCES users(emp_id)
 );
 CREATE INDEX idx_otb_day ON ot_bookings (case_date, ot, start);
