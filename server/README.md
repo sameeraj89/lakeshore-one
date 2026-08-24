@@ -16,13 +16,26 @@ node server/server.js               # http://localhost:8080
 PORT=3000 node server/server.js     # custom port
 ```
 
+Optional environment variables:
+
+| Variable | Effect |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Enables **Sign in with Google** on the login page. Create an OAuth *Web application* client in Google Cloud Console, add the site's origin (e.g. `https://ops.yourdomain.in`) to *Authorized JavaScript origins*, and set the client ID here. The server verifies the ID token against Google's public keys — no extra packages. |
+| `GOOGLE_HOSTED_DOMAIN` | e.g. `lakeshorehospital.org` — Google sign-ins from this Workspace domain that don't match an existing account are auto-provisioned as `staff`. Any other verified Google account (e.g. a personal Gmail) that isn't linked to an account gets **guest access** instead — same limits as the Guest button, but with a persistent identity (`GV-…`), so they keep the same account and ticket history across sign-ins. Emails an admin has linked (user management → Google email) always sign in with that account's full role, whatever the domain. |
+| `DEMO_LOGIN=1` | Enables the one-tap **Nurse (demo)** sign-in button. Leave unset in production. |
+
+Guest and Patient one-tap sign-in is always available: it creates an ephemeral
+limited account (`GST-…` / `PAT-…`) that can only raise facility, housekeeping
+and security requests and track its own tickets — no bed board, OT list, queue
+or dashboard data is ever sent to those sessions.
+
 On first run it creates `server/data/` containing:
 - `lakeshore-one.db` — the SQLite database (WAL mode). **Back this file up.**
 - `secret.key` — token-signing secret (mode 600)
 
 Seeded accounts (PIN set on first sign-in): `LH-ADMIN` (admin — adds real
-users), `LH-DOC01`, `LH-IT01`, `LH-FM01`, `LH-HK01`, `LH-BM01`, `LH-SEC01`,
-`LH-MGT01`.
+users), `LH-DOC01`, `LH-NUR01`, `LH-IT01`, `LH-FM01`, `LH-HK01`, `LH-BM01`,
+`LH-SEC01`, `LH-MGT01`.
 
 The frontend auto-detects the server (`/api/health`) — the same pages that
 run in demo mode on GitHub Pages become the live multi-user system when
