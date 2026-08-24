@@ -580,6 +580,9 @@ function moduleState(mod, u){
   return null;
 }
 
+/* ---------- WhatsApp intake channel (AI triage) — see server/WHATSAPP.md ---------- */
+const whatsapp = require('./whatsapp')({ db, dataDir: DATA_DIR, applyOp, broadcast, audit });
+
 /* ---------- state projection (role-filtered, matches the client shape) ---------- */
 function buildState(u){
   const role = u.role;
@@ -725,6 +728,10 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { token:sign(u.emp_id), empId:u.emp_id });
     }
 
+    /* WhatsApp Cloud API webhook — unauthenticated by design (Meta calls it);
+       verified by hub.verify_token (GET) and X-Hub-Signature-256 (POST). */
+    if (p === '/api/whatsapp/webhook') return whatsapp.handleWebhook(req, res, url);
+
     if (p === '/api/login' && req.method === 'POST'){
       const { empId, pin } = await readBody(req);
       const eid = String(empId || '').toUpperCase().trim();
@@ -794,7 +801,7 @@ const server = http.createServer(async (req, res) => {
         const { op } = await readBody(req);
         if (!op || typeof op !== 'object') return json(res, 400, { error:'missing op' });
         const result = applyOp(op, u);
-        if (result.ok) broadcast();
+        if (result.ok){ broadcast(); whatsapp.onOp(op, u); }
         return json(res, result.ok ? 200 : 403, result);
       }
       if (p === '/api/events'){

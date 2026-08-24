@@ -15,6 +15,7 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 | `it-pulse/` | IT Pulse | Live campus IT & facility monitoring map, 13 layers — IT: network / Wi-Fi / servers & apps / WAN links / clinical app interfaces; facility: power & UPS / DG & changeover / medical gas / cold chain / lifts / fire panel / water & RO; plus CCTV — 12-h zone trends, simulated telemetry, adapter point documented in-page |
 | `ops-desk/` | Ops Desk | Earlier shared incident board (superseded by Lakeshore One) |
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
+| `whatsapp/` | WhatsApp Intake | **Simulator** for the WhatsApp reporting channel — staff text the hospital number in plain language (photo optional), AI triage files a classified ticket into the Lakeshore One queues, updates flow back on WhatsApp. The real channel is built into the backend (`server/whatsapp.js`, setup in `server/WHATSAPP.md`) |
 
 ## Access control (pilot)
 
@@ -65,6 +66,12 @@ restricted server-side to the Patient Experience team (quality /
 management); other staff see only their own captures. `node server/server.js` and the apps switch from demo
 mode to the real system automatically. See `server/README.md` for the VPS
 deployment guide (systemd + Caddy HTTPS, ~5 minutes) and `Dockerfile`.
+
+The backend also carries the **WhatsApp intake channel**: a Meta WhatsApp
+Cloud API webhook where staff report incidents by texting the hospital
+number, Claude triages the free-text (any language) into the ticket
+taxonomy, and status updates are pushed back to the reporter on WhatsApp —
+`server/WHATSAPP.md` has the 30-minute setup guide.
 
 ## Data
 
