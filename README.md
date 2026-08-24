@@ -12,7 +12,7 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 | `patient-inputs/` | Patient Inputs | Voice-of-the-patient desk — capture complaints / suggestions / appreciation / queries at any touchpoint, Patient Experience triage board with response targets (high 24 h, medium 48 h, low 72 h), experience trends |
 | `usg-wait/` | USG Wait | Ultrasound wait-time tracker — token queue per machine, register → start → complete taps, live estimated waits and auto room assignment, machine load view, hourly wait trends |
 | `ot-schedule/` | OT Schedule | Operation theatre planning — book cases with table-clash checks (20-min turnover protected), six-theatre day timeline 07:00–21:00, case list with statuses, utilisation insights. Complements the live OT stage board inside the main app |
-| `it-pulse/` | IT Pulse | Live campus IT monitoring map (network / Wi-Fi / servers / power / CCTV layers, 12-h zone trends) — simulated telemetry, adapter point documented in-page |
+| `it-pulse/` | IT Pulse | Live campus IT & facility monitoring map (network / Wi-Fi / servers / power & UPS / CCTV / medical gas / cold chain / DG & changeover / WAN link layers, 12-h zone trends) — simulated telemetry, adapter point documented in-page |
 | `ops-desk/` | Ops Desk | Earlier shared incident board (superseded by Lakeshore One) |
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
 
