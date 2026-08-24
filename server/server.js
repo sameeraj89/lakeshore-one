@@ -24,6 +24,14 @@ const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
+/* Google SSO: set GOOGLE_CLIENT_ID to the OAuth web client ID to enable the
+   "Sign in with Google" button. GOOGLE_HOSTED_DOMAIN (optional) auto-provisions
+   staff accounts for that Workspace domain; otherwise an admin must add the
+   user with a matching email first. DEMO_LOGIN=1 enables the one-tap demo
+   nurse sign-in (never enable on a production instance). */
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_HOSTED_DOMAIN = (process.env.GOOGLE_HOSTED_DOMAIN || '').toLowerCase();
+const DEMO_LOGIN = process.env.DEMO_LOGIN === '1';
 const SERVER_DIR = __dirname;
 const STATIC_ROOT = path.resolve(SERVER_DIR, '..');
 const DATA_DIR = process.env.DATA_DIR || path.join(SERVER_DIR, 'data');
@@ -84,6 +92,8 @@ CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
 /* migration: photo column on tickets (added after first release) */
 try{ db.exec('ALTER TABLE tickets ADD COLUMN photo TEXT'); }catch(e){ /* exists */ }
+/* migration: email column on users (Google SSO account linking) */
+try{ db.exec('ALTER TABLE users ADD COLUMN email TEXT'); }catch(e){ /* exists */ }
 db.exec(`
 CREATE INDEX IF NOT EXISTS idx_tickets_queue ON tickets (module, status, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_updates ON ticket_updates (ticket_id, at);
@@ -92,7 +102,10 @@ CREATE INDEX IF NOT EXISTS idx_bed_events ON bed_events (bed_id, at);
 
 /* ---------- domain config (mirrors the frontend) ---------- */
 const RESPONDER = { it_agent:'it', facility_agent:'fac', housekeeping_agent:'hk', biomedical_agent:'bm', security_agent:'sec' };
-const ROLES = ['doctor','nurse','staff','it_agent','facility_agent','housekeeping_agent','biomedical_agent','security_agent','management','quality','admin'];
+const ROLES = ['doctor','nurse','staff','it_agent','facility_agent','housekeeping_agent','biomedical_agent','security_agent','management','quality','admin','guest','patient'];
+/* guests & patients: raise/track visitor-facing desks only, no ops boards */
+const isLimited = r => ['guest','patient'].includes(r);
+const GUEST_MODS = ['fac','hk','sec'];
 const MODS = ['it','fac','hk','bm','sec'];
 const PRI = { P1:{resp:15,res:240}, P2:{resp:60,res:480}, P3:{resp:240,res:1440}, P4:{resp:1440,res:4320} };
 const TICKET_STATUS = ['open','in_progress','resolved','closed'];
@@ -118,6 +131,7 @@ function seed(){
       ['LH-BM01','Rahul Menon','biomedical_agent','Biomedical Engineering'],
       ['LH-SEC01','Vinod PS','security_agent','Security'],
       ['LH-DOC01','Dr. Anitha Menon','doctor','Cardiology'],
+      ['LH-NUR01','Nisha Varghese','nurse','Nursing'],
       ['LH-MGT01','Hospital Director','management','Administration']
     ]) ins.run(id, name, role, dept, now);
   }
@@ -177,6 +191,43 @@ function verifyToken(token){
   }catch(e){ return null; }
 }
 
+/* ---------- Google SSO (ID-token verification, no dependencies) ---------- */
+let googleCertsCache = { keys: null, until: 0 };
+async function googleCerts(){
+  if (googleCertsCache.keys && googleCertsCache.until > Date.now()) return googleCertsCache.keys;
+  const r = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+  if (!r.ok) throw new Error('cert fetch failed');
+  const j = await r.json();
+  googleCertsCache = { keys: j.keys, until: Date.now() + 3600e3 };
+  return j.keys;
+}
+async function verifyGoogleToken(credential){
+  try{
+    const [h, p, sig] = String(credential).split('.');
+    if (!h || !p || !sig) return null;
+    const header = JSON.parse(Buffer.from(h, 'base64url').toString());
+    const payload = JSON.parse(Buffer.from(p, 'base64url').toString());
+    const jwk = (await googleCerts()).find(k => k.kid === header.kid);
+    if (!jwk || header.alg !== 'RS256') return null;
+    const key = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+    if (!crypto.verify('RSA-SHA256', Buffer.from(h + '.' + p), key, Buffer.from(sig, 'base64url'))) return null;
+    if (!['https://accounts.google.com','accounts.google.com'].includes(payload.iss)) return null;
+    if (payload.aud !== GOOGLE_CLIENT_ID) return null;
+    if (!(payload.exp * 1000 > Date.now())) return null;
+    if (!payload.email || payload.email_verified !== true) return null;
+    return payload;
+  }catch(e){ return null; }
+}
+
+/* ---------- guest sign-in throttle (global, coarse) ---------- */
+let guestWindow = { start: 0, n: 0 };
+function guestThrottled(){
+  const now = Date.now();
+  if (now - guestWindow.start > 3600e3) guestWindow = { start: now, n: 0 };
+  guestWindow.n += 1;
+  return guestWindow.n > 60;
+}
+
 /* ---------- login rate limiting ---------- */
 const attempts = new Map();   // empId -> {n, until}
 function throttled(empId){
@@ -212,6 +263,8 @@ function applyOp(op, u){
   switch (op.kind){
     case 'create': {
       if (!MODS.includes(op.mod) || !PRI[op.pri] || !op.title) return { ok:false, error:'invalid ticket' };
+      if (isLimited(role) && !GUEST_MODS.includes(op.mod))
+        return { ok:false, error:'Guests can raise facility, housekeeping and security requests only.' };
       const seq = nextSeq(), id = 'LSO-' + seq;
       const p = PRI[op.pri];
       let photo = null;
@@ -309,6 +362,7 @@ function applyOp(op, u){
       return { ok:true };
     }
     case 'praise': {
+      if (isLimited(role)) return { ok:false, error:'not allowed' };
       const forName = s(op.forName, 60), value = s(op.value, 40);
       if (!forName || !PRAISE_VALUES.includes(value)) return { ok:false, error:'invalid praise' };
       let forId = op.forId ? s(op.forId, 20).toUpperCase() : null;
@@ -334,8 +388,10 @@ function applyOp(op, u){
       const eid = s(nu.empId,20).toUpperCase();
       if (!eid || !nu.name || !ROLES.includes(nu.role)) return { ok:false, error:'invalid user' };
       if (db.prepare('SELECT emp_id FROM users WHERE emp_id=?').get(eid)) return { ok:false, error:'employee ID exists' };
-      db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at) VALUES (?,?,?,?,NULL,1,?)')
-        .run(eid, s(nu.name,60), nu.role, s(nu.dept,60), at);
+      const email = nu.email ? s(nu.email,80).toLowerCase() : null;
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok:false, error:'invalid email' };
+      db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at,email) VALUES (?,?,?,?,NULL,1,?,?)')
+        .run(eid, s(nu.name,60), nu.role, s(nu.dept,60), at, email);
       audit(empId, `added user ${eid} (${s(nu.name,60)}, ${nu.role})`);
       return { ok:true };
     }
@@ -379,28 +435,36 @@ function buildState(u){
     updates: updStmt.all(t.id).map(x => ({ uid:String(x.id), type:x.kind, from:x.from_status, to:x.to_status,
       by:x.author, byName:x.author_name, text:x.body || '', at:x.at }))
   }));
+  /* guests & patients never receive the bed board or OT list (patient privacy) */
   const beds = {};
-  for (const b of db.prepare('SELECT * FROM beds').all())
-    beds[b.bed_id] = { status:b.status, since:b.since, by:b.updated_by };
-  const bedlog = db.prepare('SELECT bed_id bed, from_st "from", to_st "to", at FROM bed_events ORDER BY id DESC LIMIT 600').all().reverse();
-  const cutoff = new Date(Date.now() - 2*86400e3).toISOString().slice(0,10);
-  const msStmt = db.prepare('SELECT * FROM ot_milestones WHERE case_id=? ORDER BY at');
-  const cases = db.prepare('SELECT * FROM ot_cases WHERE case_date>=? ORDER BY case_date, planned').all(cutoff)
-    .map(c => ({ id:c.id, suite:c.suite, date:c.case_date, planned:c.planned, durMin:c.dur_min,
-      procedure:c.procedure_name, surgeon:c.surgeon, status:c.status,
-      milestones: msStmt.all(c.id).map(m => ({ to:m.stage, at:m.at, by:m.actor_name })) }));
+  let bedlog = [], cases = [];
+  if (!isLimited(role)){
+    for (const b of db.prepare('SELECT * FROM beds').all())
+      beds[b.bed_id] = { status:b.status, since:b.since, by:b.updated_by };
+    bedlog = db.prepare('SELECT bed_id bed, from_st "from", to_st "to", at FROM bed_events ORDER BY id DESC LIMIT 600').all().reverse();
+    const cutoff = new Date(Date.now() - 2*86400e3).toISOString().slice(0,10);
+    const msStmt = db.prepare('SELECT * FROM ot_milestones WHERE case_id=? ORDER BY at');
+    cases = db.prepare('SELECT * FROM ot_cases WHERE case_date>=? ORDER BY case_date, planned').all(cutoff)
+      .map(c => ({ id:c.id, suite:c.suite, date:c.case_date, planned:c.planned, durMin:c.dur_min,
+        procedure:c.procedure_name, surgeon:c.surgeon, status:c.status,
+        milestones: msStmt.all(c.id).map(m => ({ to:m.stage, at:m.at, by:m.actor_name })) }));
+  }
   let users;
   if (role === 'admin')
     users = db.prepare('SELECT * FROM users ORDER BY emp_id').all()
-      .map(x => ({ empId:x.emp_id, name:x.name, role:x.role, dept:x.dept, active:!!x.active,
+      .map(x => ({ empId:x.emp_id, name:x.name, role:x.role, dept:x.dept, email:x.email || null, active:!!x.active,
                    pinHash: x.pin_hash ? 'set' : null }));
   else
     users = [{ empId:u.emp_id, name:u.name, role:u.role, dept:u.dept, active:true, pinHash:'set' }];
-  /* praise wall + a minimal people directory (for the recipient picker) — visible to every role */
-  const praise = db.prepare(`SELECT id, for_id forId, for_name forName, for_dept forDept, value,
-    body text, author "by", author_name byName, at FROM praise ORDER BY id DESC LIMIT 200`).all()
-    .map(x => ({ ...x, id:'PRS-' + x.id, text:x.text || '', forDept:x.forDept || '' }));
-  const people = db.prepare('SELECT emp_id empId, name, dept FROM users WHERE active=1 ORDER BY name').all();
+  /* praise wall + a minimal people directory (for the recipient picker) — staff only,
+     never sent to guest/patient sessions */
+  let praise = [], people = [];
+  if (!isLimited(role)){
+    praise = db.prepare(`SELECT id, for_id forId, for_name forName, for_dept forDept, value,
+      body text, author "by", author_name byName, at FROM praise ORDER BY id DESC LIMIT 200`).all()
+      .map(x => ({ ...x, id:'PRS-' + x.id, text:x.text || '', forDept:x.forDept || '' }));
+    people = db.prepare("SELECT emp_id empId, name, dept FROM users WHERE active=1 AND role NOT IN ('guest','patient') ORDER BY name").all();
+  }
   const auditRows = canSeeAll(role)
     ? db.prepare('SELECT actor "by", action, at FROM audit ORDER BY id DESC LIMIT 40').all()
     : [];
@@ -436,6 +500,55 @@ const server = http.createServer(async (req, res) => {
   try{
     /* ---- API ---- */
     if (p === '/api/health') return json(res, 200, { ok:true, service:'lakeshore-one' });
+
+    if (p === '/api/config')
+      return json(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, demoLogin: DEMO_LOGIN });
+
+    if (p === '/api/guest' && req.method === 'POST'){
+      const { as } = await readBody(req);
+      if (!['guest','patient','nurse'].includes(as)) return json(res, 400, { error:'invalid sign-in type' });
+      if (as === 'nurse'){
+        if (!DEMO_LOGIN) return json(res, 403, { error:'Nurse demo sign-in is disabled on this server — sign in with your employee ID.' });
+        let u = db.prepare("SELECT * FROM users WHERE emp_id='LH-NURSE'").get();
+        if (!u){
+          db.prepare("INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at) VALUES ('LH-NURSE','Demo Nurse','nurse','Nursing','locked',1,?)")
+            .run(new Date().toISOString());
+        } else if (!u.active) return json(res, 403, { error:'Demo nurse account is deactivated.' });
+        audit('LH-NURSE', 'demo nurse sign-in');
+        return json(res, 200, { token:sign('LH-NURSE'), empId:'LH-NURSE' });
+      }
+      if (guestThrottled()) return json(res, 429, { error:'Too many guest sign-ins right now — try again later.' });
+      const seq = nextSeq();
+      const eid = (as === 'patient' ? 'PAT-' : 'GST-') + seq;
+      const name = as === 'patient' ? 'Patient · ' + seq : 'Guest · ' + seq;
+      /* pin_hash 'locked' can never verify, so guest IDs are unusable at the PIN login */
+      db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at) VALUES (?,?,?,?,?,1,?)')
+        .run(eid, name, as, 'Visitor', 'locked', new Date().toISOString());
+      audit(eid, as + ' sign-in (no account)');
+      broadcast();
+      return json(res, 200, { token:sign(eid), empId:eid });
+    }
+
+    if (p === '/api/google-login' && req.method === 'POST'){
+      if (!GOOGLE_CLIENT_ID) return json(res, 404, { error:'Google sign-in is not configured on this server.' });
+      const { credential } = await readBody(req);
+      const g = await verifyGoogleToken(credential);
+      if (!g) return json(res, 401, { error:'Google sign-in could not be verified — try again.' });
+      const email = g.email.toLowerCase();
+      let u = db.prepare('SELECT * FROM users WHERE email IS NOT NULL AND lower(email)=? AND active=1').get(email);
+      if (!u && GOOGLE_HOSTED_DOMAIN &&
+          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN))){
+        let eid = ('G-' + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+        if (db.prepare('SELECT emp_id FROM users WHERE emp_id=?').get(eid)) eid = eid.slice(0, 14) + '-' + nextSeq();
+        db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at,email) VALUES (?,?,?,?,?,1,?,?)')
+          .run(eid, String(g.name || email).slice(0, 60), 'staff', '', 'locked', new Date().toISOString(), email);
+        audit(eid, 'auto-provisioned via Google SSO (' + email + ')');
+        u = db.prepare('SELECT * FROM users WHERE emp_id=?').get(eid);
+      }
+      if (!u) return json(res, 403, { error:'No Lakeshore One account is linked to ' + email + '. Ask an admin to add your email to your account.' });
+      audit(u.emp_id, 'signed in with Google (' + email + ')');
+      return json(res, 200, { token:sign(u.emp_id), empId:u.emp_id });
+    }
 
     if (p === '/api/login' && req.method === 'POST'){
       const { empId, pin } = await readBody(req);
