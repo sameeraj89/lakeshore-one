@@ -17,7 +17,7 @@
     --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
-    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --magenta:#E8146E; --magenta-tint:rgba(232,20,110,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
     --crit:#B3261E; --crit-bg:#FBE4E2;
@@ -35,7 +35,7 @@
       --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
       --good:#4FC97E; --good-bg:#173726;
       --warn:#E5B84B; --warn-bg:#3D3319;
       --crit:#F07A6A; --crit-bg:#43201C;
@@ -53,7 +53,7 @@
     --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
     --good:#4FC97E; --good-bg:#173726;
     --warn:#E5B84B; --warn-bg:#3D3319;
     --crit:#F07A6A; --crit-bg:#43201C;
@@ -71,6 +71,7 @@
   .app{max-width:520px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .logo-chip{line-height:0}
   .logo-chip img{height:38px; width:auto; display:block}
@@ -80,7 +81,7 @@
   .prod b{color:#fff; display:block; font-size:14px; letter-spacing:0.6px}
   .me-chip{display:flex; align-items:center; gap:7px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.28);
     border-radius:999px; padding:4px 11px 4px 5px; font-size:12px; font-weight:500; color:#fff; cursor:pointer}
-  .me-chip .av{width:24px; height:24px; border-radius:50%; background:var(--maroon); color:#fff;
+  .me-chip .av{width:24px; height:24px; border-radius:50%; background:var(--magenta); color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; flex:none}
   .banner{margin:0 16px 10px; padding:9px 13px; border-radius:12px; font-size:12px; line-height:1.5;
     background:var(--warn-bg); color:var(--warn); display:none}
@@ -145,7 +146,7 @@
   .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
   .seg.two button{flex:1 1 45%}
   .impact{display:flex; align-items:center; justify-content:space-between; gap:10px;
-    background:var(--maroon-tint); border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:14px}
+    background:var(--magenta-tint); border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:14px}
   .impact .it{font-size:13px; font-weight:700}
   .impact .is{font-size:11.5px; color:var(--ink-2); margin-top:2px; line-height:1.4}
   .switch{position:relative; width:46px; height:26px; flex:none; cursor:pointer}
@@ -153,7 +154,7 @@
   .switch .tr{position:absolute; inset:0; border-radius:999px; background:var(--neutral-bg); transition:.2s}
   .switch .tr::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
     background:#fff; box-shadow:var(--shadow-sm); transition:.2s}
-  .switch input:checked + .tr{background:var(--maroon)}
+  .switch input:checked + .tr{background:var(--magenta)}
   .switch input:checked + .tr::after{transform:translateX(20px)}
   .sla-note{font-size:11.5px; color:var(--ink-2); margin-top:10px; line-height:1.5;
     background:var(--shell); border-radius:10px; padding:9px 12px}
@@ -182,7 +183,7 @@
   .b-closed{background:var(--neutral-bg); color:var(--neutral)}
   .b-p1{background:var(--crit-bg); color:var(--crit)} .b-p2{background:var(--warn-bg); color:var(--warn)}
   .b-req{background:var(--info-bg); color:var(--info)}
-  .b-pat{background:var(--maroon-tint); color:var(--maroon)}
+  .b-pat{background:var(--magenta-tint); color:var(--magenta)}
   .b-sla-ok{background:var(--good-bg); color:var(--good)}
   .b-sla-due{background:var(--warn-bg); color:var(--warn)}
   .b-sla-late{background:var(--crit-bg); color:var(--crit)}
@@ -245,6 +246,7 @@
   .urow .ubtns{margin-left:auto; display:flex; gap:6px}
   .ubtn{border:1.5px solid var(--line); background:var(--shell); color:var(--ink-2); border-radius:8px; min-height:44px;
     padding:6px 10px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+  #tab-admin .dcard{margin-top:16px}
 
   /* ---------- improvements pass ---------- */
   .search{position:relative; margin-bottom:10px}
@@ -319,6 +321,22 @@
     font-size:13px; font-weight:500; box-shadow:var(--shadow); display:none; max-width:90%; text-align:center}
   button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
   textarea:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  /* ---------- desktop layout for management surfaces (Dash + Admin only) ---------- */
+  @media (min-width:1024px){
+    .app.wide-tab{max-width:1100px}
+    .app.wide-tab #tab-dash.active,
+    .app.wide-tab #tab-admin.active{display:grid; grid-template-columns:1fr 1fr; column-gap:16px; align-items:start}
+    .app.wide-tab #tab-dash.active > *,
+    .app.wide-tab #tab-admin.active > *{min-width:0}
+    .app.wide-tab #tab-dash.active > .page, .app.wide-tab #tab-dash.active > .page-sub,
+    .app.wide-tab #tab-admin.active > .page, .app.wide-tab #tab-admin.active > .page-sub{grid-column:1 / -1}
+    /* Dash: KPIs + charts left; campus map + activity feed right */
+    .app.wide-tab #tab-dash.active > div:nth-of-type(5){grid-column:2; grid-row:3 / span 3}
+    .app.wide-tab #tab-dash.active > div:nth-of-type(6){grid-column:2; grid-row:6}
+    /* Admin: user list left; audit trail right */
+    .app.wide-tab #tab-admin.active > .dcard{grid-column:2; grid-row:3 / span 2; margin-top:0}
+  }
 </style>
 
 
@@ -498,7 +516,7 @@
         <p class="page-sub">User accounts, roles and the audit trail. Only admins see this.</p>
         <button class="submit" id="addUserBtn" style="margin:0 0 14px">+ Add user</button>
         <div id="userList"></div>
-        <div class="dcard" style="margin-top:16px"><h3>Audit trail (latest 40)</h3><div class="feed" id="audit"></div></div>
+        <div class="dcard"><h3>Audit trail (latest 40)</h3><div class="feed" id="audit"></div></div>
       </section>
     </main>
 
@@ -1105,6 +1123,7 @@ function setTab(tab){
   ui.tab = tab;
   for (const s of document.querySelectorAll('.tab')) s.classList.remove('active');
   $('tab-' + tab).classList.add('active');
+  document.querySelector('.app').classList.toggle('wide-tab', tab === 'dash' || tab === 'admin');
   for (const b of $('nav').children) b.setAttribute('aria-pressed', b.id === 'nav-' + tab);
   renderAll();
   window.scrollTo(0,0);
