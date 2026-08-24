@@ -23,8 +23,10 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 - **Sign in with Google** (server mode): set `GOOGLE_CLIENT_ID` on the backend
   and a Google button appears on the login page. The server verifies the ID
   token and matches the Google email to the account's linked email (admin adds
-  it in user management); optionally `GOOGLE_HOSTED_DOMAIN` auto-provisions
-  staff accounts for the hospital's Workspace domain.
+  it in user management). Unrecognised emails are auto-provisioned:
+  `GOOGLE_HOSTED_DOMAIN` (hospital Workspace) accounts as staff, and any other
+  verified Google account — e.g. a patient's personal Gmail — as a guest-level
+  account with a persistent identity and ticket history.
 - **Guest / Patient sign-in** (all modes): one tap, no account. Guests and
   patients get a limited view — raise facility, housekeeping and security
   requests and track their own tickets only; no ops boards, queues or
