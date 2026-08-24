@@ -14,7 +14,7 @@
 <style>
   :root{
     --bg:#F2EFF1; --shell:#FAF8F9; --card:#FFFFFF;
-    --ink:#241820; --ink-2:#6B5A63; --ink-3:#98878F;
+    --ink:#241820; --ink-2:#6B5A63; --ink-3:#6E5D66;
     --line:rgba(36,24,32,0.10);
     --accent:#001E5F; --accent-ink:#001542; --accent-tint:rgba(0,30,95,0.07);
     --blue:#2B7CBE; --blue-ink:#1B5A8E; --blue-tint:rgba(43,124,190,0.08);
@@ -30,7 +30,7 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#151013; --shell:#1B1519; --card:#241C21;
-      --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#83717A;
+      --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#A79AA0;
       --line:rgba(240,231,235,0.12);
       --accent:#E0759F; --accent-ink:#EC9DBB; --accent-tint:rgba(224,117,159,0.12);
       --blue:#5FA4DA; --blue-ink:#8FC1E8; --blue-tint:rgba(95,164,218,0.12);
@@ -46,7 +46,7 @@
   }
   :root[data-theme="dark"]{
     --bg:#151013; --shell:#1B1519; --card:#241C21;
-    --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#83717A;
+    --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#A79AA0;
     --line:rgba(240,231,235,0.12);
     --accent:#E0759F; --accent-ink:#EC9DBB; --accent-tint:rgba(224,117,159,0.12);
     --blue:#5FA4DA; --blue-ink:#8FC1E8; --blue-tint:rgba(95,164,218,0.12);
@@ -90,11 +90,11 @@
     color:var(--ink-3); margin:15px 2px 6px}
   label.fl:first-child{margin-top:0}
   input[type=text], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
-    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:16px; color:var(--ink); outline:none}
   input:focus, select:focus, textarea:focus{border-color:var(--accent)}
   textarea{min-height:80px; resize:vertical}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
-  .seg button{flex:1 1 30%; min-width:88px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+  .seg button{flex:1 1 30%; min-width:88px; min-height:44px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif; line-height:1.3}
   .seg button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink)}
   .seg.harm button[aria-pressed="true"].h-sev{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
@@ -111,11 +111,12 @@
   .switch input:checked + .tr::after{transform:translateX(20px)}
   .checks{display:flex; flex-wrap:wrap; gap:7px}
   .checks button{border:1.5px solid var(--line); background:var(--shell); color:var(--ink-2); border-radius:999px;
-    padding:7px 13px; font-size:12px; font-weight:500; cursor:pointer; font-family:'Figtree',sans-serif}
+    min-height:44px; padding:7px 13px; font-size:12px; font-weight:500; cursor:pointer; font-family:'Figtree',sans-serif}
   .checks button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink); font-weight:700}
   .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--accent);
     color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
   .hint{font-size:11.5px; color:var(--ink-3); margin-top:6px; line-height:1.5}
+  .ferr{font-size:12.5px; font-weight:700; color:var(--crit); margin-top:8px; text-align:center; line-height:1.5}
 
   /* confirmation */
   .confirm{display:none; text-align:center; padding:30px 18px}
@@ -131,7 +132,7 @@
 
   /* queue */
   .qcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px;
-    margin-bottom:10px; box-shadow:var(--shadow-sm); cursor:pointer}
+    margin-bottom:10px; box-shadow:var(--shadow-sm)}
   .qrow{display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap}
   .irid{font-size:11px; font-weight:700; color:var(--ink-3); font-variant-numeric:tabular-nums}
   .badge{display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
@@ -140,7 +141,6 @@
   .b-mild{background:var(--warn-bg); color:var(--warn)}
   .b-mod{background:var(--warn-bg); color:var(--warn)}
   .b-sev{background:var(--crit-bg); color:var(--crit)}
-  .b-anon{background:var(--neutral-bg); color:var(--neutral)}
   .b-sla-ok{background:var(--good-bg); color:var(--good)}
   .b-sla-due{background:var(--warn-bg); color:var(--warn)}
   .b-sla-late{background:var(--crit-bg); color:var(--crit)}
@@ -218,6 +218,9 @@
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:21px; height:21px}
   nav button[aria-pressed="true"]{color:var(--accent)}
+
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+  [tabindex]:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 </style>
 
 
@@ -241,8 +244,8 @@
         <div class="fcard">
           <div class="anon">
             <div><div class="at">Report anonymously</div>
-              <div class="as">Your name is never recorded. Quality can&rsquo;t follow up with you, but the report is treated identically.</div></div>
-            <label class="switch"><input type="checkbox" id="anonTgl"><span class="tr"></span></label>
+              <div class="as">Your name is never recorded and the patient UHID field is hidden. Quality can&rsquo;t follow up with you, but the report is treated identically.</div></div>
+            <label class="switch"><input type="checkbox" id="anonTgl" aria-label="Report anonymously"><span class="tr"></span></label>
           </div>
           <label class="fl">Type of incident</label>
           <div class="seg" id="irType"></div>
@@ -255,14 +258,17 @@
           <select id="irWhen">
             <option>In the last hour</option><option>Today</option><option>Yesterday</option><option>Earlier this week</option><option>More than a week ago</option>
           </select>
+          <div id="uhidField">
           <label class="fl" for="irUhid">Patient UHID <span style="font-weight:500; text-transform:none; letter-spacing:0">(optional &middot; visible only to Quality)</span></label>
           <input type="text" id="irUhid" placeholder="e.g. LH0482913" maxlength="20">
+          </div>
           <label class="fl" for="irDesc">What happened?</label>
           <textarea id="irDesc" placeholder="Describe the event factually — what was expected, what actually happened, what was done immediately&hellip;"></textarea>
           <label class="fl">Contributing factors <span style="font-weight:500; text-transform:none; letter-spacing:0">(optional, pick any)</span></label>
           <div class="checks" id="irFactors"></div>
           <button class="submit" id="irSubmit">Submit confidential report</button>
-          <p class="hint" style="text-align:center; margin-top:10px">You&rsquo;ll get an IR number to track the outcome. Reporting a near miss is as valuable as reporting harm.</p>
+          <p class="ferr" id="irErr" aria-live="polite"></p>
+          <p class="hint" style="text-align:center; margin-top:10px">You&rsquo;ll get an IR number &mdash; quote it when following up with the Quality team. Reporting a near miss is as valuable as reporting harm.</p>
         </div>
       </div>
       <div class="confirm" id="confirm">
@@ -273,7 +279,7 @@
         <div class="steps fcard">
           <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Within 24 h</span> &mdash; Quality triages: confirms type &amp; harm level, informs the department head.</div></div>
           <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Within 7 days</span> &mdash; department review; serious events get a root-cause analysis.</div></div>
-          <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Then</span> &mdash; corrective &amp; preventive actions with owners and due dates; you can check the outcome with your IR number.</div></div>
+          <div class="tlx"><span class="dot"></span><div class="tx"><span class="who">Then</span> &mdash; corrective &amp; preventive actions with owners and due dates; quote your IR number when following up with the Quality team.</div></div>
           <div class="tlx" style="margin-bottom:0"><span class="dot"></span><div class="tx"><span class="who">Monthly</span> &mdash; de-identified learnings are shared in the patient safety huddle.</div></div>
         </div>
         <button class="submit" style="max-width:330px; margin:18px auto 0; display:block" id="again">Report another incident</button>
@@ -284,7 +290,8 @@
     <section class="tab" id="tab-queue">
       <span class="viewtag">Quality team view</span>
       <h1 class="page">Triage queue</h1>
-      <p class="page-sub">New and in-review incident reports. Triage SLA: 24 h from submission; RCA required for moderate harm and above.</p>
+      <p class="page-sub">New and in-review incident reports. Triage SLA: 24 h from submission; RCA required for moderate harm and above.
+        In the live build this queue is visible only to Quality &amp; Patient Safety sign-ins.</p>
       <div id="queueList"></div>
     </section>
 
@@ -435,7 +442,7 @@ const HARM = [
   ['Mild','Minor, no extra treatment needed'],
   ['Moderate','Needed treatment or monitoring'],
   ['Severe','Lasting harm or life-threatening'],
-  ['Death / sentinel','Report immediately by phone too']
+  ['Death / sentinel','<b>Also report by phone now &mdash; call the Quality &amp; Patient Safety on-call line immediately (ext. &mdash; set by Quality).</b>']
 ];
 const ZONES = ['Wards Tower','ICU Complex','OT Complex','Emergency & Trauma','OP Block','Cath Lab','Radiology & Imaging','Central Lab','Oncology Block','Pharmacy','Other'];
 const FACTORS = ['Workload / staffing','Communication gap','Handover','Look-alike drug / label','Equipment issue','Protocol unclear','Protocol not followed','New staff / training','IT / system issue','Environment'];
@@ -460,7 +467,7 @@ function renderForm(){
   seg($('irHarm'), HARM, harmSel, v => { harmSel = v; renderForm(); },
       l => (l === 'Severe' || l === 'Death / sentinel') ? 'h-sev' : '');
   const h = HARM.find(h => h[0] === harmSel);
-  $('harmHint').textContent = h ? h[1] : '';
+  $('harmHint').innerHTML = h ? h[1] : '';
   const zs = $('irZone');
   if (!zs.options.length) zs.innerHTML = ZONES.map(z => '<option>' + z + '</option>').join('');
   const f = $('irFactors'); f.innerHTML = '';
@@ -472,8 +479,15 @@ function renderForm(){
   }
 }
 $('irSubmit').onclick = () => {
+  const err = $('irErr');
+  if (!$('irDesc').value.trim()){
+    err.textContent = 'Please describe what happened before submitting.';
+    $('irDesc').focus();
+    return;
+  }
+  err.textContent = '';
   const d = new Date();
-  $('irNo').textContent = 'IR-' + String(d.getDate()).padStart(2,'0') + '0' + (d.getMonth()+1) + '-' + (100 + Math.floor(Math.random()*99));
+  $('irNo').textContent = 'IR-' + String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + '-' + (100 + Math.floor(Math.random()*99));
   $('reportForm').style.display = 'none';
   $('confirm').classList.add('show');
   window.scrollTo(0,0);
@@ -497,10 +511,9 @@ $('queueList').innerHTML = QUEUE.map(q =>
   '<div class="qcard"><div class="qrow"><span class="irid">' + q.id + '</span>' +
   '<span class="badge ' + q.hcls + '">' + q.harm + '</span>' +
   '<span class="badge b-stage">' + q.stage + '</span>' +
-  (q.anon ? '<span class="badge b-anon">anonymous</span>' : '') +
   '<span class="badge b-sla-' + q.sla + '">' + q.slaTx + '</span></div>' +
   '<div class="qtitle">' + q.title + '</div>' +
-  '<div class="qmeta">' + q.zone + ' &middot; reported ' + q.when + (q.anon ? '' : ' &middot; named report') + '</div></div>'
+  '<div class="qmeta">' + q.zone + ' &middot; reported ' + q.when + '</div></div>'
 ).join('');
 
 /* workflow strip */
@@ -519,9 +532,11 @@ $('flowStrip').innerHTML = FLOW.map((s,i) =>
   (i < FLOW.length-1 ? '<span class="link"></span>' : '') + '</div>'
 ).join('');
 
-/* anon toggle hides UHID? no — hides nothing, but reporter identity notice */
+/* anon toggle: hide the patient UHID field and clear its value */
 $('anonTgl').onchange = e => {
-  // purely visual in the mockup
+  const on = e.target.checked;
+  $('uhidField').style.display = on ? 'none' : '';
+  if (on) $('irUhid').value = '';
 };
 
 /* tabs */
