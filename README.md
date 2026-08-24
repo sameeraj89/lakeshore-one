@@ -8,7 +8,7 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 
 | Folder | App | What it does |
 |---|---|---|
-| `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, management dashboard with campus map, admin user management + audit trail |
+| `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, praise wall (send recognition to a colleague, everyone sees it), management dashboard with campus map, admin user management + audit trail |
 | `patient-inputs/` | Patient Inputs | Voice-of-the-patient desk — capture complaints / suggestions / appreciation / queries at any touchpoint, Patient Experience triage board with response targets (high 24 h, medium 48 h, low 72 h), experience trends |
 | `usg-wait/` | USG Wait | Ultrasound wait-time tracker — token queue per machine, register → start → complete taps, live estimated waits and auto room assignment, machine load view, hourly wait trends |
 | `ot-schedule/` | OT Schedule | Operation theatre planning — book cases with table-clash checks (20-min turnover protected), six-theatre day timeline 07:00–21:00, case list with statuses, utilisation insights. Complements the live OT stage board inside the main app |

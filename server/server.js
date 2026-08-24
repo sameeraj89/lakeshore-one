@@ -82,6 +82,10 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
   id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL, stage TEXT NOT NULL,
   actor_name TEXT NOT NULL, at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS praise (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, for_id TEXT, for_name TEXT NOT NULL, for_dept TEXT,
+  value TEXT NOT NULL, body TEXT, author TEXT NOT NULL, author_name TEXT NOT NULL, at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS ideas (
   id INTEGER PRIMARY KEY AUTOINCREMENT, idea TEXT NOT NULL, theme TEXT,
   name TEXT, dept TEXT, at TEXT NOT NULL
@@ -115,6 +119,7 @@ const BED_STATUS = ['occupied','dirty','cleaning','ready','blocked'];
 const BED_WARDS = [['3A',20],['4B',16],['5A',14],['ON',16],['ICU',12],['HDU',8]];
 const OT_STAGES = ['scheduled','in_ot','anaesthesia','incision','closure','out','cleaning','done'];
 const OT_SUITES = ['OT-1 · Cardiac','OT-2 · Neuro','OT-3 · Ortho','OT-4 · Gen & GI','OT-5 · Onco','OT-6 · Uro & Gyn'];
+const PRAISE_VALUES = ['Patient first','Team player','Went the extra mile','Calm in a crisis','Always improving'];
 const canSeeAll = r => ['management','quality','admin'].includes(r);
 const isClinical = r => ['doctor','nurse','staff'].includes(r);
 
@@ -372,6 +377,27 @@ function applyOp(op, u){
       audit(empId, `${c.id} → ${op.to}`);
       return { ok:true };
     }
+    case 'praise': {
+      if (isLimited(role)) return { ok:false, error:'not allowed' };
+      const forName = s(op.forName, 60), value = s(op.value, 40);
+      if (!forName || !PRAISE_VALUES.includes(value)) return { ok:false, error:'invalid praise' };
+      let forId = op.forId ? s(op.forId, 20).toUpperCase() : null;
+      if (forId && !db.prepare('SELECT emp_id FROM users WHERE emp_id=? AND active=1').get(forId)) forId = null;
+      if (forId === empId || forName === name) return { ok:false, error:'you cannot praise yourself' };
+      db.prepare('INSERT INTO praise (for_id,for_name,for_dept,value,body,author,author_name,at) VALUES (?,?,?,?,?,?,?,?)')
+        .run(forId, forName, s(op.forDept,60), value, s(op.text,500), empId, name, at);
+      audit(empId, `praised ${forName} (${value})`);
+      return { ok:true };
+    }
+    case 'praise_del': {
+      if (!canSeeAll(role)) return { ok:false, error:'management only' };
+      const pid = parseInt(String(op.id || '').replace(/^PRS-/, ''), 10);
+      const row = Number.isInteger(pid) ? db.prepare('SELECT * FROM praise WHERE id=?').get(pid) : null;
+      if (!row) return { ok:false, error:'no such praise' };
+      db.prepare('DELETE FROM praise WHERE id=?').run(pid);
+      audit(empId, `removed praise PRS-${pid} for ${row.for_name} (from ${row.author_name})`);
+      return { ok:true };
+    }
     case 'user_add': {
       if (role !== 'admin') return { ok:false, error:'admin only' };
       const nu = op.user || {};
@@ -446,10 +472,19 @@ function buildState(u){
                    pinHash: x.pin_hash ? 'set' : null }));
   else
     users = [{ empId:u.emp_id, name:u.name, role:u.role, dept:u.dept, active:true, pinHash:'set' }];
+  /* praise wall + a minimal people directory (for the recipient picker) — staff only,
+     never sent to guest/patient sessions */
+  let praise = [], people = [];
+  if (!isLimited(role)){
+    praise = db.prepare(`SELECT id, for_id forId, for_name forName, for_dept forDept, value,
+      body text, author "by", author_name byName, at FROM praise ORDER BY id DESC LIMIT 200`).all()
+      .map(x => ({ ...x, id:'PRS-' + x.id, text:x.text || '', forDept:x.forDept || '' }));
+    people = db.prepare("SELECT emp_id empId, name, dept FROM users WHERE active=1 AND role NOT IN ('guest','patient') ORDER BY name").all();
+  }
   const auditRows = canSeeAll(role)
     ? db.prepare('SELECT actor "by", action, at FROM audit ORDER BY id DESC LIMIT 40').all()
     : [];
-  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, audit:auditRows };
+  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, praise, people, audit:auditRows };
 }
 
 /* ---------- HTTP plumbing ---------- */
