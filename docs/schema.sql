@@ -93,6 +93,19 @@ CREATE TABLE catalog (
   UNIQUE (module, type, category)
 );
 
+-- ---------- Staff suggestion box ----------
+-- Ideas to make Lakeshore a better place to work, submitted from the hub
+-- landing page. No auth by design: anonymity encourages honest input.
+CREATE TABLE ideas (
+  id          bigserial PRIMARY KEY,
+  idea        varchar(1000) NOT NULL,
+  theme       varchar(40),                      -- e.g. 'Workplace & wellbeing'
+  name        varchar(60),                      -- optional; blank = anonymous
+  department  varchar(60),                      -- optional
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_ideas_time ON ideas (created_at DESC);
+
 -- ---------- Bed tracking ----------
 CREATE TYPE bed_status AS ENUM ('occupied','dirty','cleaning','ready','blocked');
 CREATE TABLE beds (

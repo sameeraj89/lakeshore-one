@@ -25,10 +25,12 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 /* Google SSO: set GOOGLE_CLIENT_ID to the OAuth web client ID to enable the
-   "Sign in with Google" button. GOOGLE_HOSTED_DOMAIN (optional) auto-provisions
-   staff accounts for that Workspace domain; otherwise an admin must add the
-   user with a matching email first. DEMO_LOGIN=1 enables the one-tap demo
-   nurse sign-in (never enable on a production instance). */
+   "Sign in with Google" button. Emails an admin has linked to an account sign
+   in with that account's role. Unrecognised emails are auto-provisioned:
+   GOOGLE_HOSTED_DOMAIN Workspace accounts as staff, any other verified Google
+   account (e.g. Gmail) as guest — same limits as the Guest button, but with a
+   persistent identity. DEMO_LOGIN=1 enables the one-tap demo nurse sign-in
+   (never enable on a production instance). */
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_HOSTED_DOMAIN = (process.env.GOOGLE_HOSTED_DOMAIN || '').toLowerCase();
 const DEMO_LOGIN = process.env.DEMO_LOGIN === '1';
@@ -83,6 +85,10 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
 CREATE TABLE IF NOT EXISTS praise (
   id INTEGER PRIMARY KEY AUTOINCREMENT, for_id TEXT, for_name TEXT NOT NULL, for_dept TEXT,
   value TEXT NOT NULL, body TEXT, author TEXT NOT NULL, author_name TEXT NOT NULL, at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ideas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, idea TEXT NOT NULL, theme TEXT,
+  name TEXT, dept TEXT, at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, action TEXT NOT NULL, at TEXT NOT NULL
@@ -240,6 +246,16 @@ function noteFailure(empId){
   a.n += 1;
   if (a.n >= 5){ a.until = Date.now() + 15*60e3; a.n = 0; }
   attempts.set(empId, a);
+}
+
+/* ---------- suggestion-box throttle (unauthenticated endpoint) ---------- */
+const ideaLast = new Map();   // ip -> last accepted submission (ms)
+function ideaThrottled(ip){
+  const last = ideaLast.get(ip) || 0;
+  if (Date.now() - last < 30e3) return true;
+  ideaLast.set(ip, Date.now());
+  if (ideaLast.size > 5000) ideaLast.clear();
+  return false;
 }
 
 /* ---------- SSE ---------- */
@@ -536,16 +552,24 @@ const server = http.createServer(async (req, res) => {
       if (!g) return json(res, 401, { error:'Google sign-in could not be verified — try again.' });
       const email = g.email.toLowerCase();
       let u = db.prepare('SELECT * FROM users WHERE email IS NOT NULL AND lower(email)=? AND active=1').get(email);
-      if (!u && GOOGLE_HOSTED_DOMAIN &&
-          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN))){
-        let eid = ('G-' + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+      if (!u){
+        /* a deactivated account with this email stays blocked — never silently re-created */
+        if (db.prepare('SELECT emp_id FROM users WHERE email IS NOT NULL AND lower(email)=?').get(email))
+          return json(res, 403, { error:'This account has been deactivated. Contact IT / admin.' });
+        /* auto-provision: hospital Workspace domain → staff; any other verified
+           Google account → guest access (same limits as the Guest button), with a
+           persistent identity so they get the same account back every sign-in */
+        const hosted = !!(GOOGLE_HOSTED_DOMAIN &&
+          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN)));
+        if (!hosted && guestThrottled()) return json(res, 429, { error:'Too many sign-ups right now — try again later.' });
+        let eid = ((hosted ? 'G-' : 'GV-') + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
         if (db.prepare('SELECT emp_id FROM users WHERE emp_id=?').get(eid)) eid = eid.slice(0, 14) + '-' + nextSeq();
         db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at,email) VALUES (?,?,?,?,?,1,?,?)')
-          .run(eid, String(g.name || email).slice(0, 60), 'staff', '', 'locked', new Date().toISOString(), email);
-        audit(eid, 'auto-provisioned via Google SSO (' + email + ')');
+          .run(eid, String(g.name || email).slice(0, 60), hosted ? 'staff' : 'guest', hosted ? '' : 'Visitor',
+               'locked', new Date().toISOString(), email);
+        audit(eid, 'auto-provisioned via Google SSO (' + email + (hosted ? '' : ' · guest access') + ')');
         u = db.prepare('SELECT * FROM users WHERE emp_id=?').get(eid);
       }
-      if (!u) return json(res, 403, { error:'No Lakeshore One account is linked to ' + email + '. Ask an admin to add your email to your account.' });
       audit(u.emp_id, 'signed in with Google (' + email + ')');
       return json(res, 200, { token:sign(u.emp_id), empId:u.emp_id });
     }
@@ -578,6 +602,20 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { token:sign(eid), empId:eid });
     }
 
+    /* staff suggestion box — deliberately open so ideas can be anonymous */
+    if (p === '/api/idea' && req.method === 'POST'){
+      const ip = req.socket.remoteAddress || '?';
+      if (ideaThrottled(ip)) return json(res, 429, { error:'One idea per 30 seconds — please try again shortly.' });
+      const b = await readBody(req);
+      const idea = String(b.idea || '').trim();
+      if (idea.length < 10 || idea.length > 1000) return json(res, 400, { error:'Idea must be 10–1000 characters.' });
+      const s = (v, n) => String(v ?? '').trim().slice(0, n);
+      db.prepare('INSERT INTO ideas (idea,theme,name,dept,at) VALUES (?,?,?,?,?)')
+        .run(idea, s(b.theme,40), s(b.name,60), s(b.dept,60), new Date().toISOString());
+      audit(s(b.name,60) || 'anonymous', 'shared a workplace idea (' + s(b.theme,40) + ')');
+      return json(res, 200, { ok:true });
+    }
+
     /* authenticated routes */
     if (p.startsWith('/api/')){
       const u = verifyToken(bearer(req, url));
@@ -585,6 +623,10 @@ const server = http.createServer(async (req, res) => {
 
       if (p === '/api/me') return json(res, 200, { empId:u.emp_id, name:u.name, role:u.role, dept:u.dept });
       if (p === '/api/state') return json(res, 200, buildState(u));
+      if (p === '/api/ideas'){
+        if (!canSeeAll(u.role)) return json(res, 403, { error:'not allowed' });
+        return json(res, 200, { ideas: db.prepare('SELECT * FROM ideas ORDER BY id DESC LIMIT 200').all() });
+      }
       if (p.startsWith('/api/photo/')){
         const t = db.prepare('SELECT module,reporter,photo FROM tickets WHERE id=?').get(p.slice(11));
         if (!t || !t.photo) return json(res, 404, { error:'no photo' });
