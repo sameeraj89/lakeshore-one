@@ -82,6 +82,10 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
   id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL, stage TEXT NOT NULL,
   actor_name TEXT NOT NULL, at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS ideas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, idea TEXT NOT NULL, theme TEXT,
+  name TEXT, dept TEXT, at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, action TEXT NOT NULL, at TEXT NOT NULL
 );
@@ -237,6 +241,16 @@ function noteFailure(empId){
   a.n += 1;
   if (a.n >= 5){ a.until = Date.now() + 15*60e3; a.n = 0; }
   attempts.set(empId, a);
+}
+
+/* ---------- suggestion-box throttle (unauthenticated endpoint) ---------- */
+const ideaLast = new Map();   // ip -> last accepted submission (ms)
+function ideaThrottled(ip){
+  const last = ideaLast.get(ip) || 0;
+  if (Date.now() - last < 30e3) return true;
+  ideaLast.set(ip, Date.now());
+  if (ideaLast.size > 5000) ideaLast.clear();
+  return false;
 }
 
 /* ---------- SSE ---------- */
@@ -553,6 +567,20 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { token:sign(eid), empId:eid });
     }
 
+    /* staff suggestion box — deliberately open so ideas can be anonymous */
+    if (p === '/api/idea' && req.method === 'POST'){
+      const ip = req.socket.remoteAddress || '?';
+      if (ideaThrottled(ip)) return json(res, 429, { error:'One idea per 30 seconds — please try again shortly.' });
+      const b = await readBody(req);
+      const idea = String(b.idea || '').trim();
+      if (idea.length < 10 || idea.length > 1000) return json(res, 400, { error:'Idea must be 10–1000 characters.' });
+      const s = (v, n) => String(v ?? '').trim().slice(0, n);
+      db.prepare('INSERT INTO ideas (idea,theme,name,dept,at) VALUES (?,?,?,?,?)')
+        .run(idea, s(b.theme,40), s(b.name,60), s(b.dept,60), new Date().toISOString());
+      audit(s(b.name,60) || 'anonymous', 'shared a workplace idea (' + s(b.theme,40) + ')');
+      return json(res, 200, { ok:true });
+    }
+
     /* authenticated routes */
     if (p.startsWith('/api/')){
       const u = verifyToken(bearer(req, url));
@@ -560,6 +588,10 @@ const server = http.createServer(async (req, res) => {
 
       if (p === '/api/me') return json(res, 200, { empId:u.emp_id, name:u.name, role:u.role, dept:u.dept });
       if (p === '/api/state') return json(res, 200, buildState(u));
+      if (p === '/api/ideas'){
+        if (!canSeeAll(u.role)) return json(res, 403, { error:'not allowed' });
+        return json(res, 200, { ideas: db.prepare('SELECT * FROM ideas ORDER BY id DESC LIMIT 200').all() });
+      }
       if (p.startsWith('/api/photo/')){
         const t = db.prepare('SELECT module,reporter,photo FROM tickets WHERE id=?').get(p.slice(11));
         if (!t || !t.photo) return json(res, 404, { error:'no photo' });
