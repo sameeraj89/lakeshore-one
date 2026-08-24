@@ -16,7 +16,7 @@
     --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
     --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
-    --brand:#001E5F; --brand-ink:#001542; --maroon:#E8146E;
+    --brand:#001E5F; --brand-ink:#001542; --magenta:#E8146E;
     --brand-tint:rgba(0,30,95,0.07);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
@@ -35,7 +35,7 @@
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
       --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
-      --brand:#5FA4DA; --brand-ink:#8FC1E8; --maroon:#D66A97;
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --magenta:#D66A97;
       --brand-tint:rgba(95,164,218,0.12);
       --good:#4FC97E; --good-bg:#173726;
       --warn:#E5B84B; --warn-bg:#3D3319;
@@ -53,7 +53,7 @@
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
     --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
-    --brand:#5FA4DA; --brand-ink:#8FC1E8; --maroon:#D66A97;
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --magenta:#D66A97;
     --brand-tint:rgba(95,164,218,0.12);
     --good:#4FC97E; --good-bg:#173726;
     --warn:#E5B84B; --warn-bg:#3D3319;
@@ -73,6 +73,7 @@
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .wordmark img{height:32px; display:block}
   .wordmark small{display:block; font-family:'Figtree',sans-serif; font-weight:600; font-size:10px;
@@ -80,7 +81,7 @@
   .me-chip{display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.28);
     border-radius:999px; padding:5px 12px 5px 6px; font-size:12px; font-weight:500; color:#fff;
     cursor:pointer; max-width:190px}
-  .me-chip .av{width:26px; height:26px; border-radius:50%; background:var(--maroon); color:#fff;
+  .me-chip .av{width:26px; height:26px; border-radius:50%; background:var(--magenta); color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex:none}
   .me-chip .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 

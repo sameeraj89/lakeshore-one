@@ -16,7 +16,7 @@
     --bg:#F2EFF1; --shell:#FAF8F9; --card:#FFFFFF;
     --ink:#241820; --ink-2:#6B5A63; --ink-3:#6E5D66;
     --line:rgba(36,24,32,0.10);
-    --accent:#001E5F; --accent-ink:#001542; --accent-tint:rgba(0,30,95,0.07);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07);
     --blue:#2B7CBE; --blue-ink:#1B5A8E; --blue-tint:rgba(43,124,190,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
@@ -24,7 +24,7 @@
     --info:#1B5A8E; --info-bg:#E3EEF8;
     --neutral:#6B5A63; --neutral-bg:#EFEAEC;
     --dark-card:#2A1E26; --dark-ink:#F6F1F3;
-    --chart:#E8146E; --chart-2:rgba(232,20,110,0.45); --chart-fill:rgba(232,20,110,0.12);
+    --magenta:#E8146E; --magenta-2:rgba(232,20,110,0.45); --magenta-fill:rgba(232,20,110,0.12);
     --shadow:0 8px 24px rgba(36,24,32,0.14); --shadow-sm:0 2px 8px rgba(36,24,32,0.10);
   }
   @media (prefers-color-scheme: dark){
@@ -32,7 +32,7 @@
       --bg:#151013; --shell:#1B1519; --card:#241C21;
       --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#A79AA0;
       --line:rgba(240,231,235,0.12);
-      --accent:#E0759F; --accent-ink:#EC9DBB; --accent-tint:rgba(224,117,159,0.12);
+      --brand:#E0759F; --brand-ink:#EC9DBB; --brand-tint:rgba(224,117,159,0.12);
       --blue:#5FA4DA; --blue-ink:#8FC1E8; --blue-tint:rgba(95,164,218,0.12);
       --good:#4FC97E; --good-bg:#1B3626;
       --warn:#E5B84B; --warn-bg:#3D3319;
@@ -40,7 +40,7 @@
       --info:#8FC1E8; --info-bg:#1D3348;
       --neutral:#B39FA9; --neutral-bg:#31262C;
       --dark-card:#120D10; --dark-ink:#F6F1F3;
-      --chart:#E0759F; --chart-2:rgba(224,117,159,0.5); --chart-fill:rgba(224,117,159,0.14);
+      --magenta:#E0759F; --magenta-2:rgba(224,117,159,0.5); --magenta-fill:rgba(224,117,159,0.14);
       --shadow:0 8px 24px rgba(0,0,0,0.5); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
     }
   }
@@ -48,7 +48,7 @@
     --bg:#151013; --shell:#1B1519; --card:#241C21;
     --ink:#F0E7EB; --ink-2:#B39FA9; --ink-3:#A79AA0;
     --line:rgba(240,231,235,0.12);
-    --accent:#E0759F; --accent-ink:#EC9DBB; --accent-tint:rgba(224,117,159,0.12);
+    --brand:#E0759F; --brand-ink:#EC9DBB; --brand-tint:rgba(224,117,159,0.12);
     --blue:#5FA4DA; --blue-ink:#8FC1E8; --blue-tint:rgba(95,164,218,0.12);
     --good:#4FC97E; --good-bg:#1B3626;
     --warn:#E5B84B; --warn-bg:#3D3319;
@@ -56,7 +56,7 @@
     --info:#8FC1E8; --info-bg:#1D3348;
     --neutral:#B39FA9; --neutral-bg:#31262C;
     --dark-card:#120D10; --dark-ink:#F6F1F3;
-    --chart:#E0759F; --chart-2:rgba(224,117,159,0.5); --chart-fill:rgba(224,117,159,0.14);
+    --magenta:#E0759F; --magenta-2:rgba(224,117,159,0.5); --magenta-fill:rgba(224,117,159,0.14);
     --shadow:0 8px 24px rgba(0,0,0,0.5); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
   }
 
@@ -65,6 +65,7 @@
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(36,24,32,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .wordmark img{height:32px; display:block}
   .wordmark small{display:block; font-family:'Figtree',sans-serif; font-weight:600; font-size:10px;
@@ -72,9 +73,9 @@
   .mock-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn);
     background:var(--warn-bg); border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
 
-  .trustbar{margin:6px 16px 12px; background:var(--accent-tint); border:1px solid var(--line);
+  .trustbar{margin:6px 16px 12px; background:var(--brand-tint); border:1px solid var(--line);
     border-radius:14px; padding:11px 14px; font-size:12px; line-height:1.55; color:var(--ink-2)}
-  .trustbar b{color:var(--accent-ink)}
+  .trustbar b{color:var(--brand-ink)}
 
   main{flex:1; padding-bottom:86px}
   .tab{display:none; padding:2px 16px 20px}
@@ -91,12 +92,12 @@
   label.fl:first-child{margin-top:0}
   input[type=text], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
     border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:16px; color:var(--ink); outline:none}
-  input:focus, select:focus, textarea:focus{border-color:var(--accent)}
+  input:focus, select:focus, textarea:focus{border-color:var(--brand)}
   textarea{min-height:80px; resize:vertical}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
   .seg button{flex:1 1 30%; min-width:88px; min-height:44px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif; line-height:1.3}
-  .seg button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink)}
+  .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
   .seg.harm button[aria-pressed="true"].h-sev{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
   .anon{display:flex; align-items:center; justify-content:space-between; gap:10px;
     background:var(--shell); border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:2px}
@@ -107,13 +108,13 @@
   .switch .tr{position:absolute; inset:0; border-radius:999px; background:var(--neutral-bg); transition:.2s}
   .switch .tr::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
     background:#fff; box-shadow:var(--shadow-sm); transition:.2s}
-  .switch input:checked + .tr{background:var(--accent)}
+  .switch input:checked + .tr{background:var(--brand)}
   .switch input:checked + .tr::after{transform:translateX(20px)}
   .checks{display:flex; flex-wrap:wrap; gap:7px}
   .checks button{border:1.5px solid var(--line); background:var(--shell); color:var(--ink-2); border-radius:999px;
     min-height:44px; padding:7px 13px; font-size:12px; font-weight:500; cursor:pointer; font-family:'Figtree',sans-serif}
-  .checks button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-tint); color:var(--accent-ink); font-weight:700}
-  .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--accent);
+  .checks button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink); font-weight:700}
+  .submit{width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--brand);
     color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
   .hint{font-size:11.5px; color:var(--ink-3); margin-top:6px; line-height:1.5}
   .ferr{font-size:12.5px; font-weight:700; color:var(--crit); margin-top:8px; text-align:center; line-height:1.5}
@@ -125,8 +126,8 @@
     display:flex; align-items:center; justify-content:center; margin:0 auto 14px}
   .confirm .big svg{width:30px; height:30px}
   .confirm h2{font-family:'Figtree',sans-serif; font-weight:800; font-size:20px; margin-bottom:6px}
-  .confirm .irno{font-family:'Figtree',sans-serif; font-weight:800; font-size:15px; color:var(--accent-ink);
-    background:var(--accent-tint); display:inline-block; border-radius:999px; padding:6px 16px; margin:6px 0 14px}
+  .confirm .irno{font-family:'Figtree',sans-serif; font-weight:800; font-size:15px; color:var(--brand-ink);
+    background:var(--brand-tint); display:inline-block; border-radius:999px; padding:6px 16px; margin:6px 0 14px}
   .confirm p{font-size:13px; color:var(--ink-2); line-height:1.6; max-width:320px; margin:0 auto 6px}
   .confirm .steps{text-align:left; margin:16px auto 0; max-width:330px}
 
@@ -157,7 +158,7 @@
     background:var(--neutral-bg); color:var(--ink-3); border:2px solid transparent}
   .step .ic svg{width:16px; height:16px}
   .step.done .ic{background:var(--good-bg); color:var(--good)}
-  .step.now .ic{background:var(--accent-tint); color:var(--accent-ink); border-color:var(--accent)}
+  .step.now .ic{background:var(--brand-tint); color:var(--brand-ink); border-color:var(--brand)}
   .step .lb{font-size:9.5px; font-weight:700; letter-spacing:0.4px; text-transform:uppercase; color:var(--ink-3); text-align:center; line-height:1.3}
   .step.done .lb, .step.now .lb{color:var(--ink)}
   .step .link{width:18px; height:2px; background:var(--line); margin-top:-16px}
@@ -165,12 +166,12 @@
 
   .dcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px; box-shadow:var(--shadow-sm)}
   .dcard h3{font-family:'Figtree',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.8px;
-    text-transform:uppercase; color:var(--accent-ink); margin-bottom:10px}
+    text-transform:uppercase; color:var(--brand-ink); margin-bottom:10px}
   .dcard p{font-size:13px; line-height:1.6; color:var(--ink)}
   .kv{display:grid; grid-template-columns:110px 1fr; gap:7px 10px; font-size:12.5px}
   .kv dt{color:var(--ink-3); font-weight:500}
   .kv dd{color:var(--ink); font-weight:500}
-  .why{border-left:3px solid var(--accent); padding:2px 0 2px 12px; margin-bottom:10px}
+  .why{border-left:3px solid var(--brand); padding:2px 0 2px 12px; margin-bottom:10px}
   .why .q{font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3)}
   .why .a{font-size:13px; line-height:1.5; margin-top:2px}
   .capa{border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-bottom:8px}
@@ -178,7 +179,7 @@
   .capa .cm{font-size:11.5px; color:var(--ink-2); margin-top:4px}
   .capa .cs{margin-top:7px}
   .tlx{display:flex; gap:10px; margin-bottom:11px}
-  .tlx .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); margin-top:5px; flex:none}
+  .tlx .dot{width:9px; height:9px; border-radius:50%; background:var(--brand); margin-top:5px; flex:none}
   .tlx .tx{font-size:12.5px; line-height:1.5}
   .tlx .tx .who{font-weight:700}
   .tlx .tx .when{color:var(--ink-3); font-size:11px}
@@ -196,13 +197,13 @@
   .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
   .hbar{display:grid; grid-template-columns:150px 1fr 30px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
   .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
-  .hbar .tr{height:14px; border-radius:4px; background:var(--accent-tint); overflow:hidden}
-  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--chart)}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--magenta)}
   .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
   .cols{display:flex; align-items:flex-end; gap:5px; height:110px; padding-top:6px}
   .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end}
-  .col .bar{width:100%; max-width:26px; border-radius:4px 4px 0 0; background:var(--chart-2)}
-  .col.hot .bar{background:var(--chart)}
+  .col .bar{width:100%; max-width:26px; border-radius:4px 4px 0 0; background:var(--magenta-2)}
+  .col.hot .bar{background:var(--magenta)}
   .col .cl{font-size:9px; color:var(--ink-3); font-weight:500}
   .col .cv{font-size:10px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
   .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin-top:10px}
@@ -217,10 +218,10 @@
     font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:21px; height:21px}
-  nav button[aria-pressed="true"]{color:var(--accent)}
+  nav button[aria-pressed="true"]{color:var(--brand)}
 
   button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
-  [tabindex]:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  [tabindex]:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
 </style>
 
 

@@ -17,7 +17,7 @@
     --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
-    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --magenta:#E8146E; --magenta-tint:rgba(232,20,110,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
     --crit:#B3261E; --crit-bg:#FBE4E2;
@@ -31,7 +31,7 @@
       --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
       --good:#4FC97E; --good-bg:#173726;
       --warn:#E5B84B; --warn-bg:#3D3319;
       --crit:#F07A6A; --crit-bg:#43201C;
@@ -45,7 +45,7 @@
     --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
     --good:#4FC97E; --good-bg:#173726;
     --warn:#E5B84B; --warn-bg:#3D3319;
     --crit:#F07A6A; --crit-bg:#43201C;
@@ -59,6 +59,7 @@
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .wordmark img{height:32px; display:block}
   .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
@@ -105,11 +106,11 @@
   .roomhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px}
   .roomhead h2{font-size:14px; font-weight:800}
   .roomhead .rs{font-size:11px; font-weight:700; letter-spacing:0.5px}
-  .rs.busy{color:var(--maroon)} .rs.idle{color:var(--good)}
+  .rs.busy{color:var(--magenta)} .rs.idle{color:var(--good)}
 
   .qcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;
     margin-bottom:8px; box-shadow:var(--shadow-sm)}
-  .qcard.scanning{border-left:4px solid var(--maroon)}
+  .qcard.scanning{border-left:4px solid var(--magenta)}
   .qrow{display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap}
   .tok{font-weight:800; font-size:13px; color:var(--brand-ink); background:var(--brand-tint);
     border-radius:8px; padding:2px 9px; font-variant-numeric:tabular-nums}
@@ -117,7 +118,7 @@
   .b-op{background:var(--info-bg); color:var(--info)}
   .b-ip{background:var(--neutral-bg); color:var(--neutral)}
   .b-emg{background:var(--crit-bg); color:var(--crit)}
-  .b-scan{background:var(--maroon-tint); color:var(--maroon)}
+  .b-scan{background:var(--magenta-tint); color:var(--magenta)}
   .b-w-ok{background:var(--good-bg); color:var(--good)}
   .b-w-due{background:var(--warn-bg); color:var(--warn)}
   .b-w-late{background:var(--crit-bg); color:var(--crit)}
@@ -146,14 +147,14 @@
   .cols{display:flex; align-items:flex-end; gap:4px; height:110px; padding-top:6px}
   .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
   .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
-  .col.hot .bar{background:var(--maroon)}
+  .col.hot .bar{background:var(--magenta)}
   .col .cl{font-size:10px; color:var(--ink-3); font-weight:500}
   .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
   .hbar{display:grid; grid-template-columns:135px 1fr 34px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
   .hbar:last-child{margin-bottom:0}
   .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
   .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
-  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--magenta)}
   .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
   .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
   .stack i{display:block; height:100%}
@@ -311,6 +312,10 @@ function nextToken(){
   return 'U-' + String(db.daySeq).padStart(2,'0');
 }
 
+/* unique internal id — display tokens (U-xx) reset daily while items are kept
+   for a week, so tokens recur across days; handlers locate items by this id */
+function uid(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+
 /* daily demo seed — a believable morning so the boards aren't empty */
 const NAMES = ['Mariyam K','Thomas V','Anitha R','Suresh P','Fathima N','Georgekutty J','Lakshmi D','Rahim A','Annie C','Vishnu M','Sara P','Biju T','Meera S','Abdul S','Rosamma J','Hari K','Nimmy P','Joseph M','Devika A','Shaji K'];
 function seedToday(){
@@ -320,8 +325,8 @@ function seedToday(){
   const open = d.getTime();
   if (now < open + 30*M) return;                                     /* too early — start clean */
   let n = 0;
-  const mk = (room, regAt, wait, dur, cls) => ({ id:'seed' + (++n), token: nextToken(),
-    name: NAMES[n % NAMES.length], uhid:'', cls: cls || (Math.random() < 0.25 ? 'IP' : 'OP'),
+  const mk = (room, regAt, wait, dur, cls) => ({ id: uid(), token: nextToken(),
+    name: NAMES[++n % NAMES.length], uhid:'', cls: cls || (Math.random() < 0.25 ? 'IP' : 'OP'),
     room, regAt, startAt: regAt + wait*M, endAt: regAt + (wait + dur)*M, status:'done', demo:true });
   /* completed scans through the day so far */
   for (const r of ROOMS){
@@ -335,13 +340,13 @@ function seedToday(){
     }
   }
   /* someone on the couch in rooms 1 & 4, and a live queue */
-  const scan = (room, minsIn, name, cls) => db.items.push({ id:'seed' + (++n), token: nextToken(), name, uhid:'',
+  const scan = (room, minsIn, name, cls) => db.items.push({ id: uid(), token: nextToken(), name, uhid:'',
     cls: cls || 'OP', room, regAt: now - (minsIn + 18)*M, startAt: now - minsIn*M, endAt: null, status:'scanning', demo:true });
   scan('USG-1', 7, 'Rosamma J'); scan('USG-4', 12, 'Devika A', 'OP');
   const waitq = [ ['USG-1', 24, 'Hari K', 'OP'], ['USG-1', 9, 'Nimmy P', 'OP'],
     ['USG-2', 16, 'Joseph M', 'IP'], ['USG-3', 31, 'Meera S', 'OP'], ['USG-3', 5, 'Shaji K', 'OP'] ];
   for (const [room, agoMin, name, cls] of waitq)
-    db.items.push({ id:'seed' + (++n), token: nextToken(), name, uhid:'', cls, room,
+    db.items.push({ id: uid(), token: nextToken(), name, uhid:'', cls, room,
       regAt: now - agoMin*M, startAt: null, endAt: null, status:'waiting', demo:true });
   save();
 }
@@ -395,7 +400,7 @@ $('rSubmit').onclick = () => {
   let room = $('rRoom').value;
   if (room === 'auto')
     room = ROOMS.reduce((a,r) => expectedWait(r.id) < expectedWait(a.id) ? r : a, ROOMS[0]).id;
-  const it = { id:'p' + Date.now(), token: nextToken(), name: $('rName').value.trim(), uhid: $('rUhid').value.trim(),
+  const it = { id: uid(), token: nextToken(), name: $('rName').value.trim(), uhid: $('rUhid').value.trim(),
     cls: clsSel, room, regAt: Date.now(), startAt: null, endAt: null, status:'waiting' };
   db.items.push(it); save();
   $('rName').value = ''; $('rUhid').value = ''; clsSel = 'OP';
