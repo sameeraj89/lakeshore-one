@@ -96,6 +96,27 @@ CREATE TABLE IF NOT EXISTS audit (
 CREATE TABLE IF NOT EXISTS applied_ops (uid TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
+/* module tables: patient inputs, USG wait queue, OT bookings (added with the module apps) */
+db.exec(`
+CREATE TABLE IF NOT EXISTS patient_inputs (
+  id TEXT PRIMARY KEY, who TEXT NOT NULL, type TEXT NOT NULL, sev TEXT, place TEXT NOT NULL,
+  about TEXT NOT NULL, patient_name TEXT, uhid TEXT, descr TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'New', created_at TEXT NOT NULL, resolved_at TEXT, created_by TEXT
+);
+CREATE TABLE IF NOT EXISTS usg_entries (
+  id TEXT PRIMARY KEY, token_no TEXT NOT NULL, name TEXT, uhid TEXT, cls TEXT NOT NULL,
+  room TEXT NOT NULL, reg_at TEXT NOT NULL, start_at TEXT, end_at TEXT,
+  status TEXT NOT NULL DEFAULT 'waiting', created_by TEXT
+);
+CREATE TABLE IF NOT EXISTS ot_bookings (
+  id TEXT PRIMARY KEY, case_date TEXT NOT NULL, ot TEXT NOT NULL, start TEXT NOT NULL,
+  dur_min INTEGER NOT NULL, patient TEXT NOT NULL, uhid TEXT, procedure_name TEXT NOT NULL,
+  surgeon TEXT NOT NULL, anaes TEXT, prio TEXT, status TEXT NOT NULL DEFAULT 'booked', created_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_pi_stage ON patient_inputs (stage, created_at);
+CREATE INDEX IF NOT EXISTS idx_usg_day ON usg_entries (reg_at);
+CREATE INDEX IF NOT EXISTS idx_otb_day ON ot_bookings (case_date, ot, start);
+`);
 /* migration: photo column on tickets (added after first release) */
 try{ db.exec('ALTER TABLE tickets ADD COLUMN photo TEXT'); }catch(e){ /* exists */ }
 /* migration: email column on users (Google SSO account linking) */
@@ -122,6 +143,17 @@ const OT_SUITES = ['OT-1 · Cardiac','OT-2 · Neuro','OT-3 · Ortho','OT-4 · Ge
 const PRAISE_VALUES = ['Patient first','Team player','Went the extra mile','Calm in a crisis','Always improving'];
 const canSeeAll = r => ['management','quality','admin'].includes(r);
 const isClinical = r => ['doctor','nurse','staff'].includes(r);
+/* module apps (patient-inputs / usg-wait / ot-schedule) */
+const PI_TYPES = ['Complaint','Suggestion','Appreciation','Query'];
+const PI_SEV = ['High','Medium','Low'];
+const PI_STAGES = ['New','Acknowledged','In progress','Resolved','Closed'];
+const USG_ROOMS = ['USG-1','USG-2','USG-3','USG-4'];
+const USG_CLS = ['OP','IP','Emergency'];
+const OTB_IDS = ['OT-1','OT-2','OT-3','OT-4','OT-5','OT-6'];
+const OTB_STATUS = ['booked','confirmed','in_ot','done','delayed','cancelled'];
+const OTB_DAY_START = 7*60, OTB_DAY_END = 21*60, OTB_TURNOVER = 20;
+const toMin = hhmm => { const m = /^(\d{2}):(\d{2})$/.exec(String(hhmm)); return m ? (+m[1])*60 + (+m[2]) : NaN; };
+const toHM = min => String(Math.floor(min/60)).padStart(2,'0') + ':' + String(min%60).padStart(2,'0');
 
 /* ---------- seed ---------- */
 function seed(){
@@ -424,9 +456,128 @@ function applyOp(op, u){
       audit(empId, 'reset PIN for ' + op.empId);
       return { ok:true };
     }
+    /* ----- Patient Inputs (voice of the patient) ----- */
+    case 'pi_add': {
+      /* any signed-in identity may capture an input — including guests & patients themselves */
+      if (!PI_TYPES.includes(op.type) || !op.desc) return { ok:false, error:'invalid input' };
+      const sev = op.type === 'Complaint' ? (PI_SEV.includes(op.sev) ? op.sev : 'Medium') : null;
+      const id = 'PI-' + nextSeq();
+      db.prepare(`INSERT INTO patient_inputs (id,who,type,sev,place,about,patient_name,uhid,descr,stage,created_at,created_by)
+        VALUES (?,?,?,?,?,?,?,?,?,'New',?,?)`).run(
+        id, s(op.who,40), op.type, sev, s(op.where,60), s(op.about,60),
+        s(op.name,60), s(op.uhid,20), s(op.desc,2000), at, empId);
+      audit(empId, `logged patient input ${id} (${op.type}${sev ? ' · ' + sev : ''} · ${s(op.about,60)})`);
+      return { ok:true, id };
+    }
+    case 'pi_stage': {
+      /* triage board is the Patient Experience team's — management / quality / admin only */
+      if (!canSeeAll(role)) return { ok:false, error:'Patient Experience team (quality / management) only' };
+      const it = db.prepare('SELECT * FROM patient_inputs WHERE id=?').get(String(op.id));
+      if (!it) return { ok:false, error:'no such input' };
+      if (PI_STAGES.indexOf(op.to) !== PI_STAGES.indexOf(it.stage) + 1) return { ok:false, error:'invalid stage transition' };
+      db.prepare('UPDATE patient_inputs SET stage=?, resolved_at=? WHERE id=?')
+        .run(op.to, op.to === 'Resolved' ? at : it.resolved_at, it.id);
+      audit(empId, `${it.id} → ${op.to}`);
+      return { ok:true };
+    }
+
+    /* ----- USG wait queue ----- */
+    case 'usg_add': {
+      if (isLimited(role)) return { ok:false, error:'staff sign-in required' };
+      if (!USG_ROOMS.includes(op.room) || !USG_CLS.includes(op.cls)) return { ok:false, error:'invalid entry' };
+      const day = at.slice(0,10);
+      if (db.prepare("SELECT value FROM meta WHERE key='usg_day'").get()?.value !== day){
+        db.prepare("INSERT INTO meta (key,value) VALUES ('usg_day',?) ON CONFLICT(key) DO UPDATE SET value=?").run(day, day);
+        db.prepare("INSERT INTO meta (key,value) VALUES ('usg_seq','0') ON CONFLICT(key) DO UPDATE SET value='0'").run();
+      }
+      const n = parseInt(db.prepare("SELECT value FROM meta WHERE key='usg_seq'").get().value, 10) + 1;
+      db.prepare("UPDATE meta SET value=? WHERE key='usg_seq'").run(String(n));
+      const tokenNo = 'U-' + String(n).padStart(2,'0');
+      const id = 'USG-' + nextSeq();
+      db.prepare(`INSERT INTO usg_entries (id,token_no,name,uhid,cls,room,reg_at,status,created_by)
+        VALUES (?,?,?,?,?,?,?,'waiting',?)`).run(id, tokenNo, s(op.name,60), s(op.uhid,20), op.cls, op.room, at, empId);
+      audit(empId, `USG token ${tokenNo} → ${op.room} (${op.cls})`);
+      return { ok:true, id, tokenNo };
+    }
+    case 'usg_move': {
+      if (isLimited(role)) return { ok:false, error:'staff sign-in required' };
+      const e = db.prepare('SELECT * FROM usg_entries WHERE id=?').get(String(op.id));
+      if (!e) return { ok:false, error:'no such entry' };
+      const valid = (op.to === 'scanning' && e.status === 'waiting') ||
+                    (op.to === 'done' && e.status === 'scanning') ||
+                    (op.to === 'noshow' && e.status === 'waiting');
+      if (!valid) return { ok:false, error:'invalid transition' };
+      db.prepare('UPDATE usg_entries SET status=?, start_at=COALESCE(start_at,?), end_at=? WHERE id=?')
+        .run(op.to, op.to === 'scanning' ? at : null, op.to === 'done' ? at : e.end_at, e.id);
+      audit(empId, `USG ${e.token_no} → ${op.to}`);
+      return { ok:true };
+    }
+
+    /* ----- OT bookings (planning board; the live stage board stays on ot_cases) ----- */
+    case 'otb_add': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const start = toMin(op.start), dur = Math.min(720, parseInt(op.durMin) || 0);
+      const date = s(op.date,10);
+      if (!OTB_IDS.includes(op.ot) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(start) || dur < 15 ||
+          !op.patient || !op.procedure || !op.surgeon) return { ok:false, error:'invalid booking' };
+      if (start < OTB_DAY_START || start + dur > OTB_DAY_END)
+        return { ok:false, error:'outside the OT day (07:00–21:00)' };
+      const clash = db.prepare("SELECT * FROM ot_bookings WHERE case_date=? AND ot=? AND status!='cancelled'").all(date, op.ot)
+        .find(c => start < toMin(c.start) + c.dur_min + OTB_TURNOVER && toMin(c.start) < start + dur + OTB_TURNOVER);
+      if (clash) return { ok:false, error:'table clash with ' + clash.id + ' (' + clash.start + '–' +
+        toHM(toMin(clash.start) + clash.dur_min) + ' + turnover) — pick another slot' };
+      const id = 'OTB-' + nextSeq();
+      db.prepare(`INSERT INTO ot_bookings (id,case_date,ot,start,dur_min,patient,uhid,procedure_name,surgeon,anaes,prio,status,created_by)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,'booked',?)`).run(
+        id, date, op.ot, toHM(start), dur, s(op.patient,60), s(op.uhid,20), s(op.procedure,120),
+        s(op.surgeon,60), s(op.anaes,20), op.prio === 'Emergency' ? 'Emergency' : 'Elective', empId);
+      audit(empId, `booked ${id} (${op.ot} ${date} ${toHM(start)} · ${s(op.procedure,120)})`);
+      return { ok:true, id };
+    }
+    case 'otb_move': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const c = db.prepare('SELECT * FROM ot_bookings WHERE id=?').get(String(op.id));
+      if (!c || !OTB_STATUS.includes(op.to)) return { ok:false, error:'no such booking' };
+      const from = c.status, to = op.to;
+      const valid = (to === 'confirmed' && from === 'booked') ||
+                    (to === 'in_ot' && ['confirmed','delayed'].includes(from)) ||
+                    (to === 'done' && from === 'in_ot') ||
+                    (to === 'delayed' && ['booked','confirmed'].includes(from)) ||
+                    (to === 'cancelled' && ['booked','confirmed','delayed'].includes(from));
+      if (!valid) return { ok:false, error:'invalid transition' };
+      const start = to === 'delayed' ? toHM(Math.min(OTB_DAY_END - c.dur_min, toMin(c.start) + 30)) : c.start;
+      db.prepare('UPDATE ot_bookings SET status=?, start=? WHERE id=?').run(to, start, c.id);
+      audit(empId, `${c.id} → ${to}`);
+      return { ok:true };
+    }
+
     default:
       return { ok:false, error:'unknown op' };
   }
+}
+
+/* ---------- module state (patient-inputs / usg-wait / ot-schedule apps) ---------- */
+function moduleState(mod, u){
+  const iso = d => new Date(d).toISOString();
+  if (mod === 'pi'){
+    /* the full board (patient names, UHIDs) is Patient Experience only; others see their own captures */
+    const rows = canSeeAll(u.role)
+      ? db.prepare('SELECT * FROM patient_inputs WHERE created_at>=? ORDER BY created_at DESC LIMIT 500')
+          .all(iso(Date.now() - 90*86400e3))
+      : db.prepare('SELECT * FROM patient_inputs WHERE created_by=? ORDER BY created_at DESC LIMIT 200').all(u.emp_id);
+    return { full: canSeeAll(u.role), items: rows };
+  }
+  if (mod === 'usg'){
+    if (isLimited(u.role)) return null;
+    return { full:true, items: db.prepare('SELECT * FROM usg_entries WHERE reg_at>=? ORDER BY reg_at LIMIT 1000')
+      .all(iso(Date.now() - 7*86400e3)) };
+  }
+  if (mod === 'otb'){
+    if (isLimited(u.role)) return null;
+    const from = iso(Date.now() - 10*86400e3).slice(0,10);
+    return { full:true, items: db.prepare('SELECT * FROM ot_bookings WHERE case_date>=? ORDER BY case_date, start LIMIT 1000').all(from) };
+  }
+  return null;
 }
 
 /* ---------- state projection (role-filtered, matches the client shape) ---------- */
@@ -623,6 +774,11 @@ const server = http.createServer(async (req, res) => {
 
       if (p === '/api/me') return json(res, 200, { empId:u.emp_id, name:u.name, role:u.role, dept:u.dept });
       if (p === '/api/state') return json(res, 200, buildState(u));
+      if (p === '/api/mod-state'){
+        const st = moduleState(url.searchParams.get('mod'), u);
+        if (!st) return json(res, 403, { error:'not allowed' });
+        return json(res, 200, st);
+      }
       if (p === '/api/ideas'){
         if (!canSeeAll(u.role)) return json(res, 403, { error:'not allowed' });
         return json(res, 200, { ideas: db.prepare('SELECT * FROM ideas ORDER BY id DESC LIMIT 200').all() });

@@ -84,7 +84,7 @@
     color:var(--ink-3); margin:15px 2px 6px}
   label.fl:first-child{margin-top:0}
   label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
-  input[type=text], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
+  input[type=text], input[type=password], select, textarea{width:100%; background:var(--shell); border:1.5px solid var(--line);
     border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
   input:focus, select:focus, textarea:focus{border-color:var(--brand)}
   textarea{min-height:80px; resize:vertical}
@@ -189,6 +189,21 @@
     and bystanders go straight to the Patient Experience team, with response targets on every complaint.</div>
 
   <main>
+    <!-- ============ SIGN IN (live server mode) ============ -->
+    <section id="gate" style="display:none; padding:12px 16px 20px">
+      <h1 class="page">Sign in</h1>
+      <p class="page-sub">This device is connected to the live Lakeshore One server &mdash; sign in with your employee ID and PIN to continue. Everything you log is shared across devices in real time.</p>
+      <div class="fcard">
+        <label class="fl" for="gEmp">Employee ID</label>
+        <input type="text" id="gEmp" placeholder="e.g. LH-NUR01" autocapitalize="characters" autocomplete="username">
+        <label class="fl" for="gPin">PIN</label>
+        <input type="password" id="gPin" inputmode="numeric" maxlength="6" placeholder="4&ndash;6 digits" autocomplete="current-password">
+        <p class="hint" id="gErr" style="color:var(--crit)"></p>
+        <button class="submit" id="gGo">Sign in</button>
+        <p class="hint">First sign-in? The PIN you enter becomes your PIN. Accounts are provisioned by admin in the Lakeshore One main app.</p>
+      </div>
+    </section>
+
     <!-- ============ CAPTURE ============ -->
     <section class="tab active" id="tab-capture">
       <div id="captureForm">
@@ -304,7 +319,58 @@ const NEXT_ACTION = { 'New':'Acknowledge', 'Acknowledged':'Start work', 'In prog
 const KEY = 'lakeshore-patient-inputs-v1';
 let db = { seq: 100, items: [] };
 try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+
+/* ---------- live server mode (Lakeshore One backend) ---------- */
+let mode = 'local', token = null, user = null, boardFull = true, sseStarted = false;
+async function api(path, body){
+  const r = await fetch('/api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchServer(){
+  const r = await api('mod-state?mod=pi');
+  if (!r.ok) return false;
+  boardFull = !!r.full;
+  db.items = r.items.map(x => ({ id:x.id, createdAt:Date.parse(x.created_at), who:x.who, type:x.type,
+    sev:x.sev, where:x.place, about:x.about, name:x.patient_name || '', uhid:x.uhid || '',
+    desc:x.descr, stage:x.stage, resolvedAt:x.resolved_at ? Date.parse(x.resolved_at) : null }));
+  return true;
+}
+function startSSE(){
+  if (sseStarted || !token) return;
+  sseStarted = true;
+  try{
+    new EventSource('/api/events?token=' + encodeURIComponent(token)).onmessage = async () => {
+      if (await fetchServer()){ renderBoard(); renderTrends(); }
+    };
+  }catch(e){}
+}
+function showGate(on){
+  $('gate').style.display = on ? 'block' : 'none';
+  document.querySelector('nav').style.display = on ? 'none' : 'flex';
+  if (on) for (const t of document.querySelectorAll('.tab')) t.classList.remove('active');
+  else setTab('capture');
+}
+$('gGo').onclick = async () => {
+  const empId = $('gEmp').value.trim().toUpperCase(), pin = $('gPin').value.trim();
+  $('gErr').textContent = '';
+  if (!empId || !pin){ $('gErr').textContent = 'Enter your employee ID and PIN.'; return; }
+  let r = await api('login', { empId, pin });
+  if (r.needPin) r = await api('set-pin', { empId, pin });
+  if (!r.ok || !r.token){ $('gErr').textContent = r.error || 'Sign-in failed — try again.'; return; }
+  token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+  const m = await api('me'); if (m.ok) user = m;
+  await fetchServer(); startSSE(); showGate(false);
+  renderBoard(); renderTrends();
+};
+$('gPin').addEventListener('keydown', e => { if (e.key === 'Enter') $('gGo').click(); });
 
 function mkId(){
   const d = new Date(); db.seq++;
@@ -356,18 +422,27 @@ function renderForm(){
   if (!$('fWhere').options.length) $('fWhere').innerHTML = WHERE.map(z => '<option>' + z + '</option>').join('');
   if (!$('fAbout').options.length) $('fAbout').innerHTML = ABOUT.map(z => '<option>' + z + '</option>').join('');
 }
-$('fSubmit').onclick = () => {
+$('fSubmit').onclick = async () => {
   const desc = $('fDesc').value.trim();
   if (!desc){ $('fDesc').focus(); return; }
-  const item = { id: mkId(), createdAt: Date.now(), who: whoSel, type: typeSel,
-    sev: typeSel === 'Complaint' ? sevSel : null, where: $('fWhere').value, about: $('fAbout').value,
-    name: $('fName').value.trim(), uhid: $('fUhid').value.trim(), desc, stage:'New', resolvedAt: null };
-  db.items.unshift(item); save();
-  $('refNo').textContent = item.id;
+  const base = { who: whoSel, type: typeSel, sev: typeSel === 'Complaint' ? sevSel : null,
+    where: $('fWhere').value, about: $('fAbout').value,
+    name: $('fName').value.trim(), uhid: $('fUhid').value.trim(), desc };
+  let id;
+  if (mode === 'server'){
+    const r = await api('op', { op: Object.assign({ kind:'pi_add' }, base) });
+    if (!r.ok){ alert(r.error || 'Could not save — check the connection and try again.'); return; }
+    id = r.id; await fetchServer();
+  } else {
+    id = mkId();
+    db.items.unshift(Object.assign({ id, createdAt: Date.now(), stage:'New', resolvedAt: null }, base));
+    save();
+  }
+  $('refNo').textContent = id;
   $('confirmMsg').textContent =
-    item.type === 'Complaint' ? 'Response target: ' + TAT_H[item.sev] + ' hours. The Patient Experience team will acknowledge and follow up.' :
-    item.type === 'Appreciation' ? 'This will be shared with the team it names — appreciation gets read out in the daily huddle.' :
-    item.type === 'Suggestion' ? 'Suggestions are reviewed by the Patient Experience committee within 7 days.' :
+    base.type === 'Complaint' ? 'Response target: ' + TAT_H[base.sev] + ' hours. The Patient Experience team will acknowledge and follow up.' :
+    base.type === 'Appreciation' ? 'This will be shared with the team it names — appreciation gets read out in the daily huddle.' :
+    base.type === 'Suggestion' ? 'Suggestions are reviewed by the Patient Experience committee within 7 days.' :
     'The team will get an answer back to the patient or family.';
   $('captureForm').style.display = 'none'; $('confirm').classList.add('show');
   renderBoard(); renderTrends(); window.scrollTo(0,0);
@@ -431,17 +506,29 @@ function renderBoard(){
     '<div class="qmeta">' + it.where + ' &middot; ' + it.about + ' &middot; from ' + it.who.toLowerCase() +
       (it.name ? ' &middot; ' + esc(it.name) : '') + (it.uhid ? ' &middot; ' + esc(it.uhid) : '') +
       ' &middot; logged ' + ago(it.createdAt) + '</div>' +
-    (NEXT_ACTION[it.stage] ? '<div class="qact"><button class="primary" data-adv="' + it.id + '">' + NEXT_ACTION[it.stage] + '</button></div>' : '') +
+    (NEXT_ACTION[it.stage] && (mode !== 'server' || boardFull)
+      ? '<div class="qact"><button class="primary" data-adv="' + it.id + '">' + NEXT_ACTION[it.stage] + '</button></div>' : '') +
     '</div>').join('')
     : '<div class="empty">Nothing here. Inputs logged on the Capture tab land on this board.</div>';
+  if (mode === 'server' && !boardFull)
+    $('boardList').insertAdjacentHTML('afterbegin',
+      '<div class="qmeta" style="margin:0 2px 10px">You see your own captures here. The full board with patient details is visible to the Patient Experience team (quality / management sign-in).</div>');
 
   for (const b of $('boardList').querySelectorAll('[data-adv]'))
-    b.onclick = () => {
+    b.onclick = async () => {
       const it = db.items.find(x => x.id === b.dataset.adv);
       if (!it) return;
-      it.stage = STAGES[STAGES.indexOf(it.stage) + 1];
-      if (it.stage === 'Resolved') it.resolvedAt = Date.now();
-      save(); renderBoard(); renderTrends();
+      const to = STAGES[STAGES.indexOf(it.stage) + 1];
+      if (mode === 'server'){
+        const r = await api('op', { op:{ kind:'pi_stage', id: it.id, to } });
+        if (!r.ok){ alert(r.error || 'Not allowed.'); return; }
+        await fetchServer();
+      } else {
+        it.stage = to;
+        if (to === 'Resolved') it.resolvedAt = Date.now();
+        save();
+      }
+      renderBoard(); renderTrends();
     };
 }
 function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -499,7 +586,29 @@ function setTab(t){
 }
 for (const k of ['capture','board','trends']) $('nav-' + k).onclick = () => setTab(k);
 
-seed(); renderForm(); renderBoard(); renderTrends();
+(async () => {
+  try{
+    const r = await fetch('/api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one') mode = 'server';
+  }catch(e){}
+  if (mode === 'server'){
+    $('modeTag').textContent = 'Live · shared';
+    $('modeTag').style.color = 'var(--good)'; $('modeTag').style.background = 'var(--good-bg)';
+    document.querySelector('footer').innerHTML =
+      '<b style="color:var(--ink-2)">Live system — connected to the hospital server.</b><br>' +
+      'Inputs are shared across all devices in real time; the full board with patient details is restricted ' +
+      'to the Patient Experience team, and every action is audited.' +
+      '<br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>';
+    db.items = [];
+    try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+    if (token){ const m = await api('me'); if (m.ok) user = m; else token = null; }
+    if (user){ await fetchServer(); startSSE(); }
+    else showGate(true);
+  } else {
+    seed();
+  }
+  renderForm(); renderBoard(); renderTrends();
+})();
 setInterval(() => { renderBoard(); }, 60e3);   /* keep the ageing / TAT badges fresh */
 </script>
 
