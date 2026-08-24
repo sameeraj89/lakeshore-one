@@ -72,6 +72,14 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
   id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL, stage TEXT NOT NULL,
   actor_name TEXT NOT NULL, at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS transports (
+  id TEXT PRIMARY KEY, mode TEXT NOT NULL, priority TEXT NOT NULL,
+  from_loc TEXT NOT NULL, to_loc TEXT NOT NULL, patient TEXT, note TEXT,
+  status TEXT NOT NULL DEFAULT 'requested',
+  requested_at TEXT NOT NULL, accept_at TEXT, pickup_at TEXT, done_at TEXT,
+  requester TEXT NOT NULL, requester_name TEXT NOT NULL,
+  porter TEXT, porter_name TEXT
+);
 CREATE TABLE IF NOT EXISTS discharges (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, uhid TEXT, ward TEXT NOT NULL, bed TEXT NOT NULL,
   payer TEXT NOT NULL, consultant TEXT, advised_at TEXT NOT NULL,
@@ -96,11 +104,12 @@ CREATE INDEX IF NOT EXISTS idx_updates ON ticket_updates (ticket_id, at);
 CREATE INDEX IF NOT EXISTS idx_bed_events ON bed_events (bed_id, at);
 CREATE INDEX IF NOT EXISTS idx_dc_steps ON discharge_steps (discharge_id, at);
 CREATE INDEX IF NOT EXISTS idx_dc_advised ON discharges (advised_at);
+CREATE INDEX IF NOT EXISTS idx_pt_requested ON transports (requested_at);
 `);
 
 /* ---------- domain config (mirrors the frontend) ---------- */
 const RESPONDER = { it_agent:'it', facility_agent:'fac', housekeeping_agent:'hk', biomedical_agent:'bm', security_agent:'sec' };
-const ROLES = ['doctor','nurse','staff','it_agent','facility_agent','housekeeping_agent','biomedical_agent','security_agent','management','quality','admin'];
+const ROLES = ['doctor','nurse','staff','it_agent','facility_agent','housekeeping_agent','biomedical_agent','security_agent','porter_agent','management','quality','admin'];
 const MODS = ['it','fac','hk','bm','sec'];
 const PRI = { P1:{resp:15,res:240}, P2:{resp:60,res:480}, P3:{resp:240,res:1440}, P4:{resp:1440,res:4320} };
 const TICKET_STATUS = ['open','in_progress','resolved','closed'];
@@ -111,6 +120,9 @@ const OT_SUITES = ['OT-1 · Cardiac','OT-2 · Neuro','OT-3 · Ortho','OT-4 · Ge
 const DC_STEPS = ['summary','pharmacy','billing','tpa','settle','depart'];
 const DC_PAYERS = ['Cash','Insurance / TPA','Corporate'];
 const dcPath = payer => DC_STEPS.filter(k => k !== 'tpa' || payer !== 'Cash');
+const PT_MODES = ['Wheelchair','Stretcher','Bed','Walk with escort','Item run'];
+const PT_PRI = ['Routine','Urgent','Emergency'];
+const PT_FLOW = ['requested','accepted','moving','done'];
 const canSeeAll = r => ['management','quality','admin'].includes(r);
 const isClinical = r => ['doctor','nurse','staff'].includes(r);
 
@@ -127,6 +139,8 @@ function seed(){
       ['LH-HK01','Beena Thomas','housekeeping_agent','Housekeeping'],
       ['LH-BM01','Rahul Menon','biomedical_agent','Biomedical Engineering'],
       ['LH-SEC01','Vinod PS','security_agent','Security'],
+      ['LH-PT01','Sunil Das','porter_agent','Patient Transport'],
+      ['LH-PT02','Ratheesh K','porter_agent','Patient Transport'],
       ['LH-DOC01','Dr. Anitha Menon','doctor','Cardiology'],
       ['LH-MGT01','Hospital Director','management','Administration']
     ]) ins.run(id, name, role, dept, now);
@@ -318,6 +332,43 @@ function applyOp(op, u){
       audit(empId, `${c.id} → ${op.to}`);
       return { ok:true };
     }
+    case 'pt_add': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      if (!PT_MODES.includes(op.mode) || !PT_PRI.includes(op.priority) || !op.from || !op.to)
+        return { ok:false, error:'invalid request' };
+      const seq = nextSeq(), id = 'PTR-' + seq;
+      db.prepare(`INSERT INTO transports (id,mode,priority,from_loc,to_loc,patient,note,status,requested_at,requester,requester_name)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
+        id, op.mode, op.priority, s(op.from,60), s(op.to,60), s(op.patient,60), s(op.note,200),
+        'requested', at, empId, name);
+      audit(empId, `requested transport ${id} (${op.mode} · ${s(op.from,60)} → ${s(op.to,60)} · ${op.priority})`);
+      return { ok:true, id };
+    }
+    case 'pt_move': {
+      if (!(role === 'porter_agent' || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const t = db.prepare('SELECT * FROM transports WHERE id=?').get(String(op.id));
+      if (!t || t.status === 'done' || t.status === 'cancelled') return { ok:false, error:'no open request' };
+      if (PT_FLOW[PT_FLOW.indexOf(t.status) + 1] !== op.to) return { ok:false, error:'already done — the board has moved on' };
+      if (t.status !== 'requested' && t.porter !== empId && !canSeeAll(role))
+        return { ok:false, error:'assigned to ' + (t.porter_name || 'another porter') };
+      if (op.to === 'accepted')
+        db.prepare("UPDATE transports SET status='accepted', accept_at=?, porter=?, porter_name=? WHERE id=?")
+          .run(at, empId, name, t.id);
+      else if (op.to === 'moving')
+        db.prepare("UPDATE transports SET status='moving', pickup_at=? WHERE id=?").run(at, t.id);
+      else
+        db.prepare("UPDATE transports SET status='done', done_at=? WHERE id=?").run(at, t.id);
+      audit(empId, `${t.id} → ${op.to}`);
+      return { ok:true };
+    }
+    case 'pt_cancel': {
+      const t = db.prepare('SELECT * FROM transports WHERE id=?').get(String(op.id));
+      if (!t || t.status === 'done' || t.status === 'cancelled') return { ok:false, error:'no open request' };
+      if (!(t.requester === empId || t.porter === empId || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      db.prepare("UPDATE transports SET status='cancelled' WHERE id=?").run(t.id);
+      audit(empId, `cancelled transport ${t.id}`);
+      return { ok:true };
+    }
     case 'dc_add': {
       if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
       if (!op.name || !op.ward || !DC_PAYERS.includes(op.payer)) return { ok:false, error:'invalid discharge' };
@@ -432,6 +483,15 @@ function buildState(u){
         consultant:d.consultant, advisedAt: Date.parse(d.advised_at), done, status:d.status,
         outAt: d.out_at ? Date.parse(d.out_at) : null, byName: d.created_by_name };
     });
+  const ptCut = new Date(Date.now() - 7*86400e3).toISOString();
+  const transports = db.prepare('SELECT * FROM transports WHERE requested_at>=? ORDER BY requested_at').all(ptCut)
+    .map(t => ({ id:t.id, mode:t.mode, priority:t.priority, from:t.from_loc, to:t.to_loc,
+      patient:t.patient, note:t.note, status:t.status,
+      requestedAt: Date.parse(t.requested_at),
+      acceptAt: t.accept_at ? Date.parse(t.accept_at) : null,
+      pickupAt: t.pickup_at ? Date.parse(t.pickup_at) : null,
+      doneAt: t.done_at ? Date.parse(t.done_at) : null,
+      byName: t.requester_name, porterName: t.porter_name }));
   let users;
   if (role === 'admin')
     users = db.prepare('SELECT * FROM users ORDER BY emp_id').all()
@@ -442,7 +502,7 @@ function buildState(u){
   const auditRows = canSeeAll(role)
     ? db.prepare('SELECT actor "by", action, at FROM audit ORDER BY id DESC LIMIT 40').all()
     : [];
-  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, discharges, audit:auditRows };
+  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, discharges, transports, audit:auditRows };
 }
 
 /* ---------- HTTP plumbing ---------- */

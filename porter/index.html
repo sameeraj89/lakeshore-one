@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#001E5F">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lakeshore One">
+<title>Lakeshore Porter Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
+    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --shadow:0 8px 24px rgba(22,35,46,0.14); --shadow-sm:0 2px 8px rgba(22,35,46,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
+
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
+    text-transform:uppercase; margin-top:6px}
+  .mode-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn); background:var(--warn-bg);
+    border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:10px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--info); background:var(--info-bg);
+    border-radius:999px; padding:4px 11px; margin:0 0 10px}
+
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px}
+  .kpi .n{font-weight:700; font-size:24px; letter-spacing:-0.3px; font-variant-numeric:tabular-nums}
+  .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
+
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+    box-shadow:var(--shadow-sm); margin-bottom:14px}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
+  input[type=text], input[type=password], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus{border-color:var(--brand)}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1 1 28%; min-width:80px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
+    font-family:'Figtree',sans-serif; line-height:1.3}
+  .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
+  .seg button[aria-pressed="true"].emg{border-color:var(--crit); background:var(--crit-bg); color:var(--crit)}
+  .submit{width:100%; margin-top:16px; padding:13px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  :root[data-theme="dark"] .submit{color:#0E1418}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .submit{color:#0E1418} }
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
+
+  .roomhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px}
+  .roomhead h2{font-size:14px; font-weight:800}
+  .roomhead .rs{font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--ink-3)}
+
+  .qcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;
+    margin-bottom:8px; box-shadow:var(--shadow-sm)}
+  .qcard.late{border-left:4px solid var(--crit)}
+  .qrow{display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap}
+  .tok{font-weight:800; font-size:13px; color:var(--brand-ink); background:var(--brand-tint);
+    border-radius:8px; padding:2px 9px}
+  .badge{display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
+  .b-ok{background:var(--good-bg); color:var(--good)}
+  .b-due{background:var(--warn-bg); color:var(--warn)}
+  .b-late{background:var(--crit-bg); color:var(--crit)}
+  .b-st{background:var(--maroon-tint); color:var(--maroon)}
+  .b-routine{background:var(--neutral-bg); color:var(--neutral)}
+  .b-urgent{background:var(--warn-bg); color:var(--warn)}
+  .b-emergency{background:var(--crit-bg); color:var(--crit)}
+  .qroute{font-size:13.5px; font-weight:700; line-height:1.4}
+  .qroute i{font-style:normal; color:var(--ink-3); font-weight:600}
+  .qmeta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
+  .qact{margin-top:10px; display:flex; gap:7px; flex-wrap:wrap}
+  .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
+    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+  .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
+  .qact button.ghost{color:var(--ink-3)}
+  .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:22px 10px; line-height:1.6}
+  .outrow{display:flex; align-items:center; gap:8px; padding:9px 4px; border-bottom:1px solid var(--line);
+    font-size:12px; color:var(--ink-2)}
+  .outrow:last-child{border-bottom:0}
+  .outrow .on{font-weight:700; color:var(--ink); flex:1; min-width:0}
+  .outrow .ot{font-weight:700; font-variant-numeric:tabular-nums}
+
+  .rcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 15px;
+    margin-bottom:10px; box-shadow:var(--shadow-sm)}
+  .rcard .rrow{display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .rcard h2{font-size:14.5px; font-weight:800}
+  .rcard .rs{font-size:11px; font-weight:700; letter-spacing:0.5px}
+  .rs.busy{color:var(--maroon)} .rs.idle{color:var(--good)}
+  .rcard .rmeta{font-size:12px; color:var(--ink-2); margin-top:6px; line-height:1.6}
+  .rstat{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px}
+  .rstat div{background:var(--shell); border:1px solid var(--line); border-radius:10px; padding:8px 9px}
+  .rstat .v{font-weight:800; font-size:16px; font-variant-numeric:tabular-nums}
+  .rstat .k{font-size:9.5px; letter-spacing:0.8px; text-transform:uppercase; color:var(--ink-3); margin-top:2px}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px}
+  .chart-card h3{font-size:13.5px; font-weight:700; margin-bottom:2px}
+  .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
+  .cols{display:flex; align-items:flex-end; gap:4px; height:110px; padding-top:6px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
+  .col.hot .bar{background:var(--maroon)}
+  .col .cl{font-size:8.5px; color:var(--ink-3); font-weight:500}
+  .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  .hbar{display:grid; grid-template-columns:150px 1fr 34px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums; font-size:11px; color:var(--ink-2)}
+  .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
+  .stack i{display:block; height:100%}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin-top:10px}
+  .legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:21px; height:21px}
+  nav button[aria-pressed="true"]{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
+      <small>Porter Dispatch &middot; Patient Transport</small></div>
+    <span class="mode-tag" id="modeTag">Pilot &middot; this device</span>
+  </header>
+
+  <main>
+    <!-- ============ SIGN IN (live server mode only) ============ -->
+    <div id="signin" style="display:none; padding:10px 16px 20px">
+      <h1 class="page">Sign in</h1>
+      <p class="page-sub">This is the live shared dispatch board. Sign in with your Lakeshore One employee ID and PIN &mdash; the same account as the service desk.</p>
+      <div class="fcard">
+        <label class="fl" for="siEmp">Employee ID</label>
+        <input type="text" id="siEmp" placeholder="e.g. LH-PT01" maxlength="20" autocapitalize="characters">
+        <label class="fl" for="siPin">PIN</label>
+        <input type="password" id="siPin" placeholder="4&ndash;6 digits" maxlength="6" inputmode="numeric">
+        <div id="siNew" style="display:none">
+          <label class="fl" for="siPin2">Confirm new PIN</label>
+          <input type="password" id="siPin2" placeholder="repeat PIN" maxlength="6" inputmode="numeric">
+        </div>
+        <button class="submit" id="siGo">Sign in</button>
+        <p class="hint" id="siMsg">Ask an admin to add you if your ID isn&rsquo;t recognised.</p>
+      </div>
+    </div>
+
+    <!-- ============ BOARD ============ -->
+    <section class="tab active" id="tab-board">
+      <h1 class="page">Transport requests</h1>
+      <p class="page-sub">Raise a request instead of phoning around for a porter. Targets: a porter on the job in 10 min, patient at the destination in 30. Emergency jumps the queue.</p>
+      <div class="kpis" id="bKpis"></div>
+      <div class="fcard">
+        <label class="fl">Transport mode</label>
+        <div class="seg" id="fMode"></div>
+        <label class="fl">Priority</label>
+        <div class="seg" id="fPri"></div>
+        <label class="fl" for="fFrom">From</label>
+        <select id="fFrom"></select>
+        <label class="fl" for="fTo">To</label>
+        <select id="fTo"></select>
+        <label class="fl" for="fPatient">Patient <span>(optional &mdash; leave blank for item runs)</span></label>
+        <input type="text" id="fPatient" placeholder="e.g. Thomas V, bed 4B-07" maxlength="60">
+        <label class="fl" for="fNote">Note <span>(optional)</span></label>
+        <input type="text" id="fNote" placeholder="e.g. on oxygen, take the service lift" maxlength="200">
+        <button class="submit" id="fGo">Request a porter</button>
+        <p class="hint" id="fHint"></p>
+      </div>
+      <div class="roomhead"><h2>Waiting for a porter</h2><span class="rs" id="waitCount"></span></div>
+      <div id="waitList"></div>
+      <div class="roomhead"><h2>On the job</h2><span class="rs" id="activeCount"></span></div>
+      <div id="activeList"></div>
+      <div class="roomhead"><h2>Completed today</h2><span class="rs" id="doneCount"></span></div>
+      <div class="fcard" id="doneList" style="padding:6px 14px"></div>
+    </section>
+
+    <!-- ============ PORTERS ============ -->
+    <section class="tab" id="tab-porters">
+      <span class="viewtag">Dispatcher view</span>
+      <h1 class="page">Porter fleet &mdash; now</h1>
+      <p class="page-sub">Who is on a job, who is free, and how the day is running. A long waiting queue with idle porters is a dispatch problem; everyone busy is a staffing problem.</p>
+      <div class="kpis" id="pKpis"></div>
+      <div id="porterCards"></div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="tab" id="tab-trends">
+      <span class="viewtag">Operations view</span>
+      <h1 class="page">Transport turnaround</h1>
+      <p class="page-sub">Response is the number patients feel &mdash; how long a ward waits for the porter to take the job. The hourly pattern shows when the fleet is stretched.</p>
+      <div class="kpis" id="tKpis"></div>
+      <div class="chart-card">
+        <h3>Requests by hour</h3>
+        <div class="cs">Jobs raised per hour &mdash; last 7 days</div>
+        <div class="cols" id="hourCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Median response by day</h3>
+        <div class="cs">Minutes from request to a porter accepting &mdash; target 10</div>
+        <div class="cols" id="dayCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Busiest routes</h3>
+        <div class="cs">Most-requested from &rarr; to pairs &mdash; last 7 days</div>
+        <div id="routeBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Transport mix &mdash; last 7 days</h3>
+        <div class="cs" id="mixSub"></div>
+        <div class="stack" id="mixStack"></div>
+        <div class="legend" id="mixLegend"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span id="footNote"><b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
+    The board is saved only in this browser (localStorage); demo entries are fictional and re-seeded daily.
+    When served by the Lakeshore One backend this app switches to the live shared dispatch board automatically
+    &mdash; wards raise requests, porters work their queue from their own phones, dispatch sees the whole fleet.</span>
+    <br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>
+  </footer>
+
+  <nav>
+    <button id="nav-board" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2"/><circle cx="16" cy="18" r="2"/><path d="M8 18h6M4 18V6h9v12M13 8h4l3 4v6h-2"/></svg>
+      Board</button>
+    <button id="nav-porters" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5M16 4.5a3.2 3.2 0 0 1 0 6.4M17.5 15.3c2 .6 3 2.3 3 4.7"/></svg>
+      Porters</button>
+    <button id="nav-trends" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+      Trends</button>
+  </nav>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const M = 6e4, D = 864e5;
+
+/* Same modes / priorities / lifecycle as the backend (server/server.js):
+   requested → accepted (porter takes it) → moving (patient picked up) → done. */
+const MODES = ['Wheelchair','Stretcher','Bed','Walk with escort','Item run'];
+const PRIS = ['Routine','Urgent','Emergency'];
+const PRI_BADGE = { Routine:'b-routine', Urgent:'b-urgent', Emergency:'b-emergency' };
+const PRI_RANK = { Emergency:0, Urgent:1, Routine:2 };
+const LOCS = ['Ward 3A','Ward 4B','Ward 5A','Oncology Ward','ICU','HDU','Emergency',
+  'Radiology & Imaging','USG · OP Block L2','Cath Lab','OT Complex','Dialysis Unit','Endoscopy',
+  'Physiotherapy','Lab & Sample Counter','Blood Bank','OPD Block','Main Lobby · Discharge'];
+const ACCEPT_TGT = 10, TOTAL_TGT = 30;   /* minutes */
+
+/* ---------- store ---------- */
+const KEY = 'lakeshore-porter-v1';
+let db = { items: [] };
+try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function isToday(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
+function sameDay(ts, d){ return new Date(ts).toDateString() === d.toDateString(); }
+function hhmm(ts){ const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function median(a){ const s = a.slice().sort((x,y) => x-y); const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
+const minsSince = ts => Math.round((Date.now() - ts)/M);
+function badge(mins, tgt, prefix){
+  const cls = mins <= tgt ? 'b-ok' : mins <= tgt*2 ? 'b-due' : 'b-late';
+  return '<span class="badge ' + cls + '">' + (prefix || '') + mins + ' min</span>';
+}
+const respMin = it => Math.round((it.acceptAt - it.requestedAt)/M);
+const totalMin = it => Math.round((it.doneAt - it.requestedAt)/M);
+const waiting = () => db.items.filter(i => i.status === 'requested')
+  .sort((a,b) => PRI_RANK[a.priority] - PRI_RANK[b.priority] || a.requestedAt - b.requestedAt);
+const onJob = () => db.items.filter(i => i.status === 'accepted' || i.status === 'moving')
+  .sort((a,b) => a.acceptAt - b.acceptAt);
+const doneToday = () => db.items.filter(i => i.status === 'done' && isToday(i.doneAt));
+
+/* ---------- daily demo seed — a believable week so the boards aren't empty ---------- */
+const PORTERS = ['Sunil Das','Ratheesh K','Mary A','Salim P','Vineeth R'];
+const NAMES = ['Mariyam K','Thomas V','Anitha R','Suresh P','Fathima N','Georgekutty J','Lakshmi D','Rahim A','Annie C','Vishnu M'];
+const NURSES = ['Sr. Mercy J','Sr. Deepa R','Sr. Anju M','CN Latha S'];
+let seedN = 0;
+function randMode(){ const r = Math.random();
+  return r < 0.42 ? 'Wheelchair' : r < 0.68 ? 'Stretcher' : r < 0.78 ? 'Bed' : r < 0.86 ? 'Walk with escort' : 'Item run'; }
+function randPri(){ const r = Math.random(); return r < 0.72 ? 'Routine' : r < 0.94 ? 'Urgent' : 'Emergency'; }
+function randRoute(){
+  const a = LOCS[Math.floor(Math.random()*LOCS.length)];
+  let b = a; while (b === a) b = LOCS[Math.floor(Math.random()*LOCS.length)];
+  return Math.random() < 0.55 ? ['Ward ' + ['3A','4B','5A'][seedN % 3], 'Radiology & Imaging'] : [a, b];
+}
+function mk(requestedAt, patch){
+  seedN++;
+  const [from, to] = randRoute();
+  const md = randMode();
+  return Object.assign({ id:'seed' + Date.now() + '-' + seedN, mode: md, priority: randPri(),
+    from, to, patient: md === 'Item run' ? '' : NAMES[seedN % NAMES.length], note:'',
+    status:'requested', requestedAt, acceptAt:null, pickupAt:null, doneAt:null,
+    porterName:null, byName: NURSES[seedN % NURSES.length], demo:true }, patch || {});
+}
+function mkDone(requestedAt){
+  const it = mk(requestedAt);
+  let resp = 2 + Math.random()*9;
+  if (Math.random() < 0.25) resp = 12 + Math.random()*16;      /* everyone already on a job */
+  const pick = 2 + Math.random()*8, run = 5 + Math.random()*16;
+  it.acceptAt = requestedAt + resp*M;
+  it.pickupAt = it.acceptAt + pick*M;
+  it.doneAt = it.pickupAt + run*M;
+  it.status = 'done';
+  it.porterName = PORTERS[seedN % PORTERS.length];
+  return it;
+}
+function seedDemo(){
+  db.items = db.items.filter(i => Date.now() - i.requestedAt < 8*D);
+  if (db.items.some(i => isToday(i.requestedAt))) return;
+  const now = Date.now();
+  for (let d = 6; d >= 1; d--){
+    const day = new Date(); day.setDate(day.getDate() - d); day.setHours(8,0,0,0);
+    if (db.items.some(i => sameDay(i.requestedAt, day))) continue;
+    const n = 12 + Math.floor(Math.random()*9);
+    for (let k = 0; k < n; k++) db.items.push(mkDone(day.getTime() + Math.random()*11*36e5));
+  }
+  const d0 = new Date(); d0.setHours(8,0,0,0);
+  for (let t = d0.getTime(); t < now - 45*M; t += (25 + Math.random()*35)*M){
+    const it = mkDone(t);
+    if (it.doneAt < now - 5*M) db.items.push(it);
+  }
+  const open = new Date(); open.setHours(9,0,0,0);
+  if (now > open.getTime()){
+    db.items.push(mk(now - 14*M, { priority:'Urgent' }));                      /* waiting too long */
+    db.items.push(mk(now - 6*M));
+    db.items.push(mk(now - 2*M, { mode:'Item run', patient:'', note:'STAT sample to lab' }));
+    db.items.push(mk(now - 21*M, { status:'accepted', acceptAt: now - 9*M, porterName: PORTERS[0] }));
+    db.items.push(mk(now - 33*M, { status:'moving', acceptAt: now - 26*M, pickupAt: now - 12*M, porterName: PORTERS[1] }));
+  }
+  save();
+}
+
+/* ---------- live backend (Lakeshore One server) ---------- */
+/* Same pattern as the Discharge Tracker and Bed Turnaround: served by
+   server/server.js the app binds to the shared transports store — wards
+   request (clinical roles), porters accept and run jobs (porter role),
+   dispatch and management see the fleet. */
+let mode = 'local', token = null;
+try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+async function api(path, body){
+  const r = await fetch('../api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchState(){
+  const r = await api('state');
+  if (r.ok && r.transports) db.items = r.transports;
+  return r.ok;
+}
+function startSSE(){
+  try{
+    const es = new EventSource('../api/events?token=' + encodeURIComponent(token));
+    es.onmessage = async () => { if (await fetchState()) renderAll(); };
+  }catch(e){}
+}
+async function commit(op){
+  op.uid = 'pt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const r = await api('op', { op });
+  if (!r.ok) alert(r.error || 'Not allowed for your role.');
+  if (await fetchState()) renderAll();
+  return r;
+}
+function setTag(m){
+  const el = $('modeTag');
+  if (m === 'live'){ el.innerHTML = 'Live &middot; shared'; el.style.color = 'var(--good)'; el.style.background = 'var(--good-bg)'; }
+  else if (m === 'signin'){ el.innerHTML = 'Live &middot; sign in'; el.style.color = 'var(--info)'; el.style.background = 'var(--info-bg)'; }
+}
+function showSignin(v){
+  $('signin').style.display = v ? 'block' : 'none';
+  for (const k of ['board','porters','trends']) $('tab-' + k).style.display = v ? 'none' : '';
+  document.querySelector('nav').style.display = v ? 'none' : 'flex';
+}
+async function enterLive(){
+  setTag('live'); showSignin(false);
+  $('footNote').innerHTML = '<b style="color:var(--ink-2)">Live system.</b><br>' +
+    'One shared dispatch board — wards raise requests, porters work the queue from their own phones ' +
+    '(the porter who accepts owns the job), dispatch sees the whole fleet. Every change is role-checked, ' +
+    'audited and pushed to all open devices in real time.';
+  await fetchState(); renderAll(); startSSE();
+}
+$('siGo').onclick = async () => {
+  const empId = $('siEmp').value.trim().toUpperCase(), pin = $('siPin').value.trim();
+  if (!empId){ $('siMsg').textContent = 'Enter your employee ID.'; return; }
+  $('siMsg').textContent = 'Signing in…';
+  let r;
+  if ($('siNew').style.display !== 'none'){
+    if (!/^\d{4,6}$/.test(pin) || pin !== $('siPin2').value.trim()){
+      $('siMsg').textContent = 'PINs must match and be 4–6 digits.'; return;
+    }
+    r = await api('set-pin', { empId, pin });
+  } else {
+    r = await api('login', { empId, pin });
+    if (r.needPin){
+      $('siNew').style.display = 'block'; $('siGo').textContent = 'Set PIN & sign in';
+      $('siMsg').textContent = 'First sign-in — choose a 4–6 digit PIN.'; return;
+    }
+  }
+  if (!r.ok || !r.token){ $('siMsg').textContent = r.error || 'Sign-in failed.'; return; }
+  token = r.token;
+  try{ sessionStorage.setItem('l1-token', token); localStorage.setItem('l1-last-emp', empId); }catch(e){}
+  await enterLive();
+};
+async function boot(){
+  try{
+    const r = await fetch('../api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one'){
+      mode = 'server'; db = { items: [] };
+      if (token && (await api('me')).ok){ await enterLive(); return; }
+      token = null;
+      setTag('signin'); showSignin(true); renderAll();
+      try{ const le = localStorage.getItem('l1-last-emp'); if (le) $('siEmp').value = le; }catch(e){}
+      return;
+    }
+  }catch(e){}
+  seedDemo(); renderAll();
+}
+
+/* ---------- request form ---------- */
+let modeSel = 'Wheelchair', priSel = 'Routine';
+function renderForm(){
+  const mEl = $('fMode'); mEl.innerHTML = '';
+  for (const m of MODES){
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = m;
+    b.setAttribute('aria-pressed', m === modeSel);
+    b.onclick = () => { modeSel = m; renderForm(); };
+    mEl.appendChild(b);
+  }
+  const pEl = $('fPri'); pEl.innerHTML = '';
+  for (const p of PRIS){
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = p;
+    if (p === 'Emergency') b.className = 'emg';
+    b.setAttribute('aria-pressed', p === priSel);
+    b.onclick = () => { priSel = p; renderForm(); };
+    pEl.appendChild(b);
+  }
+  for (const [id, def] of [['fFrom', 0], ['fTo', 7]]){
+    const sel = $(id), keep = sel.value;
+    sel.innerHTML = LOCS.map(l => '<option>' + l + '</option>').join('');
+    sel.value = keep || LOCS[def];
+  }
+  $('fHint').textContent = priSel === 'Emergency'
+    ? 'Emergency goes to the top of every porter’s queue — use for time-critical moves only.'
+    : 'The request lands on every free porter’s phone; the first to accept owns the job.';
+}
+$('fGo').onclick = async () => {
+  if ($('fFrom').value === $('fTo').value){ alert('From and To are the same location.'); return; }
+  const fields = { mode: modeSel, priority: priSel, from: $('fFrom').value, to: $('fTo').value,
+    patient: $('fPatient').value.trim(), note: $('fNote').value.trim() };
+  if (mode === 'server'){
+    const r = await commit(Object.assign({ kind:'pt_add' }, fields));
+    if (!r.ok) return;
+  } else {
+    db.items.push(Object.assign(mk(Date.now()), fields, { demo:false, byName:'You' }));
+    save();
+  }
+  $('fPatient').value = ''; $('fNote').value = ''; priSel = 'Routine';
+  renderAll();
+  alert('Porter requested — ' + fields.mode + ', ' + fields.from + ' → ' + fields.to +
+    (fields.priority !== 'Routine' ? ' (' + fields.priority + ')' : '') + '.');
+};
+
+/* one entry point for every job change, both modes */
+async function moveJob(id, to){
+  if (mode === 'server'){ await commit({ kind: to === 'cancelled' ? 'pt_cancel' : 'pt_move', id, to }); return; }
+  const it = db.items.find(x => x.id === id); if (!it) return;
+  const now = Date.now();
+  if (to === 'accepted'){ it.status = 'accepted'; it.acceptAt = now; it.porterName = 'You'; }
+  else if (to === 'moving'){ it.status = 'moving'; it.pickupAt = now; }
+  else if (to === 'done'){ it.status = 'done'; it.doneAt = now; }
+  else if (to === 'cancelled'){ it.status = 'cancelled'; }
+  save(); renderAll();
+}
+
+/* ---------- board ---------- */
+function jobCard(it){
+  const isReq = it.status === 'requested';
+  const wait = isReq ? minsSince(it.requestedAt)
+    : it.status === 'accepted' ? minsSince(it.acceptAt) : minsSince(it.pickupAt);
+  const stBadge = isReq ? badge(wait, ACCEPT_TGT, 'waiting ')
+    : it.status === 'accepted'
+      ? '<span class="badge b-st">porter on the way · ' + wait + ' min</span>'
+      : '<span class="badge b-st">en route · ' + wait + ' min</span>';
+  const act = isReq ? '<button class="primary" data-mv="' + it.id + '|accepted">Accept job</button>'
+    : it.status === 'accepted' ? '<button class="primary" data-mv="' + it.id + '|moving">Picked up</button>'
+    : '<button class="primary" data-mv="' + it.id + '|done">Completed</button>';
+  return '<div class="qcard' + (isReq && wait > ACCEPT_TGT ? ' late' : '') + '">' +
+    '<div class="qrow"><span class="tok">' + it.mode + '</span>' +
+    '<span class="badge ' + PRI_BADGE[it.priority] + '">' + it.priority + '</span>' + stBadge + '</div>' +
+    '<div class="qroute">' + esc(it.from) + ' <i>&rarr;</i> ' + esc(it.to) + '</div>' +
+    '<div class="qmeta">' + (it.patient ? esc(it.patient) + ' &middot; ' : '') +
+      'requested ' + hhmm(it.requestedAt) + (it.byName ? ' by ' + esc(it.byName) : '') +
+      (it.porterName ? ' &middot; porter ' + esc(it.porterName) : '') +
+      (it.note ? '<br>&ldquo;' + esc(it.note) + '&rdquo;' : '') + '</div>' +
+    '<div class="qact">' + act + '<button class="ghost" data-mv="' + it.id + '|cancelled">Cancel</button></div></div>';
+}
+function renderBoard(){
+  const w = waiting(), act = onJob(), done = doneToday();
+  const longest = w.length ? Math.max(...w.map(i => minsSince(i.requestedAt))) : 0;
+  const resps = done.filter(i => i.acceptAt).map(respMin);
+  $('bKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:' + (w.length > 3 ? 'var(--crit)' : 'var(--brand)') + '">' + w.length + '</div><div class="l">Waiting for a porter</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (longest > ACCEPT_TGT ? 'var(--crit)' : 'var(--good)') + '">' + longest + '<small> min</small></div><div class="l">Longest wait &middot; target ' + ACCEPT_TGT + '</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--warn)">' + act.length + '</div><div class="l">On the job now</div></div>' +
+    '<div class="kpi"><div class="n">' + (resps.length ? Math.round(median(resps)) : 0) + '<small> min</small></div><div class="l">Median response today</div></div>';
+
+  $('waitCount').textContent = w.length + ' requests';
+  $('waitList').innerHTML = w.length ? w.map(jobCard).join('')
+    : '<div class="empty">No one waiting — every request has a porter.</div>';
+  $('activeCount').textContent = act.length + ' jobs';
+  $('activeList').innerHTML = act.length ? act.map(jobCard).join('')
+    : '<div class="empty">No jobs in progress.</div>';
+
+  const dl = done.slice().sort((a,b) => b.doneAt - a.doneAt);
+  $('doneCount').textContent = dl.length + ' done';
+  $('doneList').innerHTML = dl.length ? dl.slice(0, 8).map(it =>
+    '<div class="outrow"><span class="ot" style="color:var(--ink-3)">' + hhmm(it.doneAt) + '</span>' +
+    '<span class="on">' + esc(it.from) + ' &rarr; ' + esc(it.to) +
+    (it.porterName ? ' &middot; ' + esc(it.porterName) : '') + '</span>' +
+    badge(totalMin(it), TOTAL_TGT) + '</div>').join('')
+    : '<div class="empty" style="padding:12px">Nothing completed yet today.</div>';
+
+  for (const b of document.querySelectorAll('#tab-board [data-mv]'))
+    b.onclick = () => {
+      const [id, to] = b.dataset.mv.split('|');
+      if (to === 'cancelled' && !confirm('Cancel this transport request?')) return;
+      moveJob(id, to);
+    };
+}
+
+/* ---------- porters ---------- */
+function porterRoster(){
+  const names = new Set(PORTERS);
+  for (const i of db.items) if (i.porterName) names.add(i.porterName);
+  if (mode === 'server'){ names.clear(); for (const i of db.items) if (i.porterName) names.add(i.porterName); }
+  return [...names];
+}
+function renderPorters(){
+  const w = waiting(), act = onJob(), done = doneToday();
+  const roster = porterRoster();
+  const busy = new Set(act.map(i => i.porterName));
+  const resps = done.filter(i => i.acceptAt).map(respMin);
+  $('pKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:' + (w.length > 3 ? 'var(--crit)' : 'var(--brand)') + '">' + w.length + '</div><div class="l">In the queue</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--warn)">' + busy.size + '<small>' + (roster.length ? ' / ' + roster.length : '') + '</small></div><div class="l">Porters on a job</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + done.length + '</div><div class="l">Jobs done today</div></div>' +
+    '<div class="kpi"><div class="n">' + (resps.length ? Math.round(median(resps)) : 0) + '<small> min</small></div><div class="l">Median response &middot; target ' + ACCEPT_TGT + '</div></div>';
+
+  $('porterCards').innerHTML = roster.length ? roster.map(name => {
+    const cur = act.find(i => i.porterName === name);
+    const mine = done.filter(i => i.porterName === name);
+    const durs = mine.filter(i => i.acceptAt && i.doneAt).map(i => Math.round((i.doneAt - i.acceptAt)/M));
+    return '<div class="rcard"><div class="rrow"><h2>' + esc(name) + '</h2>' +
+      '<span class="rs ' + (cur ? 'busy' : 'idle') + '">' + (cur ? 'ON A JOB' : 'FREE') + '</span></div>' +
+      '<div class="rmeta">' + (cur
+        ? esc(cur.from) + ' &rarr; ' + esc(cur.to) + ' &middot; ' + cur.mode.toLowerCase() +
+          ' &middot; ' + (cur.status === 'moving' ? 'en route' : 'heading to pickup') + ' since ' +
+          hhmm(cur.status === 'moving' ? cur.pickupAt : cur.acceptAt)
+        : 'Free for the next request') + '</div>' +
+      '<div class="rstat"><div><div class="v">' + mine.length + '</div><div class="k">Done today</div></div>' +
+      '<div><div class="v">' + (durs.length ? Math.round(median(durs)) : 0) + '<small style="font-size:10px"> min</small></div><div class="k">Median job</div></div>' +
+      '<div><div class="v">' + (cur ? 1 : 0) + '</div><div class="k">Active now</div></div></div></div>';
+  }).join('') : '<div class="empty">No porters have worked a job yet — the fleet appears here as jobs are accepted.</div>';
+}
+
+/* ---------- trends ---------- */
+function renderTrends(){
+  const week = db.items.filter(i => i.status === 'done' && Date.now() - i.doneAt < 7*D);
+  const resps = week.filter(i => i.acceptAt).map(respMin);
+  const totals = week.map(totalMin);
+  const within = totals.filter(t => t <= TOTAL_TGT);
+  $('tKpis').innerHTML =
+    '<div class="kpi"><div class="n">' + week.length + '</div><div class="l">Jobs &middot; 7 d</div></div>' +
+    '<div class="kpi"><div class="n">' + (resps.length ? Math.round(median(resps)) : 0) + '<small> min</small></div><div class="l">Median response &middot; tgt ' + ACCEPT_TGT + '</div></div>' +
+    '<div class="kpi"><div class="n">' + (totals.length ? Math.round(median(totals)) : 0) + '<small> min</small></div><div class="l">Median request&rarr;done &middot; tgt ' + TOTAL_TGT + '</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (totals.length && within.length/totals.length < 0.7 ? 'var(--crit)' : 'var(--good)') + '">' +
+      (totals.length ? Math.round(100*within.length/totals.length) : 0) + '<small>%</small></div><div class="l">Within ' + TOTAL_TGT + ' min</div></div>';
+
+  const byHour = {};
+  for (const i of week){ const h = new Date(i.requestedAt).getHours(); byHour[h] = (byHour[h] || 0) + 1; }
+  const hours = []; for (let h = 7; h <= 20; h++) hours.push(h);
+  const hMax = Math.max(...hours.map(h => byHour[h] || 0), 1);
+  $('hourCols').innerHTML = hours.map(h =>
+    '<div class="col' + ((byHour[h] || 0) === hMax ? ' hot' : '') + '"><span class="cv">' + (byHour[h] || '·') + '</span>' +
+    '<span class="bar" style="height:' + Math.round(88*(byHour[h] || 0)/hMax) + '%"></span><span class="cl">' + h + 'h</span></div>').join('');
+
+  let dayHtml = '';
+  const meds = [];
+  for (let d = 6; d >= 0; d--){
+    const day = new Date(); day.setDate(day.getDate() - d);
+    const r = week.filter(i => sameDay(i.requestedAt, day) && i.acceptAt).map(respMin);
+    meds.push([day, r.length ? Math.round(median(r)) : 0]);
+  }
+  const dMax = Math.max(...meds.map(m => m[1]), ACCEPT_TGT);
+  for (const [day, v] of meds)
+    dayHtml += '<div class="col' + (v > ACCEPT_TGT ? ' hot' : '') + '"><span class="cv">' + (v || '·') + '</span>' +
+      '<span class="bar" style="height:' + Math.round(88*v/dMax) + '%"></span>' +
+      '<span class="cl">' + day.toLocaleString('en',{weekday:'short'}) + '</span></div>';
+  $('dayCols').innerHTML = dayHtml;
+
+  const routes = {};
+  for (const i of week){ const k = i.from + ' → ' + i.to; routes[k] = (routes[k] || 0) + 1; }
+  const top = Object.entries(routes).sort((a,b) => b[1] - a[1]).slice(0, 7);
+  const rMax = Math.max(...top.map(t => t[1]), 1);
+  $('routeBars').innerHTML = top.length ? top.map(([k, n]) =>
+    '<div class="hbar"><span class="hl">' + esc(k) + '</span><span class="tr"><i style="width:' + Math.round(100*n/rMax) + '%"></i></span><span class="hv">' + n + '</span></div>').join('')
+    : '<div class="empty">No completed jobs yet this week.</div>';
+
+  const mix = MODES.map(m => [m, week.filter(i => i.mode === m).length]).filter(x => x[1]);
+  const tot = mix.reduce((a,m) => a + m[1], 0) || 1;
+  const colors = { Wheelchair:'var(--info)', Stretcher:'var(--maroon)', Bed:'var(--brand)',
+    'Walk with escort':'var(--good)', 'Item run':'var(--neutral)' };
+  $('mixSub').textContent = 'Share of ' + tot + ' jobs by transport mode';
+  $('mixStack').innerHTML = mix.map(m => '<i style="width:' + (100*m[1]/tot) + '%; background:' + colors[m[0]] + '" title="' + m[0] + '"></i>').join('');
+  $('mixLegend').innerHTML = mix.map(m => '<span><b style="background:' + colors[m[0]] + '"></b>' + m[0] + ' ' + Math.round(100*m[1]/tot) + '%</span>').join('');
+}
+
+/* ---------- tabs & boot ---------- */
+function setTab(t){
+  for (const k of ['board','porters','trends']){
+    $('tab-' + k).classList.toggle('active', k === t);
+    $('nav-' + k).setAttribute('aria-pressed', k === t);
+  }
+  window.scrollTo(0,0);
+}
+for (const k of ['board','porters','trends']) $('nav-' + k).onclick = () => setTab(k);
+
+function renderAll(){ renderForm(); renderBoard(); renderPorters(); renderTrends(); }
+boot();
+setInterval(renderAll, 60e3);          /* keep the waiting clocks ticking */
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+</body>
+</html>

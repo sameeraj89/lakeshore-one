@@ -7,7 +7,7 @@
 
 CREATE TYPE user_role AS ENUM (
   'doctor','nurse','staff',
-  'it_agent','facility_agent','housekeeping_agent','biomedical_agent','security_agent',
+  'it_agent','facility_agent','housekeeping_agent','biomedical_agent','security_agent','porter_agent',
   'management','quality','admin'
 );
 
@@ -110,6 +110,29 @@ CREATE TABLE bed_events (                       -- turnaround-time source
   at       timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_bed_events ON bed_events (bed_id, at);
+
+-- ---------- Porter dispatch ----------
+CREATE TYPE pt_status AS ENUM ('requested','accepted','moving','done','cancelled');
+CREATE TYPE pt_mode   AS ENUM ('Wheelchair','Stretcher','Bed','Walk with escort','Item run');
+CREATE TYPE pt_pri    AS ENUM ('Routine','Urgent','Emergency');
+CREATE TABLE transports (
+  id           varchar(16) PRIMARY KEY,           -- 'PTR-317'
+  mode         pt_mode     NOT NULL,
+  priority     pt_pri      NOT NULL,              -- Emergency jumps the queue
+  from_loc     varchar(60) NOT NULL,
+  to_loc       varchar(60) NOT NULL,
+  patient      varchar(60),                       -- blank for item runs
+  note         varchar(200),
+  status       pt_status   NOT NULL DEFAULT 'requested',
+  requested_at timestamptz NOT NULL,              -- the clock starts here
+  accept_at    timestamptz,                       -- porter takes the job (response)
+  pickup_at    timestamptz,
+  done_at      timestamptz,
+  requester    varchar(20) NOT NULL REFERENCES users(emp_id),
+  porter       varchar(20) REFERENCES users(emp_id)  -- role porter_agent
+);
+CREATE INDEX idx_pt_queue     ON transports (priority, requested_at) WHERE status = 'requested';
+CREATE INDEX idx_pt_requested ON transports (requested_at);
 
 -- ---------- Discharge tracking ----------
 CREATE TYPE dc_status AS ENUM ('active','out','cancelled');
