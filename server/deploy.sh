@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Lakeshore One — one-shot VPS deploy (Ubuntu 24.04, run as root).
 #
-#   sudo bash deploy.sh ops.yourdomain.in
+#   sudo bash deploy.sh opslakeshore.in
 #
 # Prerequisite: a DNS A record for that domain already pointing at this
 # machine's public IP (Caddy needs it to obtain the HTTPS certificate).
+#
+# Server settings (GOOGLE_CLIENT_ID, GOOGLE_HOSTED_DOMAIN, DEMO_LOGIN, …)
+# live in /etc/lakeshore-one.env — created once below, never overwritten,
+# so they survive re-runs. Edit it, then: systemctl restart lakeshore-one.
 #
 # What it does: installs Node 22 + Caddy, clones/updates this repo into
 # /opt/lakeshore-one, runs the server as a systemd service under www-data,
