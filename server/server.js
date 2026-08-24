@@ -119,6 +119,8 @@ CREATE INDEX IF NOT EXISTS idx_otb_day ON ot_bookings (case_date, ot, start);
 `);
 /* migration: photo column on tickets (added after first release) */
 try{ db.exec('ALTER TABLE tickets ADD COLUMN photo TEXT'); }catch(e){ /* exists */ }
+/* migration: link a confirmed OT booking to its case on the live stage board */
+try{ db.exec('ALTER TABLE ot_bookings ADD COLUMN case_id TEXT'); }catch(e){ /* exists */ }
 /* migration: email column on users (Google SSO account linking) */
 try{ db.exec('ALTER TABLE users ADD COLUMN email TEXT'); }catch(e){ /* exists */ }
 db.exec(`
@@ -389,7 +391,7 @@ function applyOp(op, u){
     case 'ot_add': {
       if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
       if (!OT_SUITES.includes(op.suite) || !op.procedure || !op.surgeon) return { ok:false, error:'invalid case' };
-      const seq = nextSeq(), id = 'OTC-' + seq;
+      const id = 'OTC-' + nextSeq();
       db.prepare('INSERT INTO ot_cases (id,suite,case_date,planned,dur_min,procedure_name,surgeon,status,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
         .run(id, op.suite, s(op.date,10), s(op.planned,5), Math.min(720, parseInt(op.durMin)||120),
              s(op.procedure,120), s(op.surgeon,60), 'scheduled', empId);
@@ -406,6 +408,13 @@ function applyOp(op, u){
       if (!validNext) return { ok:false, error:'invalid stage transition' };
       db.prepare('UPDATE ot_cases SET status=? WHERE id=?').run(op.to, c.id);
       db.prepare('INSERT INTO ot_milestones (case_id,stage,actor_name,at) VALUES (?,?,?,?)').run(c.id, op.to, name, at);
+      /* reflect execution onto the linked planning-board booking, if any */
+      const bk = db.prepare('SELECT * FROM ot_bookings WHERE case_id=?').get(c.id);
+      if (bk){
+        const to = op.to === 'in_ot' ? 'in_ot' : op.to === 'done' ? 'done' : op.to === 'cancelled' ? 'cancelled' : null;
+        if (to && bk.status !== to && bk.status !== 'cancelled')
+          db.prepare('UPDATE ot_bookings SET status=? WHERE id=?').run(to, bk.id);
+      }
       audit(empId, `${c.id} → ${op.to}`);
       return { ok:true };
     }
@@ -545,10 +554,30 @@ function applyOp(op, u){
                     (to === 'delayed' && ['booked','confirmed'].includes(from)) ||
                     (to === 'cancelled' && ['booked','confirmed','delayed'].includes(from));
       if (!valid) return { ok:false, error:'invalid transition' };
+      const linked = c.case_id ? db.prepare('SELECT * FROM ot_cases WHERE id=?').get(c.case_id) : null;
+      /* once a booking is on the live stage board, execution is driven there */
+      if (linked && (to === 'in_ot' || to === 'done'))
+        return { ok:false, error:'this case is on the live OT board (' + c.case_id + ') — wheel-in and completion are recorded there' };
+      if (linked && linked.status !== 'scheduled' && (to === 'delayed' || to === 'cancelled'))
+        return { ok:false, error:'too late — ' + c.case_id + ' is already ' + linked.status + ' on the live OT board' };
       const start = to === 'delayed' ? toHM(Math.min(OTB_DAY_END - c.dur_min, toMin(c.start) + 30)) : c.start;
-      db.prepare('UPDATE ot_bookings SET status=?, start=? WHERE id=?').run(to, start, c.id);
-      audit(empId, `${c.id} → ${to}`);
-      return { ok:true };
+      let caseId = c.case_id;
+      if (to === 'confirmed' && !caseId){
+        /* push onto the live stage board — procedure & surgeon only, patient identity stays here */
+        caseId = 'OTC-' + nextSeq();
+        const suite = OT_SUITES.find(s => s.startsWith(c.ot + ' ')) || c.ot;
+        db.prepare('INSERT INTO ot_cases (id,suite,case_date,planned,dur_min,procedure_name,surgeon,status,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
+          .run(caseId, suite, c.case_date, start, c.dur_min, c.procedure_name, c.surgeon, 'scheduled', empId);
+      }
+      if (linked && to === 'delayed')
+        db.prepare("UPDATE ot_cases SET planned=? WHERE id=? AND status='scheduled'").run(start, c.case_id);
+      if (linked && to === 'cancelled'){
+        db.prepare("UPDATE ot_cases SET status='cancelled' WHERE id=? AND status='scheduled'").run(c.case_id);
+        db.prepare('INSERT INTO ot_milestones (case_id,stage,actor_name,at) VALUES (?,?,?,?)').run(c.case_id, 'cancelled', name, at);
+      }
+      db.prepare('UPDATE ot_bookings SET status=?, start=?, case_id=? WHERE id=?').run(to, start, caseId, c.id);
+      audit(empId, `${c.id} → ${to}` + (to === 'confirmed' && caseId ? ` (live board ${caseId})` : ''));
+      return { ok:true, caseId };
     }
 
     default:
