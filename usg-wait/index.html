@@ -14,7 +14,7 @@
 <style>
   :root{
     --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
-    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
     --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
@@ -28,7 +28,7 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
       --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
@@ -42,7 +42,7 @@
   }
   :root[data-theme="dark"]{
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
     --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
@@ -88,10 +88,10 @@
   label.fl:first-child{margin-top:0}
   label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
   input[type=text], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
-    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:16px; color:var(--ink); outline:none}
   input:focus, select:focus{border-color:var(--brand)}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
-  .seg button{flex:1 1 28%; min-width:80px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+  .seg button{flex:1 1 28%; min-width:80px; min-height:44px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
     font-family:'Figtree',sans-serif; line-height:1.3}
   .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
@@ -125,7 +125,7 @@
   .qmeta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
   .qact{margin-top:9px; display:flex; gap:7px; flex-wrap:wrap}
   .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
-    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+    min-height:44px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
   .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
   .qact button.ghost{color:var(--ink-3)}
   .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:22px 10px; line-height:1.6}
@@ -147,7 +147,7 @@
   .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
   .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
   .col.hot .bar{background:var(--maroon)}
-  .col .cl{font-size:8.5px; color:var(--ink-3); font-weight:500}
+  .col .cl{font-size:10px; color:var(--ink-3); font-weight:500}
   .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
   .hbar{display:grid; grid-template-columns:135px 1fr 34px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
   .hbar:last-child{margin-bottom:0}
@@ -168,6 +168,22 @@
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:21px; height:21px}
   nav button[aria-pressed="true"]{color:var(--brand)}
+
+  .toast{position:fixed; left:50%; transform:translateX(-50%) translateY(6px);
+    bottom:calc(78px + env(safe-area-inset-bottom)); width:min(444px, calc(100% - 24px));
+    background:#1A242C; color:#E8EEF3; border:1px solid rgba(232,238,243,0.16); border-radius:14px;
+    padding:12px 15px; font-size:13px; line-height:1.55; box-shadow:var(--shadow); z-index:60;
+    opacity:0; pointer-events:none; transition:opacity .25s, transform .25s}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast.crit{background:#43201C; color:#F5C9C2; border-color:rgba(240,122,106,0.4)}
+  .toast b{color:#8FC1E8}
+
+  details.recall{margin:18px 2px 0}
+  details.recall summary{cursor:pointer; font-size:12.5px; font-weight:700; color:var(--ink-2); padding:8px 2px}
+  details.recall .qcard{margin-top:8px}
+
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px}
 </style>
 </head>
 <body>
@@ -273,10 +289,21 @@ const WAIT_TARGET = 30;                /* minutes — service promise for OP USG
 const KEY = 'lakeshore-usg-wait-v1';
 let db = { daySeq: 0, day: '', items: [] };
 try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast('Could not save — storage may be full.', true); } }
 function todayStr(){ const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function isToday(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
+
+/* ---------- toast ---------- */
+let toastTimer = null;
+function toast(html, crit){
+  let t = $('toast');
+  if (!t){ t = document.createElement('div'); t.id = 'toast'; t.className = 'toast';
+    t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); document.body.appendChild(t); }
+  t.innerHTML = html; t.classList.toggle('crit', !!crit);
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
 
 function nextToken(){
   if (db.day !== todayStr()){ db.day = todayStr(); db.daySeq = 0; }
@@ -373,7 +400,7 @@ $('rSubmit').onclick = () => {
   db.items.push(it); save();
   $('rName').value = ''; $('rUhid').value = ''; clsSel = 'OP';
   renderAll();
-  alert('Token ' + it.token + ' — ' + ROOMS.find(r => r.id === room).name + '\nExpected wait ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
+  toast('Token <b>' + it.token + '</b> issued — ' + ROOMS.find(r => r.id === room).name + ' · expected start ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
 };
 
 /* ---------- queue board ---------- */
@@ -381,6 +408,7 @@ function esc(s){ const d = document.createElement('div'); d.textContent = s || '
 function hhmm(ts){ const d = new Date(ts);
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 
+let confirmNoShow = null;
 function renderQueue(){
   let html = '';
   for (const r of ROOMS){
@@ -404,8 +432,25 @@ function renderQueue(){
         '<div class="qname">' + (esc(i.name) || 'Unnamed patient') + '</div>' +
         '<div class="qmeta">Registered ' + hhmm(i.regAt) + (i.uhid ? ' · ' + esc(i.uhid) : '') + ' · position ' + (k+1) + ' in queue</div>' +
         '<div class="qact">' + (k === 0 && !cur ? '<button class="primary" data-start="' + i.id + '">Start scan</button>' : '') +
-        '<button class="ghost" data-noshow="' + i.id + '">No-show</button></div></div>';
+        (confirmNoShow === i.id
+          ? '<button data-noshow-yes="' + i.id + '" style="border-color:var(--crit); background:var(--crit-bg); color:var(--crit)">Confirm no-show</button>' +
+            '<button class="ghost" data-noshow-no="' + i.id + '">Keep in queue</button>'
+          : '<button class="ghost" data-noshow="' + i.id + '">No-show</button>') + '</div></div>';
     });
+  }
+  const ns = today().filter(i => i.status === 'noshow').sort((a,b) => (b.noShowAt || b.regAt) - (a.noShowAt || a.regAt));
+  if (ns.length){
+    const prev = $('nsRecall');
+    html += '<details class="recall" id="nsRecall"' + (prev && prev.open ? ' open' : '') + '>' +
+      '<summary>No-shows today (' + ns.length + ')</summary>' +
+      ns.map(i => '<div class="qcard"><div class="qrow"><span class="tok">' + i.token + '</span>' +
+        '<span class="badge ' + CLS_BADGE[i.cls] + '">' + i.cls + '</span>' +
+        '<span class="badge b-w-due">no-show ' + hhmm(i.noShowAt || i.regAt) + '</span></div>' +
+        '<div class="qname">' + (esc(i.name) || 'Unnamed patient') + '</div>' +
+        '<div class="qmeta">Registered ' + hhmm(i.regAt) + (i.uhid ? ' · ' + esc(i.uhid) : '') + ' · ' +
+          (ROOMS.find(r => r.id === i.room) || { name:i.room }).name + '</div>' +
+        '<div class="qact"><button class="primary" data-requeue="' + i.id + '">Re-queue</button></div></div>').join('') +
+      '</details>';
   }
   $('queueList').innerHTML = html;
   for (const b of $('queueList').querySelectorAll('[data-start]'))
@@ -415,8 +460,16 @@ function renderQueue(){
     b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.done);
       if (i){ i.status = 'done'; i.endAt = Date.now(); save(); renderAll(); } };
   for (const b of $('queueList').querySelectorAll('[data-noshow]'))
-    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.noshow);
-      if (i){ i.status = 'noshow'; save(); renderAll(); } };
+    b.onclick = () => { confirmNoShow = b.dataset.noshow; renderQueue(); };
+  for (const b of $('queueList').querySelectorAll('[data-noshow-no]'))
+    b.onclick = () => { confirmNoShow = null; renderQueue(); };
+  for (const b of $('queueList').querySelectorAll('[data-noshow-yes]'))
+    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.noshowYes);
+      if (i){ i.status = 'noshow'; i.noShowAt = Date.now(); confirmNoShow = null; save(); renderAll(); } };
+  for (const b of $('queueList').querySelectorAll('[data-requeue]'))
+    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.requeue);
+      if (i){ i.status = 'waiting'; delete i.noShowAt; save(); renderAll();
+        toast('Token <b>' + i.token + '</b> back in queue — ' + (ROOMS.find(r => r.id === i.room) || { name:i.room }).name); } };
 }
 
 /* ---------- rooms ---------- */
@@ -491,9 +544,10 @@ function setTab(t){
 }
 for (const k of ['queue','rooms','trends']) $('nav-' + k).onclick = () => setTab(k);
 
-function renderAll(){ renderRegister(); renderQueue(); renderRooms(); renderTrends(); }
+function renderLive(){ renderQueue(); renderRooms(); renderTrends(); }
+function renderAll(){ renderRegister(); renderLive(); }
 seedToday(); renderAll();
-setInterval(renderAll, 30e3);          /* live waits tick over */
+setInterval(renderLive, 30e3);         /* live waits tick over — registration form left untouched */
 </script>
 
 <script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
