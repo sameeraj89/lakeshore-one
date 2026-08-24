@@ -17,7 +17,7 @@
     --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
-    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --magenta:#E8146E; --magenta-tint:rgba(232,20,110,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
     --crit:#B3261E; --crit-bg:#FBE4E2;
@@ -31,7 +31,7 @@
       --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
       --good:#4FC97E; --good-bg:#173726;
       --warn:#E5B84B; --warn-bg:#3D3319;
       --crit:#F07A6A; --crit-bg:#43201C;
@@ -45,7 +45,7 @@
     --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
     --good:#4FC97E; --good-bg:#173726;
     --warn:#E5B84B; --warn-bg:#3D3319;
     --crit:#F07A6A; --crit-bg:#43201C;
@@ -59,6 +59,7 @@
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .wordmark img{height:32px; display:block}
   .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
@@ -107,14 +108,15 @@
   .tl-case .tc-t{font-weight:800; font-size:10px; font-variant-numeric:tabular-nums}
   .tl-case .tc-p{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .tl-case .tc-s{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:.85}
+  .tl-case .tc-d{display:none}   /* surgeon line — shown on desktop where columns are wide */
   .st-booked{background:var(--brand-tint); border-color:var(--brand); color:var(--brand-ink)}
   .st-confirmed{background:var(--info-bg); border-color:var(--info); color:var(--info)}
-  .st-in_ot{background:var(--maroon-tint); border-color:var(--maroon); color:var(--maroon)}
+  .st-in_ot{background:var(--magenta-tint); border-color:var(--magenta); color:var(--magenta)}
   .st-done{background:var(--good-bg); border-color:var(--good); color:var(--good)}
   .st-delayed{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
   .st-cancelled{background:var(--crit-bg); border-color:var(--crit); color:var(--crit); opacity:.55; text-decoration:line-through}
-  .nowline{position:absolute; left:0; right:0; height:0; border-top:2px solid var(--maroon); z-index:2}
-  .nowline::before{content:""; position:absolute; left:2px; top:-4px; width:6px; height:6px; border-radius:50%; background:var(--maroon)}
+  .nowline{position:absolute; left:0; right:0; height:0; border-top:2px solid var(--magenta); z-index:2}
+  .nowline::before{content:""; position:absolute; left:2px; top:-4px; width:6px; height:6px; border-radius:50%; background:var(--magenta)}
   .tl-legend{display:flex; flex-wrap:wrap; gap:10px; font-size:11px; color:var(--ink-2); padding:10px 4px 2px}
   .tl-legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
 
@@ -163,7 +165,7 @@
   .badge{display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
   .b-booked{background:var(--brand-tint); color:var(--brand-ink)}
   .b-confirmed{background:var(--info-bg); color:var(--info)}
-  .b-in_ot{background:var(--maroon-tint); color:var(--maroon)}
+  .b-in_ot{background:var(--magenta-tint); color:var(--magenta)}
   .b-done{background:var(--good-bg); color:var(--good)}
   .b-delayed{background:var(--warn-bg); color:var(--warn)}
   .b-cancelled{background:var(--crit-bg); color:var(--crit)}
@@ -185,7 +187,7 @@
   .hbar:last-child{margin-bottom:0}
   .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
   .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
-  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--magenta)}
   .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
   .cols{display:flex; align-items:flex-end; gap:5px; height:110px; padding-top:6px}
   .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end}
@@ -209,8 +211,43 @@
     max-width:440px; width:calc(100% - 32px); background:var(--crit-bg); color:var(--crit); border:1.5px solid var(--crit);
     border-radius:12px; padding:11px 14px; font-size:12.5px; font-weight:700; box-shadow:var(--shadow); text-align:center}
   .toast.show{display:block}
-  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+  .tl-case:focus-visible{
     outline:2px solid var(--brand); outline-offset:2px}
+
+  /* ---------- responsive board: per-theatre list on phones, full-width timeline on desktop ---------- */
+  .board-views{margin-bottom:10px}
+  .board-views button{flex:1 1 0}
+  .tl-outer{position:relative}
+  .tl-outer::after{content:""; position:absolute; top:1px; right:1px; bottom:1px; width:26px;
+    border-radius:0 16px 16px 0; pointer-events:none; opacity:0; transition:opacity .2s;
+    background:linear-gradient(to left, var(--card) 15%, transparent)}
+  #tab-day.view-list .tl-outer, #tab-day.view-list .tl-legend{display:none}
+  #tab-day.view-tl .otlist{display:none}
+  .ot-sec{margin-bottom:16px}
+  .ot-sec-h{display:flex; align-items:baseline; gap:7px; margin:0 2px 7px}
+  .ot-sec-h b{font-size:13px; font-weight:800}
+  .ot-sec-h span{font-size:10.5px; letter-spacing:0.6px; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+  .otl-case{padding:10px 12px; margin-bottom:8px}
+  .otl-empty{font-size:12px; color:var(--ink-3); padding:2px 2px 6px}
+  .tl-outer:not(.at-end)::after{opacity:1}   /* right-edge fade — cue that the timeline scrolls sideways */
+  @media (min-width:740px){
+    #tab-day .board-views{display:none}
+    #tab-day .otlist{display:none}
+    #tab-day.view-list .tl-outer{display:block}
+    #tab-day.view-list .tl-legend{display:flex}
+  }
+  @media (min-width:1024px){
+    .app{max-width:1200px}
+    nav{max-width:1200px}
+    #tab-book, #tab-list, #tab-insights{max-width:672px; margin-left:auto; margin-right:auto}
+    .tl-hour{font-size:11px}
+    .tl-head .otn{font-size:12.5px}
+    .tl-head .ots{font-size:10px}
+    .tl-case{font-size:12.5px; padding:5px 8px}
+    .tl-case .tc-t{font-size:12px}
+    .tl-case .tc-d{display:block}
+  }
 </style>
 </head>
 <body>
@@ -232,11 +269,18 @@
         <button id="dNext" aria-label="Next day">&rsaquo;</button>
       </div>
       <div class="kpis" id="dayKpis"></div>
-      <div class="tl-wrap" id="tlWrap"></div>
+      <div class="seg board-views" role="group" aria-label="Board layout">
+        <button type="button" id="bvList" aria-pressed="true">List</button>
+        <button type="button" id="bvTl" aria-pressed="false">Timeline</button>
+      </div>
+      <div class="otlist" id="otList"></div>
+      <div class="tl-outer" id="tlOuter">
+        <div class="tl-wrap" id="tlWrap"></div>
+      </div>
       <div class="tl-legend">
         <span><b style="background:var(--brand-tint); border:1.5px solid var(--brand)"></b>Booked</span>
         <span><b style="background:var(--info-bg); border:1.5px solid var(--info)"></b>Confirmed</span>
-        <span><b style="background:var(--maroon-tint); border:1.5px solid var(--maroon)"></b>In OT</span>
+        <span><b style="background:var(--magenta-tint); border:1.5px solid var(--magenta)"></b>In OT</span>
         <span><b style="background:var(--good-bg); border:1.5px solid var(--good)"></b>Done</span>
         <span><b style="background:var(--warn-bg); border:1.5px solid var(--warn)"></b>Delayed</span>
       </div>
@@ -373,7 +417,7 @@ function dayLabel(ds){
   return '<b>' + d.toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'short'}) + '</b><small>' +
     (rel ? rel + ' · ' : '') + 'OT day 07:00–21:00</small>';
 }
-function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML.replace(/"/g,'&quot;'); }
 
 /* ---------- store ---------- */
 const KEY = 'lakeshore-ot-schedule-v1';
@@ -472,11 +516,14 @@ function renderBoard(){
     for (const c of onDay(boardDay).filter(c => c.ot === o.id)){
       const top = Math.round((toMin(c.start) - DAY_START) * PX);
       const h = Math.max(26, Math.round(c.dur * PX) - 3);
-      colHtml += '<div class="tl-case st-' + c.status + '" style="top:' + top + 'px; height:' + h + 'px" title="' +
-        esc(c.patient + ' — ' + c.proc + ' (' + c.surgeon + ')') + '">' +
+      colHtml += '<div class="tl-case st-' + c.status + '" tabindex="0" style="top:' + top + 'px; height:' + h + 'px" title="' +
+        esc(c.patient + ' — ' + c.proc + ' (' + c.surgeon + ')') + '" aria-label="' +
+        esc(c.start + ' to ' + toHM(toMin(c.start) + c.dur) + ', ' + c.proc + ', ' + c.surgeon + ', ' +
+          ST_LABEL[c.status] + (hasClash(c) ? ', table clash' : '')) + '">' +
         '<div class="tc-t">' + c.start + ' · ' + Math.round(c.dur/60*10)/10 + 'h' +
         (hasClash(c) ? ' <span style="color:var(--crit)">· clash</span>' : '') + '</div>' +
-        '<div class="tc-p">' + esc(c.patient) + '</div><div class="tc-s">' + esc(c.proc) + '</div></div>';
+        '<div class="tc-p">' + esc(c.patient) + '</div><div class="tc-s">' + esc(c.proc) + '</div>' +
+        '<div class="tc-s tc-d">' + esc(c.surgeon) + '</div></div>';
     }
     if (boardDay === TODAY() && nowMin >= DAY_START && nowMin <= DAY_END)
       colHtml += '<div class="nowline" style="top:' + Math.round((nowMin - DAY_START)*PX) + 'px"></div>';
@@ -485,7 +532,40 @@ function renderBoard(){
   }
   grid += '</div>';
   $('tlWrap').innerHTML = grid;
+
+  /* per-theatre list — the phone-default view of the same day */
+  $('otList').innerHTML = OTS.map(o => {
+    const ocs = onDay(boardDay).filter(c => c.ot === o.id).sort((a,b) => toMin(a.start) - toMin(b.start));
+    return '<section class="ot-sec"><div class="ot-sec-h"><b>' + o.id + '</b><span>' + o.spec + '</span></div>' +
+      (ocs.length ? ocs.map(c =>
+        '<div class="qcard otl-case"><div class="qrow">' +
+        '<span class="refid">' + c.start + '&ndash;' + toHM(toMin(c.start) + c.dur) + '</span>' +
+        '<span class="badge b-' + c.status + '">' + ST_LABEL[c.status] + '</span>' +
+        (c.prio === 'Emergency' ? '<span class="badge b-emg">Emergency</span>' : '') +
+        (hasClash(c) ? '<span class="badge b-emg">Clash</span>' : '') + '</div>' +
+        '<div class="qtitle">' + esc(c.proc) + '</div>' +
+        '<div class="qmeta">' + esc(c.patient) + (c.uhid ? ' (' + esc(c.uhid) + ')' : '') +
+        ' &middot; ' + esc(c.surgeon) + ' &middot; ' + c.anaes + '</div></div>').join('')
+      : '<div class="otl-empty">No cases on this table.</div>') + '</section>';
+  }).join('');
+  tlFade();
 }
+/* board layout toggle — list is the phone default; the timeline stays reachable */
+let boardView = window.matchMedia('(min-width:740px)').matches ? 'tl' : 'list';
+function setBoardView(v){
+  boardView = v;
+  $('tab-day').classList.toggle('view-list', v === 'list');
+  $('tab-day').classList.toggle('view-tl', v === 'tl');
+  $('bvList').setAttribute('aria-pressed', v === 'list');
+  $('bvTl').setAttribute('aria-pressed', v === 'tl');
+  tlFade();
+}
+$('bvList').onclick = () => setBoardView('list');
+$('bvTl').onclick = () => setBoardView('tl');
+setBoardView(boardView);
+function tlFade(){ const w = $('tlWrap');
+  $('tlOuter').classList.toggle('at-end', w.scrollLeft + w.clientWidth >= w.scrollWidth - 4); }
+$('tlWrap').addEventListener('scroll', tlFade, { passive:true });
 $('dPrev').onclick = () => { boardDay = dstr(new Date(new Date(boardDay + 'T12:00') - 864e5)); renderBoard(); };
 $('dNext').onclick = () => { boardDay = dstr(new Date(+new Date(boardDay + 'T12:00') + 864e5)); renderBoard(); };
 
