@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#001E5F">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lakeshore One">
+<title>Lakeshore Bed Turnaround</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
+    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --shadow:0 8px 24px rgba(22,35,46,0.14); --shadow-sm:0 2px 8px rgba(22,35,46,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
+    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --shadow:0 8px 24px rgba(0,0,0,0.45); --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
+       box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
+
+  header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .wordmark img{height:32px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
+    text-transform:uppercase; margin-top:6px}
+  .mode-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn); background:var(--warn-bg);
+    border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  main{flex:1; padding-bottom:86px}
+  .tab{display:none; padding:10px 16px 20px}
+  .tab.active{display:block}
+  h1.page{font-weight:800; font-size:21px; margin:4px 2px 2px; letter-spacing:-0.2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .viewtag{display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--info); background:var(--info-bg);
+    border-radius:999px; padding:4px 11px; margin:0 0 10px}
+
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px}
+  .kpi .n{font-weight:700; font-size:24px; letter-spacing:-0.3px; font-variant-numeric:tabular-nums}
+  .kpi .n small{font-size:12px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.4}
+
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+    box-shadow:var(--shadow-sm); margin-bottom:14px}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  input[type=text], input[type=password], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus, select:focus{border-color:var(--brand)}
+  .submit{width:100%; margin-top:16px; padding:13px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  :root[data-theme="dark"] .submit{color:#0E1418}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .submit{color:#0E1418} }
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
+
+  .roomhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px}
+  .roomhead h2{font-size:14px; font-weight:800}
+  .roomhead .rs{font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--ink-3)}
+
+  .qcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;
+    margin-bottom:8px; box-shadow:var(--shadow-sm)}
+  .qcard.late{border-left:4px solid var(--crit)}
+  .qrow{display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap}
+  .tok{font-weight:800; font-size:13px; color:var(--brand-ink); background:var(--brand-tint);
+    border-radius:8px; padding:2px 9px; font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
+  .b-ok{background:var(--good-bg); color:var(--good)}
+  .b-due{background:var(--warn-bg); color:var(--warn)}
+  .b-late{background:var(--crit-bg); color:var(--crit)}
+  .b-st{background:var(--maroon-tint); color:var(--maroon)}
+  .qmeta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
+  .qact{margin-top:10px; display:flex; gap:7px; flex-wrap:wrap}
+  .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
+    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+  .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
+  .qact button.ghost{color:var(--ink-3)}
+  .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:22px 10px; line-height:1.6}
+  .outrow{display:flex; align-items:center; gap:8px; padding:9px 4px; border-bottom:1px solid var(--line);
+    font-size:12px; color:var(--ink-2)}
+  .outrow:last-child{border-bottom:0}
+  .outrow .on{font-weight:700; color:var(--ink); flex:1; min-width:0}
+  .outrow .ot{font-weight:700; font-variant-numeric:tabular-nums}
+  .outrow button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:8px;
+    padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--ink-2); margin:0 2px 12px}
+  .legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+  .tiles{display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:6px; margin-bottom:6px}
+  .tile{border-radius:10px; padding:8px 3px 7px; text-align:center; cursor:pointer;
+    border:1.5px solid transparent; font-family:'Figtree',sans-serif; font-size:12px; font-weight:800}
+  .tile small{display:block; font-size:7.5px; font-weight:700; letter-spacing:0.4px; margin-top:2px; text-transform:uppercase; opacity:0.85}
+  .tile.sel{border-color:var(--ink); box-shadow:var(--shadow-sm)}
+  .t-occupied{background:var(--brand-tint); color:var(--brand-ink)}
+  .t-dirty{background:var(--crit-bg); color:var(--crit)}
+  .t-cleaning{background:var(--warn-bg); color:var(--warn)}
+  .t-ready{background:var(--good-bg); color:var(--good)}
+  .t-blocked{background:var(--neutral-bg); color:var(--ink-3); border:1.5px dashed var(--line)}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px}
+  .chart-card h3{font-size:13.5px; font-weight:700; margin-bottom:2px}
+  .chart-card .cs{font-size:11.5px; color:var(--ink-3); margin-bottom:12px}
+  .cols{display:flex; align-items:flex-end; gap:4px; height:110px; padding-top:6px}
+  .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
+  .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
+  .col.hot .bar{background:var(--maroon)}
+  .col .cl{font-size:8.5px; color:var(--ink-3); font-weight:500}
+  .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
+  .hbar{display:grid; grid-template-columns:135px 1fr 62px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
+  .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .tr i.in-tgt{background:var(--good)}
+  .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums; font-size:11px; color:var(--ink-2)}
+
+  footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
+    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
+    display:flex; flex-direction:column; align-items:center; gap:4px}
+  nav button svg{width:21px; height:21px}
+  nav button[aria-pressed="true"]{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
+      <small>Bed Turnaround &middot; Housekeeping &amp; Wards</small></div>
+    <span class="mode-tag" id="modeTag">Pilot &middot; this device</span>
+  </header>
+
+  <main>
+    <!-- ============ SIGN IN (live server mode only) ============ -->
+    <div id="signin" style="display:none; padding:10px 16px 20px">
+      <h1 class="page">Sign in</h1>
+      <p class="page-sub">This is the live shared bed board. Sign in with your Lakeshore One employee ID and PIN &mdash; the same account as the service desk.</p>
+      <div class="fcard">
+        <label class="fl" for="siEmp">Employee ID</label>
+        <input type="text" id="siEmp" placeholder="e.g. LH-HK01" maxlength="20" autocapitalize="characters">
+        <label class="fl" for="siPin">PIN</label>
+        <input type="password" id="siPin" placeholder="4&ndash;6 digits" maxlength="6" inputmode="numeric">
+        <div id="siNew" style="display:none">
+          <label class="fl" for="siPin2">Confirm new PIN</label>
+          <input type="password" id="siPin2" placeholder="repeat PIN" maxlength="6" inputmode="numeric">
+        </div>
+        <button class="submit" id="siGo">Sign in</button>
+        <p class="hint" id="siMsg">Ask an admin to add you if your ID isn&rsquo;t recognised.</p>
+      </div>
+    </div>
+
+    <!-- ============ QUEUE ============ -->
+    <section class="tab active" id="tab-queue">
+      <h1 class="page">Housekeeping queue</h1>
+      <p class="page-sub">The clock starts when a bed is marked vacated &mdash; by the ward here, or automatically when the Discharge Tracker taps &ldquo;patient out&rdquo;. Targets: cleaning started in 15 min, bed ready in 45.</p>
+      <div class="kpis" id="qKpis"></div>
+      <div class="fcard">
+        <label class="fl" for="qWard">Ward</label>
+        <select id="qWard"></select>
+        <label class="fl" for="qBed">Bed just vacated</label>
+        <select id="qBed"></select>
+        <button class="submit" id="qGo">Bed vacated &mdash; needs cleaning</button>
+        <p class="hint">Beds freed through the Discharge Tracker land in this queue on their own.</p>
+      </div>
+      <div class="roomhead"><h2>Awaiting housekeeping</h2><span class="rs" id="dirtyCount"></span></div>
+      <div id="dirtyList"></div>
+      <div class="roomhead"><h2>Cleaning in progress</h2><span class="rs" id="cleanCount"></span></div>
+      <div id="cleaningList"></div>
+      <div class="roomhead"><h2>Ready for admission</h2><span class="rs" id="readyCount"></span></div>
+      <div class="fcard" id="readyList" style="padding:6px 14px"></div>
+    </section>
+
+    <!-- ============ BEDS ============ -->
+    <section class="tab" id="tab-beds">
+      <span class="viewtag">Bed manager view</span>
+      <h1 class="page">Every bed &mdash; now</h1>
+      <p class="page-sub">Tap a bed to act on it. The same beds and rules as the main app&rsquo;s bed board &mdash; this view is built for the turnaround workflow.</p>
+      <div class="kpis" id="bKpis"></div>
+      <div class="legend">
+        <span><b style="background:var(--brand-tint)"></b>Occupied</span>
+        <span><b style="background:var(--crit-bg)"></b>Needs cleaning</span>
+        <span><b style="background:var(--warn-bg)"></b>Cleaning</span>
+        <span><b style="background:var(--good-bg)"></b>Ready</span>
+        <span><b style="background:var(--neutral-bg)"></b>Blocked</span>
+      </div>
+      <div id="selCard"></div>
+      <div id="wardGrids"></div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="tab" id="tab-trends">
+      <span class="viewtag">Operations view</span>
+      <h1 class="page">Turnaround time</h1>
+      <p class="page-sub">Vacated-to-ready is admission capacity: every minute a bed sits dirty is a minute the next patient waits. Split the clock to see whether the delay is response or cleaning.</p>
+      <div class="kpis" id="tKpis"></div>
+      <div class="chart-card">
+        <h3>Median turnaround &mdash; last 7 days</h3>
+        <div class="cs">Minutes from vacated to ready</div>
+        <div class="cols" id="dayCols"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Where the time goes</h3>
+        <div class="cs">Average minutes per stage vs target &mdash; last 7 days</div>
+        <div id="stageBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>By ward</h3>
+        <div class="cs">Median turnaround per ward &mdash; last 7 days</div>
+        <div id="wardBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Beds made ready by hour</h3>
+        <div class="cs">Turnarounds completed per hour &mdash; last 7 days</div>
+        <div class="cols" id="hourCols"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span id="footNote"><b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
+    The board is saved only in this browser (localStorage); demo entries are fictional and re-seeded daily.
+    When served by the Lakeshore One backend this app switches to the live shared bed board automatically
+    &mdash; the same beds, roles and audit trail as the main app, with the Discharge Tracker feeding the queue.</span>
+    <br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>
+  </footer>
+
+  <nav>
+    <button id="nav-queue" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      Queue</button>
+    <button id="nav-beds" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6M3 18h18M3 18v2M21 18v2M6 11V8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>
+      Beds</button>
+    <button id="nav-trends" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+      Trends</button>
+  </nav>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const M = 6e4, D = 864e5;
+
+/* Same bed inventory and lifecycle as the backend (server/server.js BED_WARDS):
+   occupied → dirty → cleaning → ready → occupied, blocked as a side state. */
+const BED_WARDS = [['3A',20],['4B',16],['5A',14],['ON',16],['ICU',12],['HDU',8]];
+const WARD_NAMES = { '3A':'Ward 3A · Medical', '4B':'Ward 4B · Surgical', '5A':'Ward 5A · Cardiac & Neuro',
+  'ON':'Oncology Ward', 'ICU':'ICU', 'HDU':'HDU' };
+const wardOf = id => id.split('-')[0];
+const STATUS_LABEL = { occupied:'Occupied', dirty:'Needs cleaning', cleaning:'Cleaning', ready:'Ready', blocked:'Blocked' };
+const ACTIONS = {
+  occupied: [['dirty','Bed vacated — needs cleaning']],
+  dirty:    [['cleaning','Start cleaning'], ['blocked','Block bed']],
+  cleaning: [['ready','Mark ready'], ['blocked','Block bed']],
+  ready:    [['occupied','Occupy — new admission'], ['blocked','Block bed']],
+  blocked:  [['ready','Release to ready']]
+};
+const RESP_TGT = 15, CLEAN_TGT = 30, TOTAL_TGT = 45;   /* minutes */
+
+/* ---------- store ---------- */
+const KEY = 'lakeshore-bedturn-v1';
+let db = { day:'', beds:null, bedlog:[] };
+try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.beds) db = s; }catch(e){}
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function todayStr(){ const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function isToday(iso){ return new Date(iso).toDateString() === new Date().toDateString(); }
+function sameDay(iso, d){ return new Date(iso).toDateString() === d.toDateString(); }
+function minsSince(iso){ return iso ? Math.round((Date.now() - Date.parse(iso))/M) : null; }
+function hhmm(iso){ const d = new Date(iso);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function median(a){ const s = a.slice().sort((x,y) => x-y); const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
+function badge(mins, tgt, prefix){
+  if (mins === null) return '<span class="badge b-due">since unknown</span>';
+  const cls = mins <= tgt ? 'b-ok' : mins <= tgt*2 ? 'b-due' : 'b-late';
+  return '<span class="badge ' + cls + '">' + (prefix || '') + mins + ' min</span>';
+}
+
+/* turnaround episodes reconstructed from the event log */
+function episodes(){
+  const open = {}, eps = [];
+  for (const e of db.bedlog){
+    if (e.to === 'dirty') open[e.bed] = { bed:e.bed, dirtyAt:e.at };
+    else if (e.to === 'cleaning'){ if (open[e.bed]) open[e.bed].cleanAt = e.at; }
+    else if (e.to === 'ready'){
+      const ep = open[e.bed];
+      if (ep && ep.cleanAt){ ep.readyAt = e.at; eps.push(ep); }
+      delete open[e.bed];
+    } else delete open[e.bed];               /* blocked / occupied interrupts the episode */
+  }
+  return eps;
+}
+const epResp = ep => Math.round((Date.parse(ep.cleanAt) - Date.parse(ep.dirtyAt))/M);
+const epClean = ep => Math.round((Date.parse(ep.readyAt) - Date.parse(ep.cleanAt))/M);
+const epTotal = ep => Math.round((Date.parse(ep.readyAt) - Date.parse(ep.dirtyAt))/M);
+const bedsWhere = st => Object.entries(db.beds || {}).filter(([,b]) => b.status === st);
+
+/* ---------- daily demo seed — a believable week so the boards aren't empty ---------- */
+const HK_NAMES = ['Beena Thomas','Ravi K','Shiny George','Anil P'];
+const NURSES = ['Sr. Mercy J','Sr. Deepa R','Sr. Anju M','CN Latha S'];
+function allBedIds(){
+  const ids = [];
+  for (const [w, n] of BED_WARDS) for (let i = 1; i <= n; i++) ids.push(w + '-' + String(i).padStart(2,'0'));
+  return ids;
+}
+function seedDemo(){
+  if (db.day === todayStr() && db.beds) return;
+  const now = Date.now();
+  db = { day: todayStr(), beds: {}, bedlog: [] };
+  for (const id of allBedIds()){
+    const r = Math.random();
+    const st = r < 0.66 ? 'occupied' : r < 0.95 ? 'ready' : 'blocked';
+    db.beds[id] = { status: st, since: new Date(now - (2 + Math.random()*30)*36e5).toISOString(), by: null };
+  }
+  const ids = allBedIds();
+  /* a week of completed turnarounds */
+  for (let d = 6; d >= 0; d--){
+    const day = new Date(); day.setDate(day.getDate() - d); day.setHours(8,0,0,0);
+    const n = 14 + Math.floor(Math.random()*8);
+    for (let k = 0; k < n; k++){
+      const bed = ids[Math.floor(Math.random()*ids.length)];
+      const dirtyAt = day.getTime() + Math.random()*11*36e5;
+      let resp = 4 + Math.random()*13;
+      if (Math.random() < 0.25) resp = 18 + Math.random()*30;      /* nobody free — the classic gap */
+      let clean = 16 + Math.random()*18;
+      if (Math.random() < 0.15) clean = 35 + Math.random()*22;
+      const cleanAt = dirtyAt + resp*M, readyAt = cleanAt + clean*M;
+      if (readyAt > now - 20*M) continue;
+      db.bedlog.push({ bed, from:'occupied', to:'dirty', at:new Date(dirtyAt).toISOString() });
+      db.bedlog.push({ bed, from:'dirty', to:'cleaning', at:new Date(cleanAt).toISOString() });
+      db.bedlog.push({ bed, from:'cleaning', to:'ready', at:new Date(readyAt).toISOString() });
+    }
+  }
+  db.bedlog.sort((a,b) => Date.parse(a.at) - Date.parse(b.at));
+  /* a live queue right now: a few dirty (one well past target), a few mid-clean */
+  const occ = bedsWhere('occupied').map(([id]) => id);
+  const pick = () => occ.splice(Math.floor(Math.random()*occ.length), 1)[0];
+  [42, 26, 14, 7, 3].forEach((ago, i) => {
+    const id = pick(); if (!id) return;
+    const at = new Date(now - ago*M).toISOString();
+    db.bedlog.push({ bed:id, from:'occupied', to:'dirty', at });
+    db.beds[id] = { status:'dirty', since:at, by: NURSES[i % NURSES.length] };
+  });
+  [[34, 21], [19, 9], [11, 4]].forEach(([dirtyAgo, cleanAgo], i) => {
+    const id = pick(); if (!id) return;
+    const dAt = new Date(now - dirtyAgo*M).toISOString(), cAt = new Date(now - cleanAgo*M).toISOString();
+    db.bedlog.push({ bed:id, from:'occupied', to:'dirty', at:dAt });
+    db.bedlog.push({ bed:id, from:'dirty', to:'cleaning', at:cAt });
+    db.beds[id] = { status:'cleaning', since:cAt, by: HK_NAMES[i % HK_NAMES.length] };
+  });
+  if (db.bedlog.length > 600) db.bedlog = db.bedlog.slice(-600);
+  save();
+}
+
+/* ---------- live backend (Lakeshore One server) ---------- */
+/* Same pattern as the Discharge Tracker: when served by server/server.js the
+   app binds to the shared beds + bed_events store — the very board the main
+   app's bed view uses — with role checks enforced server-side. */
+let mode = 'local', token = null;
+try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+async function api(path, body){
+  const r = await fetch('../api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchState(){
+  const r = await api('state');
+  if (r.ok && r.beds){ db.beds = r.beds; db.bedlog = r.bedlog || []; }
+  return r.ok;
+}
+function startSSE(){
+  try{
+    const es = new EventSource('../api/events?token=' + encodeURIComponent(token));
+    es.onmessage = async () => { if (await fetchState()) renderAll(); };
+  }catch(e){}
+}
+async function commit(op){
+  op.uid = 'bt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const r = await api('op', { op });
+  if (!r.ok) alert(r.error || 'Not allowed for your role.');
+  if (await fetchState()) renderAll();
+  return r;
+}
+function setTag(m){
+  const el = $('modeTag');
+  if (m === 'live'){ el.innerHTML = 'Live &middot; shared'; el.style.color = 'var(--good)'; el.style.background = 'var(--good-bg)'; }
+  else if (m === 'signin'){ el.innerHTML = 'Live &middot; sign in'; el.style.color = 'var(--info)'; el.style.background = 'var(--info-bg)'; }
+}
+function showSignin(v){
+  $('signin').style.display = v ? 'block' : 'none';
+  for (const k of ['queue','beds','trends']) $('tab-' + k).style.display = v ? 'none' : '';
+  document.querySelector('nav').style.display = v ? 'none' : 'flex';
+}
+async function enterLive(){
+  setTag('live'); showSignin(false);
+  $('footNote').innerHTML = '<b style="color:var(--ink-2)">Live system.</b><br>' +
+    'One shared bed board — ward marks vacated, housekeeping cleans, the Discharge Tracker feeds the queue ' +
+    'automatically. Every change is role-checked, audited and pushed to all open devices in real time.';
+  await fetchState(); renderAll(); startSSE();
+}
+$('siGo').onclick = async () => {
+  const empId = $('siEmp').value.trim().toUpperCase(), pin = $('siPin').value.trim();
+  if (!empId){ $('siMsg').textContent = 'Enter your employee ID.'; return; }
+  $('siMsg').textContent = 'Signing in…';
+  let r;
+  if ($('siNew').style.display !== 'none'){
+    if (!/^\d{4,6}$/.test(pin) || pin !== $('siPin2').value.trim()){
+      $('siMsg').textContent = 'PINs must match and be 4–6 digits.'; return;
+    }
+    r = await api('set-pin', { empId, pin });
+  } else {
+    r = await api('login', { empId, pin });
+    if (r.needPin){
+      $('siNew').style.display = 'block'; $('siGo').textContent = 'Set PIN & sign in';
+      $('siMsg').textContent = 'First sign-in — choose a 4–6 digit PIN.'; return;
+    }
+  }
+  if (!r.ok || !r.token){ $('siMsg').textContent = r.error || 'Sign-in failed.'; return; }
+  token = r.token;
+  try{ sessionStorage.setItem('l1-token', token); localStorage.setItem('l1-last-emp', empId); }catch(e){}
+  await enterLive();
+};
+async function boot(){
+  try{
+    const r = await fetch('../api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one'){
+      mode = 'server'; db = { beds:{}, bedlog:[] };
+      if (token && (await api('me')).ok){ await enterLive(); return; }
+      token = null;
+      setTag('signin'); showSignin(true); renderAll();
+      try{ const le = localStorage.getItem('l1-last-emp'); if (le) $('siEmp').value = le; }catch(e){}
+      return;
+    }
+  }catch(e){}
+  seedDemo(); renderAll();
+}
+
+/* one entry point for every bed change, both modes */
+async function moveBed(bedId, to){
+  if (mode === 'server'){ await commit({ kind:'bed', bed:bedId, to }); return; }
+  const b = db.beds[bedId]; if (!b || b.status === to) return;
+  const at = new Date().toISOString();
+  db.bedlog.push({ bed:bedId, from:b.status, to, at });
+  if (db.bedlog.length > 600) db.bedlog = db.bedlog.slice(-600);
+  b.status = to; b.since = at; b.by = 'You';
+  save(); renderAll();
+}
+
+/* ---------- queue ---------- */
+function renderQueueForm(){
+  const wSel = $('qWard'), keep = wSel.value;
+  wSel.innerHTML = BED_WARDS.map(([w]) => '<option value="' + w + '">' + WARD_NAMES[w] + '</option>').join('');
+  if (keep) wSel.value = keep;
+  wSel.onchange = renderQueueForm;
+  const occ = bedsWhere('occupied').map(([id]) => id).filter(id => wardOf(id) === wSel.value).sort();
+  $('qBed').innerHTML = occ.length ? occ.map(id => '<option>' + id + '</option>').join('')
+    : '<option value="">No occupied beds in this ward</option>';
+}
+$('qGo').onclick = () => { const bed = $('qBed').value; if (bed) moveBed(bed, 'dirty'); };
+
+function renderQueue(){
+  const dirty = bedsWhere('dirty').sort((a,b) => Date.parse(a[1].since || 0) - Date.parse(b[1].since || 0));
+  const cleaning = bedsWhere('cleaning').sort((a,b) => Date.parse(a[1].since || 0) - Date.parse(b[1].since || 0));
+  const ready = bedsWhere('ready').sort((a,b) => Date.parse(b[1].since || 0) - Date.parse(a[1].since || 0));
+  const doneToday = episodes().filter(ep => isToday(ep.readyAt));
+  const longest = dirty.length ? Math.max(...dirty.map(([,b]) => minsSince(b.since) || 0)) : 0;
+
+  $('qKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:' + (dirty.length ? 'var(--crit)' : 'var(--good)') + '">' + dirty.length + '</div><div class="l">Awaiting cleaning</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (longest > RESP_TGT ? 'var(--crit)' : 'var(--good)') + '">' + longest + '<small> min</small></div><div class="l">Longest wait &middot; target ' + RESP_TGT + '</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--warn)">' + cleaning.length + '</div><div class="l">Cleaning now</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + doneToday.length + '</div><div class="l">Turned around today</div></div>';
+
+  $('dirtyCount').textContent = dirty.length + ' beds';
+  $('dirtyList').innerHTML = dirty.length ? dirty.map(([id, b]) => {
+    const w = minsSince(b.since);
+    return '<div class="qcard' + (w !== null && w > RESP_TGT*2 ? ' late' : '') + '">' +
+      '<div class="qrow"><span class="tok">' + id + '</span>' + badge(w, RESP_TGT, 'waiting ') + '</div>' +
+      '<div class="qmeta">' + WARD_NAMES[wardOf(id)] + (b.since ? ' &middot; vacated ' + hhmm(b.since) : '') +
+        (b.by ? ' &middot; by ' + b.by : '') + '</div>' +
+      '<div class="qact"><button class="primary" data-mv="' + id + '|cleaning">Start cleaning</button>' +
+      '<button class="ghost" data-mv="' + id + '|blocked">Block</button></div></div>';
+  }).join('') : '<div class="empty">No beds waiting — the queue is clear.</div>';
+
+  $('cleanCount').textContent = cleaning.length + ' beds';
+  $('cleaningList').innerHTML = cleaning.length ? cleaning.map(([id, b]) => {
+    const w = minsSince(b.since);
+    return '<div class="qcard">' +
+      '<div class="qrow"><span class="tok">' + id + '</span><span class="badge b-st">cleaning</span>' + badge(w, CLEAN_TGT, '') + '</div>' +
+      '<div class="qmeta">' + WARD_NAMES[wardOf(id)] + (b.since ? ' &middot; started ' + hhmm(b.since) : '') +
+        (b.by ? ' &middot; ' + b.by : '') + ' &middot; target ' + CLEAN_TGT + ' min</div>' +
+      '<div class="qact"><button class="primary" data-mv="' + id + '|ready">Mark ready</button></div></div>';
+  }).join('') : '<div class="empty">Nothing being cleaned right now.</div>';
+
+  $('readyCount').textContent = ready.length + ' beds';
+  $('readyList').innerHTML = ready.length ? ready.slice(0, 8).map(([id, b]) =>
+    '<div class="outrow"><span class="ot" style="color:var(--ink-3)">' + (b.since ? hhmm(b.since) : '—') + '</span>' +
+    '<span class="on">' + id + ' &middot; ' + WARD_NAMES[wardOf(id)] + '</span>' +
+    '<button data-mv="' + id + '|occupied">Occupy</button></div>').join('')
+    : '<div class="empty" style="padding:12px">No beds ready — that is the problem this board exists to fix.</div>';
+
+  wireMoves('#tab-queue');
+}
+function wireMoves(scope){
+  for (const b of document.querySelector(scope).querySelectorAll('[data-mv]'))
+    b.onclick = () => { const [id, to] = b.dataset.mv.split('|'); moveBed(id, to); };
+}
+
+/* ---------- beds grid ---------- */
+let sel = null;
+function renderBeds(){
+  const counts = { occupied:0, dirty:0, cleaning:0, ready:0, blocked:0 };
+  for (const [, b] of Object.entries(db.beds || {})) counts[b.status] = (counts[b.status] || 0) + 1;
+  $('bKpis').innerHTML =
+    '<div class="kpi"><div class="n" style="color:var(--good)">' + counts.ready + '</div><div class="l">Ready now</div></div>' +
+    '<div class="kpi"><div class="n">' + counts.occupied + '</div><div class="l">Occupied</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (counts.dirty + counts.cleaning ? 'var(--warn)' : 'var(--good)') + '">' + (counts.dirty + counts.cleaning) + '</div><div class="l">In turnaround</div></div>' +
+    '<div class="kpi"><div class="n" style="color:var(--ink-3)">' + counts.blocked + '</div><div class="l">Blocked</div></div>';
+
+  const b = sel && db.beds ? db.beds[sel] : null;
+  $('selCard').innerHTML = b ?
+    '<div class="qcard"><div class="qrow"><span class="tok">' + sel + '</span>' +
+    '<span class="badge b-st">' + STATUS_LABEL[b.status].toLowerCase() + '</span>' +
+    (b.since ? '<span class="badge b-ok" style="background:var(--neutral-bg); color:var(--neutral)">since ' + hhmm(b.since) + '</span>' : '') + '</div>' +
+    '<div class="qmeta">' + WARD_NAMES[wardOf(sel)] + (b.by ? ' &middot; last change by ' + b.by : '') + '</div>' +
+    '<div class="qact">' + ACTIONS[b.status].map(([to, label]) =>
+      '<button ' + (to === 'blocked' ? 'class="ghost"' : 'class="primary"') + ' data-mv="' + sel + '|' + to + '">' + label + '</button>').join('') +
+    '</div></div>' : '';
+
+  $('wardGrids').innerHTML = BED_WARDS.map(([w, n]) => {
+    const beds = Object.entries(db.beds || {}).filter(([id]) => wardOf(id) === w).sort();
+    const free = beds.filter(([,x]) => x.status === 'ready').length;
+    return '<div class="roomhead"><h2>' + WARD_NAMES[w] + '</h2><span class="rs">' + free + ' of ' + n + ' ready</span></div>' +
+      '<div class="tiles">' + beds.map(([id, x]) =>
+        '<div class="tile t-' + x.status + (id === sel ? ' sel' : '') + '" data-sel="' + id + '">' +
+        id.split('-')[1] + '<small>' + (x.status === 'occupied' ? 'occ' : x.status === 'cleaning' ? 'clng' : x.status) + '</small></div>').join('') +
+      '</div>';
+  }).join('');
+
+  for (const t of $('wardGrids').querySelectorAll('[data-sel]'))
+    t.onclick = () => { sel = t.dataset.sel === sel ? null : t.dataset.sel; renderBeds(); };
+  wireMoves('#tab-beds');
+}
+
+/* ---------- trends ---------- */
+function renderTrends(){
+  const eps = episodes().filter(ep => Date.now() - Date.parse(ep.readyAt) < 7*D);
+  const totals = eps.map(epTotal);
+  const within = totals.filter(t => t <= TOTAL_TGT);
+  $('tKpis').innerHTML =
+    '<div class="kpi"><div class="n">' + eps.length + '</div><div class="l">Turnarounds &middot; 7 d</div></div>' +
+    '<div class="kpi"><div class="n">' + (totals.length ? Math.round(median(totals)) : 0) + '<small> min</small></div><div class="l">Median vacated&rarr;ready &middot; tgt ' + TOTAL_TGT + '</div></div>' +
+    '<div class="kpi"><div class="n" style="color:' + (totals.length && within.length/totals.length < 0.7 ? 'var(--crit)' : 'var(--good)') + '">' +
+      (totals.length ? Math.round(100*within.length/totals.length) : 0) + '<small>%</small></div><div class="l">Within ' + TOTAL_TGT + ' min</div></div>' +
+    '<div class="kpi"><div class="n">' + (eps.length ? Math.round(median(eps.map(epResp))) : 0) + '<small> min</small></div><div class="l">Median response &middot; tgt ' + RESP_TGT + '</div></div>';
+
+  let dayHtml = '';
+  const meds = [];
+  for (let d = 6; d >= 0; d--){
+    const day = new Date(); day.setDate(day.getDate() - d);
+    const t = eps.filter(ep => sameDay(ep.readyAt, day)).map(epTotal);
+    meds.push([day, t.length ? Math.round(median(t)) : 0]);
+  }
+  const dMax = Math.max(...meds.map(m => m[1]), TOTAL_TGT);
+  for (const [day, v] of meds)
+    dayHtml += '<div class="col' + (v > TOTAL_TGT ? ' hot' : '') + '"><span class="cv">' + (v || '·') + '</span>' +
+      '<span class="bar" style="height:' + Math.round(88*v/dMax) + '%"></span>' +
+      '<span class="cl">' + day.toLocaleString('en',{weekday:'short'}) + '</span></div>';
+  $('dayCols').innerHTML = dayHtml;
+
+  const stages = [ ['Response — vacated to cleaning', eps.map(epResp), RESP_TGT],
+                   ['Cleaning — start to ready', eps.map(epClean), CLEAN_TGT] ];
+  $('stageBars').innerHTML = stages.map(([label, arr, tgt]) => {
+    const avg = arr.length ? Math.round(arr.reduce((a,b) => a+b, 0)/arr.length) : 0;
+    return '<div class="hbar"><span class="hl">' + label + '</span>' +
+      '<span class="tr"><i class="' + (avg <= tgt ? 'in-tgt' : '') + '" style="width:' + Math.min(100, Math.round(100*avg/(tgt*2))) + '%"></i></span>' +
+      '<span class="hv">' + avg + '/' + tgt + 'm</span></div>';
+  }).join('');
+
+  const wMax = Math.max(...BED_WARDS.map(([w]) => {
+    const t = eps.filter(ep => wardOf(ep.bed) === w).map(epTotal);
+    return t.length ? median(t) : 0;
+  }), 1);
+  $('wardBars').innerHTML = BED_WARDS.map(([w]) => {
+    const t = eps.filter(ep => wardOf(ep.bed) === w).map(epTotal);
+    const m = t.length ? Math.round(median(t)) : 0;
+    return '<div class="hbar"><span class="hl">' + WARD_NAMES[w] + '</span>' +
+      '<span class="tr"><i class="' + (m && m <= TOTAL_TGT ? 'in-tgt' : '') + '" style="width:' + Math.round(100*m/wMax) + '%"></i></span>' +
+      '<span class="hv">' + (m || '—') + (m ? ' min' : '') + '</span></div>';
+  }).join('');
+
+  const byHour = {};
+  for (const ep of eps){ const h = new Date(ep.readyAt).getHours(); byHour[h] = (byHour[h] || 0) + 1; }
+  const hours = []; for (let h = 8; h <= 20; h++) hours.push(h);
+  const hMax = Math.max(...hours.map(h => byHour[h] || 0), 1);
+  $('hourCols').innerHTML = hours.map(h =>
+    '<div class="col' + ((byHour[h] || 0) === hMax ? ' hot' : '') + '"><span class="cv">' + (byHour[h] || '·') + '</span>' +
+    '<span class="bar" style="height:' + Math.round(88*(byHour[h] || 0)/hMax) + '%"></span><span class="cl">' + h + 'h</span></div>').join('');
+}
+
+/* ---------- tabs & boot ---------- */
+function setTab(t){
+  for (const k of ['queue','beds','trends']){
+    $('tab-' + k).classList.toggle('active', k === t);
+    $('nav-' + k).setAttribute('aria-pressed', k === t);
+  }
+  window.scrollTo(0,0);
+}
+for (const k of ['queue','beds','trends']) $('nav-' + k).onclick = () => setTab(k);
+
+function renderAll(){ renderQueueForm(); renderQueue(); renderBeds(); renderTrends(); }
+boot();
+setInterval(renderAll, 60e3);          /* keep the waiting clocks ticking */
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+</body>
+</html>

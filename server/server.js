@@ -339,8 +339,17 @@ function applyOp(op, u){
       if (!expected || op.step !== expected) return { ok:false, error:'already done — the board has moved on' };
       db.prepare('INSERT INTO discharge_steps (discharge_id,step,actor,actor_name,at) VALUES (?,?,?,?,?)')
         .run(d.id, expected, empId, name, at);
-      if (expected === path[path.length - 1])
+      if (expected === path[path.length - 1]){
         db.prepare("UPDATE discharges SET status='out', out_at=? WHERE id=?").run(at, d.id);
+        /* hand-off to bed turnaround: patient out ⇒ that bed needs cleaning */
+        const b = db.prepare('SELECT * FROM beds WHERE bed_id=?').get(d.bed);
+        if (b && b.status === 'occupied'){
+          db.prepare('INSERT INTO bed_events (bed_id,from_st,to_st,actor,at) VALUES (?,?,?,?,?)')
+            .run(b.bed_id, b.status, 'dirty', empId, at);
+          db.prepare("UPDATE beds SET status='dirty', since=?, updated_by=? WHERE bed_id=?").run(at, name, b.bed_id);
+          audit(empId, `bed ${b.bed_id} → dirty (${d.id} out)`);
+        }
+      }
       audit(empId, `${d.id} ${expected} done`);
       return { ok:true };
     }
