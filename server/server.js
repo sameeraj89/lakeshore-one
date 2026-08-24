@@ -72,6 +72,16 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
   id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL, stage TEXT NOT NULL,
   actor_name TEXT NOT NULL, at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS discharges (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, uhid TEXT, ward TEXT NOT NULL, bed TEXT NOT NULL,
+  payer TEXT NOT NULL, consultant TEXT, advised_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active', out_at TEXT,
+  created_by TEXT NOT NULL, created_by_name TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS discharge_steps (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, discharge_id TEXT NOT NULL, step TEXT NOT NULL,
+  actor TEXT NOT NULL, actor_name TEXT NOT NULL, at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, action TEXT NOT NULL, at TEXT NOT NULL
 );
@@ -84,6 +94,8 @@ db.exec(`
 CREATE INDEX IF NOT EXISTS idx_tickets_queue ON tickets (module, status, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_updates ON ticket_updates (ticket_id, at);
 CREATE INDEX IF NOT EXISTS idx_bed_events ON bed_events (bed_id, at);
+CREATE INDEX IF NOT EXISTS idx_dc_steps ON discharge_steps (discharge_id, at);
+CREATE INDEX IF NOT EXISTS idx_dc_advised ON discharges (advised_at);
 `);
 
 /* ---------- domain config (mirrors the frontend) ---------- */
@@ -96,6 +108,9 @@ const BED_STATUS = ['occupied','dirty','cleaning','ready','blocked'];
 const BED_WARDS = [['3A',20],['4B',16],['5A',14],['ON',16],['ICU',12],['HDU',8]];
 const OT_STAGES = ['scheduled','in_ot','anaesthesia','incision','closure','out','cleaning','done'];
 const OT_SUITES = ['OT-1 · Cardiac','OT-2 · Neuro','OT-3 · Ortho','OT-4 · Gen & GI','OT-5 · Onco','OT-6 · Uro & Gyn'];
+const DC_STEPS = ['summary','pharmacy','billing','tpa','settle','depart'];
+const DC_PAYERS = ['Cash','Insurance / TPA','Corporate'];
+const dcPath = payer => DC_STEPS.filter(k => k !== 'tpa' || payer !== 'Cash');
 const canSeeAll = r => ['management','quality','admin'].includes(r);
 const isClinical = r => ['doctor','nurse','staff'].includes(r);
 
@@ -303,6 +318,40 @@ function applyOp(op, u){
       audit(empId, `${c.id} → ${op.to}`);
       return { ok:true };
     }
+    case 'dc_add': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      if (!op.name || !op.ward || !DC_PAYERS.includes(op.payer)) return { ok:false, error:'invalid discharge' };
+      const seq = nextSeq(), id = 'DIS-' + seq;
+      db.prepare(`INSERT INTO discharges (id,name,uhid,ward,bed,payer,consultant,advised_at,status,created_by,created_by_name)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
+        id, s(op.name,60), s(op.uhid,20), s(op.ward,10), s(op.bed,12), op.payer, s(op.consultant,60),
+        at, 'active', empId, name);
+      audit(empId, `started discharge ${id} (bed ${s(op.bed,12)} · ${op.payer})`);
+      return { ok:true, id };
+    }
+    case 'dc_step': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const d = db.prepare('SELECT * FROM discharges WHERE id=?').get(String(op.id));
+      if (!d || d.status !== 'active') return { ok:false, error:'no active discharge' };
+      const done = new Set(db.prepare('SELECT step FROM discharge_steps WHERE discharge_id=?').all(d.id).map(r => r.step));
+      const path = dcPath(d.payer);
+      const expected = path.find(k => !done.has(k));
+      if (!expected || op.step !== expected) return { ok:false, error:'already done — the board has moved on' };
+      db.prepare('INSERT INTO discharge_steps (discharge_id,step,actor,actor_name,at) VALUES (?,?,?,?,?)')
+        .run(d.id, expected, empId, name, at);
+      if (expected === path[path.length - 1])
+        db.prepare("UPDATE discharges SET status='out', out_at=? WHERE id=?").run(at, d.id);
+      audit(empId, `${d.id} ${expected} done`);
+      return { ok:true };
+    }
+    case 'dc_cancel': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const d = db.prepare('SELECT * FROM discharges WHERE id=?').get(String(op.id));
+      if (!d || d.status !== 'active') return { ok:false, error:'no active discharge' };
+      db.prepare("UPDATE discharges SET status='cancelled' WHERE id=?").run(d.id);
+      audit(empId, `cancelled discharge ${d.id}`);
+      return { ok:true };
+    }
     case 'user_add': {
       if (role !== 'admin') return { ok:false, error:'admin only' };
       const nu = op.user || {};
@@ -364,6 +413,16 @@ function buildState(u){
     .map(c => ({ id:c.id, suite:c.suite, date:c.case_date, planned:c.planned, durMin:c.dur_min,
       procedure:c.procedure_name, surgeon:c.surgeon, status:c.status,
       milestones: msStmt.all(c.id).map(m => ({ to:m.stage, at:m.at, by:m.actor_name })) }));
+  const dcCut = new Date(Date.now() - 7*86400e3).toISOString();
+  const dcStepStmt = db.prepare('SELECT * FROM discharge_steps WHERE discharge_id=? ORDER BY at');
+  const discharges = db.prepare('SELECT * FROM discharges WHERE advised_at>=? ORDER BY advised_at').all(dcCut)
+    .map(d => {
+      const done = {};
+      for (const st of dcStepStmt.all(d.id)) done[st.step] = Date.parse(st.at);
+      return { id:d.id, name:d.name, uhid:d.uhid, ward:d.ward, bed:d.bed, payer:d.payer,
+        consultant:d.consultant, advisedAt: Date.parse(d.advised_at), done, status:d.status,
+        outAt: d.out_at ? Date.parse(d.out_at) : null, byName: d.created_by_name };
+    });
   let users;
   if (role === 'admin')
     users = db.prepare('SELECT * FROM users ORDER BY emp_id').all()
@@ -374,7 +433,7 @@ function buildState(u){
   const auditRows = canSeeAll(role)
     ? db.prepare('SELECT actor "by", action, at FROM audit ORDER BY id DESC LIMIT 40').all()
     : [];
-  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, audit:auditRows };
+  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, discharges, audit:auditRows };
 }
 
 /* ---------- HTTP plumbing ---------- */

@@ -111,6 +111,34 @@ CREATE TABLE bed_events (                       -- turnaround-time source
 );
 CREATE INDEX idx_bed_events ON bed_events (bed_id, at);
 
+-- ---------- Discharge tracking ----------
+CREATE TYPE dc_status AS ENUM ('active','out','cancelled');
+CREATE TYPE dc_step   AS ENUM ('summary','pharmacy','billing','tpa','settle','depart');
+CREATE TYPE dc_payer  AS ENUM ('Cash','Insurance / TPA','Corporate');
+CREATE TABLE discharges (
+  id          varchar(16) PRIMARY KEY,            -- 'DIS-231'
+  name        varchar(60)  NOT NULL,              -- patient (HIS FK in production)
+  uhid        varchar(20),
+  ward        varchar(10)  NOT NULL,
+  bed         varchar(12)  NOT NULL,
+  payer       dc_payer     NOT NULL,              -- Cash path skips the tpa step
+  consultant  varchar(60),
+  advised_at  timestamptz  NOT NULL,              -- the clock starts here
+  status      dc_status    NOT NULL DEFAULT 'active',
+  out_at      timestamptz,                        -- bed vacated
+  created_by  varchar(20)  NOT NULL REFERENCES users(emp_id)
+);
+CREATE TABLE discharge_steps (                    -- one row per completed hand-off
+  id           bigserial   PRIMARY KEY,
+  discharge_id varchar(16) NOT NULL REFERENCES discharges(id),
+  step         dc_step     NOT NULL,
+  actor        varchar(20) NOT NULL REFERENCES users(emp_id),
+  at           timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (discharge_id, step)
+);
+CREATE INDEX idx_dc_active  ON discharges (ward) WHERE status = 'active';
+CREATE INDEX idx_dc_advised ON discharges (advised_at);
+
 -- ---------- OT tracking ----------
 CREATE TYPE ot_stage AS ENUM
   ('scheduled','in_ot','anaesthesia','incision','closure','out','cleaning','done','cancelled');

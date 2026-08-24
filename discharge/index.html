@@ -187,10 +187,28 @@
   <header>
     <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
       <small>Discharge Tracker &middot; Wards &amp; Billing</small></div>
-    <span class="mode-tag">Pilot &middot; this device</span>
+    <span class="mode-tag" id="modeTag">Pilot &middot; this device</span>
   </header>
 
   <main>
+    <!-- ============ SIGN IN (live server mode only) ============ -->
+    <div id="signin" style="display:none; padding:10px 16px 20px">
+      <h1 class="page">Sign in</h1>
+      <p class="page-sub">This is the live shared discharge board. Sign in with your Lakeshore One employee ID and PIN &mdash; the same account as the service desk.</p>
+      <div class="fcard">
+        <label class="fl" for="siEmp">Employee ID</label>
+        <input type="text" id="siEmp" placeholder="e.g. LH-DOC01" maxlength="20" autocapitalize="characters">
+        <label class="fl" for="siPin">PIN</label>
+        <input type="password" id="siPin" placeholder="4&ndash;6 digits" maxlength="6" inputmode="numeric">
+        <div id="siNew" style="display:none">
+          <label class="fl" for="siPin2">Confirm new PIN</label>
+          <input type="password" id="siPin2" placeholder="repeat PIN" maxlength="6" inputmode="numeric">
+        </div>
+        <button class="submit" id="siGo">Sign in</button>
+        <p class="hint" id="siMsg">Ask an admin to add you if your ID isn&rsquo;t recognised.</p>
+      </div>
+    </div>
+
     <!-- ============ BOARD ============ -->
     <section class="tab active" id="tab-board">
       <h1 class="page">Discharge board</h1>
@@ -257,10 +275,11 @@
   </main>
 
   <footer>
-    <b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
+    <span id="footNote"><b style="color:var(--ink-2)">Pilot &mdash; single-device demo mode.</b><br>
     The board is saved only in this browser (localStorage); demo entries are fictional and re-seeded daily.
-    Production plugs into the Lakeshore One backend (one shared board across ward, pharmacy, billing and the
-    insurance desk) and can later stamp steps automatically from HIS events instead of manual taps.
+    When served by the Lakeshore One backend this app switches to the live shared board automatically
+    (one board across ward, pharmacy, billing and the insurance desk); HIS events can later stamp steps
+    automatically instead of manual taps.</span>
     <br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>
   </footer>
 
@@ -410,6 +429,95 @@ function seedDemo(){
   save();
 }
 
+/* ---------- live backend (Lakeshore One server) ---------- */
+/* When served by server/server.js the app switches from single-device demo
+   mode to the shared board: same sign-in as the main app, ops enforced
+   server-side, SSE pushes every change to every open device. */
+let mode = 'local', token = null;
+try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+async function api(path, body){
+  const r = await fetch('../api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchState(){
+  const r = await api('state');
+  if (r.ok && r.discharges) db.items = r.discharges;
+  return r.ok;
+}
+function startSSE(){
+  try{
+    const es = new EventSource('../api/events?token=' + encodeURIComponent(token));
+    es.onmessage = async () => { if (await fetchState()) renderAll(); };
+  }catch(e){}
+}
+async function commit(op){
+  op.uid = 'dc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const r = await api('op', { op });
+  if (!r.ok) alert(r.error || 'Not allowed.');
+  if (await fetchState()) renderAll();
+  return r;
+}
+function setTag(m){
+  const el = $('modeTag');
+  if (m === 'live'){ el.innerHTML = 'Live &middot; shared'; el.style.color = 'var(--good)'; el.style.background = 'var(--good-bg)'; }
+  else if (m === 'signin'){ el.innerHTML = 'Live &middot; sign in'; el.style.color = 'var(--info)'; el.style.background = 'var(--info-bg)'; }
+}
+function showSignin(v){
+  $('signin').style.display = v ? 'block' : 'none';
+  for (const k of ['board','wards','trends']) $('tab-' + k).style.display = v ? 'none' : '';
+  document.querySelector('nav').style.display = v ? 'none' : 'flex';
+}
+async function enterLive(){
+  setTag('live'); showSignin(false);
+  $('footNote').innerHTML = '<b style="color:var(--ink-2)">Live system.</b><br>' +
+    'One shared board across ward, pharmacy, billing and the insurance desk — every tap is role-checked, ' +
+    'audited and pushed to all open devices in real time. HIS events can later stamp steps automatically.';
+  await fetchState(); renderAll(); startSSE();
+}
+$('siGo').onclick = async () => {
+  const empId = $('siEmp').value.trim().toUpperCase(), pin = $('siPin').value.trim();
+  if (!empId){ $('siMsg').textContent = 'Enter your employee ID.'; return; }
+  $('siMsg').textContent = 'Signing in…';
+  let r;
+  if ($('siNew').style.display !== 'none'){
+    if (!/^\d{4,6}$/.test(pin) || pin !== $('siPin2').value.trim()){
+      $('siMsg').textContent = 'PINs must match and be 4–6 digits.'; return;
+    }
+    r = await api('set-pin', { empId, pin });
+  } else {
+    r = await api('login', { empId, pin });
+    if (r.needPin){
+      $('siNew').style.display = 'block'; $('siGo').textContent = 'Set PIN & sign in';
+      $('siMsg').textContent = 'First sign-in — choose a 4–6 digit PIN.'; return;
+    }
+  }
+  if (!r.ok || !r.token){ $('siMsg').textContent = r.error || 'Sign-in failed.'; return; }
+  token = r.token;
+  try{ sessionStorage.setItem('l1-token', token); localStorage.setItem('l1-last-emp', empId); }catch(e){}
+  await enterLive();
+};
+async function boot(){
+  try{
+    const r = await fetch('../api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one'){
+      mode = 'server'; db = { items: [] };
+      if (token && (await api('me')).ok){ await enterLive(); return; }
+      token = null;
+      setTag('signin'); showSignin(true); renderAll();
+      try{ const le = localStorage.getItem('l1-last-emp'); if (le) $('siEmp').value = le; }catch(e){}
+      return;
+    }
+  }catch(e){}
+  seedDemo(); renderAll();
+}
+
 /* ---------- initiate form ---------- */
 let payerSel = 'Cash';
 function renderForm(){
@@ -427,17 +535,22 @@ function renderForm(){
   $('fHint').textContent = (payerSel === 'Cash' ? 'Cash path skips TPA approval — ' : 'Insured path includes TPA approval — ')
     + 'target out in ' + fmtMin(tgt) + '.';
 }
-$('fSubmit').onclick = () => {
+$('fSubmit').onclick = async () => {
   const name = $('fName').value.trim();
   if (!name){ alert('Enter the patient name.'); return; }
-  const it = { id:'d' + Date.now(), name, uhid: $('fUhid').value.trim(),
-    ward: $('fWard').value, bed: $('fBed').value.trim() || $('fWard').value + '-?',
-    payer: payerSel, consultant: $('fDoc').value.trim(),
-    advisedAt: Date.now(), done:{}, status:'active' };
-  db.items.push(it); save();
+  const fields = { name, uhid: $('fUhid').value.trim(), ward: $('fWard').value,
+    bed: $('fBed').value.trim() || $('fWard').value + '-?', payer: payerSel,
+    consultant: $('fDoc').value.trim() };
+  if (mode === 'server'){
+    const r = await commit(Object.assign({ kind:'dc_add' }, fields));
+    if (!r.ok) return;
+  } else {
+    db.items.push(Object.assign({ id:'d' + Date.now(), advisedAt: Date.now(), done:{}, status:'active' }, fields));
+    save();
+  }
   $('fName').value = ''; $('fUhid').value = ''; $('fBed').value = ''; $('fDoc').value = ''; payerSel = 'Cash';
   renderAll();
-  alert('Clock started for ' + it.name + ' — ' + wardName(it.ward) + ', bed ' + it.bed +
+  alert('Clock started for ' + name + ' — ' + wardName(fields.ward) + ', bed ' + fields.bed +
     '.\nFirst hand-off: discharge summary (target ' + STEPS[0].tgt + ' min).');
 };
 
@@ -493,20 +606,21 @@ function renderBoard(){
     : '<div class="empty" style="padding:12px">No discharges completed yet today.</div>';
 
   for (const b of $('boardList').querySelectorAll('[data-adv]'))
-    b.onclick = () => {
+    b.onclick = async () => {
       const it = db.items.find(x => x.id === b.dataset.adv);
       if (!it || it.status !== 'active') return;
       const cur = curStep(it);
+      if (mode === 'server'){ await commit({ kind:'dc_step', id: it.id, step: cur.key }); return; }
       it.done[cur.key] = Date.now();
       if (!curStep(it)){ it.status = 'out'; it.outAt = Date.now(); }
       save(); renderAll();
     };
   for (const b of $('boardList').querySelectorAll('[data-cancel]'))
-    b.onclick = () => {
+    b.onclick = async () => {
       const it = db.items.find(x => x.id === b.dataset.cancel);
-      if (it && confirm('Take ' + it.name + ' off the discharge board? (Discharge cancelled by the team.)')){
-        it.status = 'cancelled'; save(); renderAll();
-      }
+      if (!it || !confirm('Take ' + it.name + ' off the discharge board? (Discharge cancelled by the team.)')) return;
+      if (mode === 'server'){ await commit({ kind:'dc_cancel', id: it.id }); return; }
+      it.status = 'cancelled'; save(); renderAll();
     };
 }
 
@@ -606,7 +720,7 @@ function setTab(t){
 for (const k of ['board','wards','trends']) $('nav-' + k).onclick = () => setTab(k);
 
 function renderAll(){ renderForm(); renderBoard(); renderWards(); renderTrends(); }
-seedDemo(); renderAll();
+boot();
 setInterval(renderAll, 60e3);          /* keep the clocks ticking */
 </script>
 
