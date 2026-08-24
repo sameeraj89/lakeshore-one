@@ -27,7 +27,18 @@ Optional environment variables:
 Guest and Patient one-tap sign-in is always available: it creates an ephemeral
 limited account (`GST-…` / `PAT-…`) that can only raise facility, housekeeping
 and security requests and track its own tickets — no bed board, OT list, queue
-or dashboard data is ever sent to those sessions.
+or dashboard data is ever sent to those sessions. Guest accounts that raised
+no requests are purged automatically after 7 days.
+
+## Tests
+
+```bash
+node --test server/server.test.js
+```
+
+Zero-dependency integration tests (built-in `node:test`) covering the
+security-sensitive surface: guest/patient access limits, role-filtered state,
+demo-nurse and Google SSO gating, email linking and uniqueness, guest cleanup.
 
 On first run it creates `server/data/` containing:
 - `lakeshore-one.db` — the SQLite database (WAL mode). **Back this file up.**
@@ -67,7 +78,10 @@ sudo bash deploy.sh ops.yourdomain.in
 
 That installs Node 22 + Caddy, sets up the systemd service, HTTPS, and a
 nightly backup to `/var/backups/lakeshore-one`. Re-run it any time to pull
-updates. The equivalent manual steps:
+updates. Server settings (`GOOGLE_CLIENT_ID`, `GOOGLE_HOSTED_DOMAIN`,
+`DEMO_LOGIN`) live in `/etc/lakeshore-one.env` — the script creates it once
+and never overwrites it, so they survive re-runs; edit it and
+`systemctl restart lakeshore-one`. The equivalent manual steps:
 
 ```bash
 # 1. Node 22+ (Ubuntu 24.04)
@@ -84,6 +98,7 @@ After=network.target
 [Service]
 ExecStart=/usr/bin/node /opt/lakeshore-one/server/server.js
 Environment=PORT=8080
+EnvironmentFile=-/etc/lakeshore-one.env
 Restart=always
 User=www-data
 [Install]
