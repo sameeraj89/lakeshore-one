@@ -62,6 +62,37 @@
     display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600}
   a.card:hover .chev{border-color:var(--pink);color:var(--pink)}
 
+  /* ── ideas section ──────────────────────────────────── */
+  .ideas{max-width:1080px;margin:0 auto;padding:0 26px 70px}
+  .ideas-card{background:#fff;border-radius:18px;color:var(--navy-ink);box-shadow:0 18px 50px rgba(0,10,40,.35);
+    display:grid;grid-template-columns:1.05fr .95fr;gap:44px;padding:34px 32px 36px}
+  .ideas h2{font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.3px;color:var(--navy-ink);margin-bottom:12px}
+  .ideas .eyebrow{color:var(--pink);margin-bottom:14px}
+  .ideas .blurb{font-size:14px;line-height:1.7;color:#5B6B78;max-width:46ch;margin-bottom:18px}
+  .ideas ul{list-style:none;font-size:13px;color:#5B6B78;line-height:1.6}
+  .ideas ul li{padding:7px 0 7px 26px;position:relative;border-top:1px solid var(--line)}
+  .ideas ul li::before{content:"✓";position:absolute;left:2px;color:var(--pink);font-weight:700}
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+    color:var(--grey);margin-bottom:6px}
+  .fld label small{letter-spacing:.4px;text-transform:none;font-weight:500;color:#9AA7B4}
+  .fld select,.fld textarea,.fld input{width:100%;font:inherit;font-size:14px;color:var(--navy-ink);
+    border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;outline:none}
+  .fld select:focus,.fld textarea:focus,.fld input:focus{border-color:var(--pink)}
+  .fld textarea{resize:vertical;min-height:104px;line-height:1.55}
+  .fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ideas button{font:inherit;font-size:14.5px;font-weight:700;color:#fff;background:var(--pink);border:0;
+    border-radius:999px;padding:12px 28px;cursor:pointer}
+  .ideas button:hover{filter:brightness(1.07)}
+  .ideas button:disabled{opacity:.55;cursor:default}
+  .idea-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+  .idea-foot .anon{font-size:12px;color:var(--grey);line-height:1.5}
+  .idea-done{border:1.5px solid var(--line);border-radius:14px;padding:26px 22px;text-align:center}
+  .idea-done .big{font-size:34px;margin-bottom:10px}
+  .idea-done b{display:block;font-size:17px;color:var(--navy-ink);margin-bottom:8px}
+  .idea-done p{font-size:13px;color:#5B6B78;line-height:1.65}
+  .idea-done a{color:var(--pink);font-weight:600;cursor:pointer;text-decoration:none}
+
   footer{border-top:1px solid rgba(255,255,255,.14)}
   .fo{max-width:1080px;margin:0 auto;padding:18px 26px;font-size:12px;color:var(--sky);
     display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -71,6 +102,8 @@
     h1{font-size:38px}
     .hd img{height:38px}
     .hd .tag{display:none}
+    .ideas-card{grid-template-columns:1fr;gap:26px;padding:26px 22px 28px}
+    .fld-row{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -116,10 +149,64 @@
       <div class="cbody"><div class="ct">IT Pulse <small>Monitor</small></div>
       <div class="cd">Live campus IT status map — network, Wi-Fi, servers, power and CCTV layers with 12-hour zone trends. Simulated telemetry.</div></div>
       <div class="chev">&rsaquo;</div></a>
+    <a class="card" href="whatsapp/">
+      <div class="cbody"><div class="ct">WhatsApp Intake <small class="hot">New</small></div>
+      <div class="cd">Report by texting the hospital&rsquo;s WhatsApp number — AI triage files the ticket to the right desk with the right priority. Try the simulator.</div></div>
+      <div class="chev">&rsaquo;</div></a>
     <a class="card" href="safereport/">
       <div class="cbody"><div class="ct">SafeReport <small>Mockup</small></div>
       <div class="cd">Confidential patient-safety incident reporting workflow — anonymous reporting, quality triage, RCA / CAPA, safety trends.</div></div>
       <div class="chev">&rsaquo;</div></a>
+  </div>
+</div>
+
+<div class="ideas">
+  <div class="ideas-card">
+    <div>
+      <div class="eyebrow">Staff Suggestion Box</div>
+      <h2>Have an idea to make Lakeshore a better place to work?</h2>
+      <div class="blurb">Big or small — a fix for a daily annoyance, a smarter process, something
+        another hospital does well. The best improvements come from the people doing the work,
+        and every idea submitted here goes straight to the management team.</div>
+      <ul>
+        <li>Open to every member of staff — clinical and non-clinical</li>
+        <li>Share anonymously, or leave your name so we can follow up</li>
+        <li>Reviewed by hospital management, with recurring themes tracked</li>
+      </ul>
+    </div>
+    <form id="ideaForm" autocomplete="off">
+      <div class="fld">
+        <label for="ideaTheme">What is it about?</label>
+        <select id="ideaTheme">
+          <option>Workplace &amp; wellbeing</option>
+          <option>Patient experience</option>
+          <option>Processes &amp; efficiency</option>
+          <option>Facilities &amp; environment</option>
+          <option>Technology &amp; tools</option>
+          <option>Training &amp; growth</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label for="ideaText">Your idea</label>
+        <textarea id="ideaText" maxlength="1000" required
+          placeholder="What should we improve, and how would it help? A couple of sentences is plenty."></textarea>
+      </div>
+      <div class="fld-row">
+        <div class="fld">
+          <label for="ideaName">Name <small>— optional</small></label>
+          <input id="ideaName" maxlength="60" placeholder="Leave blank to stay anonymous">
+        </div>
+        <div class="fld">
+          <label for="ideaDept">Department <small>— optional</small></label>
+          <input id="ideaDept" maxlength="60" placeholder="e.g. Nursing · 4B">
+        </div>
+      </div>
+      <div class="idea-foot">
+        <button type="submit" id="ideaBtn">Share idea</button>
+        <div class="anon">No login needed. Anonymous unless you add your name.</div>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -138,6 +225,41 @@ fetch('api/health',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
     document.getElementById('modeNote').innerHTML =
       '<b>Live system</b> — connected to the hospital server. Sign-ins, tickets and updates are shared across all devices in real time.';
 }).catch(()=>{});
+</script>
+<script>
+/* staff suggestion box — posts to the live server, else keeps the idea on this device (demo mode) */
+document.getElementById('ideaForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const idea = document.getElementById('ideaText').value.trim();
+  if (idea.length < 10){ document.getElementById('ideaText').focus(); return; }
+  const payload = {
+    idea,
+    theme: document.getElementById('ideaTheme').value,
+    name:  document.getElementById('ideaName').value.trim(),
+    dept:  document.getElementById('ideaDept').value.trim()
+  };
+  const btn = document.getElementById('ideaBtn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  let live = false;
+  try{
+    const r = await fetch('api/idea', { method:'POST',
+      headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    live = r.ok;
+  }catch(err){ /* static host — fall through to local save */ }
+  if (!live){
+    try{
+      const box = JSON.parse(localStorage.getItem('lso-ideas') || '[]');
+      box.push({ ...payload, at: new Date().toISOString() });
+      localStorage.setItem('lso-ideas', JSON.stringify(box));
+    }catch(err){}
+  }
+  document.getElementById('ideaForm').outerHTML =
+    '<div class="idea-done"><div class="big">💡</div><b>Thank you — idea received.</b>' +
+    (live
+      ? '<p>Your suggestion has been shared with the management team. Recurring themes are reviewed and the best ideas get taken up.</p>'
+      : '<p>On this static host your idea is saved on this device only (demo mode). On the live system it goes straight to the management team.</p>') +
+    '<p style="margin-top:10px"><a onclick="location.reload()">Share another idea</a></p></div>';
+});
 </script>
 </body>
 </html>

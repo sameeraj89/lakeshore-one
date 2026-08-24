@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#001E5F">
+<title>WhatsApp Intake — Lakeshore One</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --navy:#001E5F; --navy-ink:#0B2B6B; --sky:#8FA9DC; --pink:#E8146E; --grey:#7F8C9B;
+    --line:rgba(11,43,107,.12);
+    --wa-green:#075E54; --wa-bubble:#DCF8C6; --wa-bg:#ECE5DD;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--navy)}
+  body{background:var(--navy);color:#fff;font-family:Figtree,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  header{border-bottom:1px solid rgba(255,255,255,.14)}
+  .hd{max-width:1120px;margin:0 auto;padding:16px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .hd a{color:var(--sky);text-decoration:none;font-size:13px;font-weight:600}
+  .hd a:hover{color:#fff}
+  .hd .tag{font-size:11.5px;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:var(--sky)}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:44px 26px 70px;display:grid;
+    grid-template-columns:1fr 400px;gap:52px;align-items:start}
+
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--sky);margin-bottom:14px}
+  h1{font-weight:600;font-size:40px;line-height:1.08;letter-spacing:-.5px;margin-bottom:14px}
+  .sub{color:var(--sky);font-size:15px;line-height:1.7;max-width:52ch;margin-bottom:26px}
+  .sub b{color:#fff;font-weight:600}
+
+  /* pipeline steps */
+  .steps{display:flex;flex-direction:column;gap:0;margin-bottom:26px}
+  .step{display:flex;gap:14px;padding:11px 0;align-items:flex-start;opacity:.55;transition:opacity .3s}
+  .step.on{opacity:1}
+  .snum{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .3s}
+  .step.on .snum{background:var(--pink);border-color:var(--pink)}
+  .sbody b{display:block;font-size:14.5px;font-weight:600}
+  .sbody span{font-size:12.5px;color:var(--sky);line-height:1.5;display:block;margin-top:2px}
+
+  /* triage result card */
+  .tri{background:#fff;border-radius:16px;padding:18px 20px;color:var(--navy-ink);display:none;margin-bottom:22px}
+  .tri.show{display:block;animation:pop .25s}
+  @keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+  .tri .tt{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--grey);margin-bottom:12px}
+  .tri .row{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(11,43,107,.07)}
+  .chip.mod{color:#fff}
+  .chip.p1{background:#FCE7EF;color:#B3134F} .chip.p2{background:#FDEEDD;color:#9A5B0F}
+  .chip.p3{background:#E8F0FB;color:#2B5FA3} .chip.p4{background:#EDF1F4;color:#5B6B78}
+  .chip.impact{background:#FCE7EF;color:#B3134F}
+  .tri .title{font-size:14px;font-weight:600;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+
+  .note{border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:14px 16px;font-size:12.5px;
+    line-height:1.65;color:var(--sky);max-width:56ch}
+  .note b{color:#fff;font-weight:600}
+
+  /* queue mini-panel */
+  .queue{background:#fff;border-radius:16px;padding:16px 18px;color:var(--navy-ink);margin-bottom:22px;display:none}
+  .queue.show{display:block}
+  .queue .tt{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--grey);margin-bottom:10px}
+  .qrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+  .qrow:first-of-type{border-top:0}
+  .qdot{flex:none;width:9px;height:9px;border-radius:50%}
+  .qrow .qid{font-weight:700;font-size:12px}
+  .qrow .qt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#42546A}
+  .qrow .qp{font-size:11px;font-weight:700}
+
+  /* ── phone mockup ─────────────────────────────── */
+  .phone{background:#111;border-radius:38px;padding:12px;box-shadow:0 24px 60px rgba(0,10,40,.5);position:sticky;top:26px}
+  .screen{border-radius:28px;overflow:hidden;display:flex;flex-direction:column;height:640px;background:var(--wa-bg)}
+  .wahd{background:var(--wa-green);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:11px}
+  .avatar{width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .wahd .who b{display:block;font-size:14.5px;font-weight:600}
+  .wahd .who span{font-size:11px;opacity:.85}
+  .chat{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:8px}
+  .msg{max-width:82%;padding:8px 11px;border-radius:10px;font-size:13.2px;line-height:1.45;white-space:pre-wrap;
+    box-shadow:0 1px 1px rgba(0,0,0,.08);color:#222;position:relative;animation:pop .2s}
+  .msg.in{background:#fff;align-self:flex-start;border-top-left-radius:3px}
+  .msg.out{background:var(--wa-bubble);align-self:flex-end;border-top-right-radius:3px}
+  .msg .time{display:block;font-size:10px;color:#7d8b92;text-align:right;margin-top:3px}
+  .msg.typing{color:#7d8b92;font-style:italic}
+  .chips{padding:8px 12px;display:flex;gap:7px;overflow-x:auto;background:rgba(255,255,255,.65)}
+  .chips button{flex:none;border:1px solid #cfd8dc;background:#fff;border-radius:999px;padding:7px 13px;
+    font-size:12px;font-family:inherit;color:#075E54;font-weight:600;cursor:pointer}
+  .chips button:hover{background:#f0f6f4}
+  .inbar{display:flex;gap:8px;padding:9px 10px;background:#F0F0F0}
+  .inbar input{flex:1;border:0;border-radius:999px;padding:11px 16px;font-size:14px;font-family:inherit;outline:none}
+  .inbar button{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--wa-green);color:#fff;
+    font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+  footer{border-top:1px solid rgba(255,255,255,.14)}
+  .fo{max-width:1120px;margin:0 auto;padding:18px 26px;font-size:12px;color:var(--sky);
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+  @media (max-width:900px){
+    .wrap{grid-template-columns:1fr;gap:34px;padding-top:30px}
+    h1{font-size:32px}
+    .phone{position:static;max-width:400px;margin:0 auto}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <a href="../">&lsaquo; Lakeshore One</a>
+    <div class="tag">WhatsApp Intake &middot; Simulator</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="eyebrow">VPS Lakeshore &middot; Kochi</div>
+    <h1>Report it like you&rsquo;d text a friend.</h1>
+    <div class="sub">Staff message the hospital&rsquo;s WhatsApp number in plain language —
+      English, Malayalam or Manglish, photo optional. <b>AI triage</b> reads the message and files a
+      properly classified ticket into the same Lakeshore One queues agents already work:
+      right desk, right category, right priority, right zone. Updates come back on WhatsApp.</div>
+
+    <div class="steps" id="steps">
+      <div class="step" data-s="1"><div class="snum">1</div><div class="sbody"><b>Message received</b>
+        <span>Meta WhatsApp Cloud API webhook delivers it to the Lakeshore One server. First message links the number to an employee ID.</span></div></div>
+      <div class="step" data-s="2"><div class="snum">2</div><div class="sbody"><b>AI triage</b>
+        <span>Claude classifies desk, category, priority (ITIL P1&ndash;P4), campus zone and patient-care impact — with a keyword fallback if the AI is unreachable.</span></div></div>
+      <div class="step" data-s="3"><div class="snum">3</div><div class="sbody"><b>Ticket in the queue</b>
+        <span>Created through the same role-checked pipeline as the app — SLA clock starts, agents see it instantly, audit trail records it.</span></div></div>
+      <div class="step" data-s="4"><div class="snum">4</div><div class="sbody"><b>Updates flow back</b>
+        <span>Taken up, resolved, comments — the reporter is notified on WhatsApp and can reply STATUS, CLOSE or CANCEL any time.</span></div></div>
+    </div>
+
+    <div class="tri" id="tri">
+      <div class="tt">What the AI extracted</div>
+      <div class="row" id="triRow"></div>
+      <div class="title" id="triTitle"></div>
+    </div>
+
+    <div class="queue" id="queue">
+      <div class="tt">Agent queue — tickets raised in this demo</div>
+      <div id="qBody"></div>
+    </div>
+
+    <div class="note"><b>This page is a simulator</b> — triage here runs on keyword rules in your browser,
+      and nothing is stored. The production channel uses the Meta WhatsApp Cloud API webhook on the
+      Lakeshore One server with Claude doing the triage (it understands Malayalam, Manglish, typos and
+      photos with captions). Setup guide: <b>server/WHATSAPP.md</b> in the repo.</div>
+  </div>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="wahd">
+        <div class="avatar">🏥</div>
+        <div class="who"><b>Lakeshore One</b><span>Service desk &middot; online</span></div>
+      </div>
+      <div class="chat" id="chat"></div>
+      <div class="chips" id="chips"></div>
+      <div class="inbar">
+        <input id="inp" type="text" placeholder="Type a message" autocomplete="off">
+        <button id="send" aria-label="Send">&#10148;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="fo">
+    <span>VPS Lakeshore Hospital &middot; Global Lifecare</span>
+    <span>Internal tools &middot; Lakeshore One</span>
+  </div>
+</footer>
+
+<script>
+/* ================= taxonomy (mirrors server/whatsapp.js) ================= */
+const MOD_META = { it:['IT & Systems','#2B7CBE'], fac:['Facility & Engineering','#B3611E'],
+  hk:['Housekeeping','#0B7C3E'], bm:['Biomedical','#8B1A4A'], sec:['Security','#5B4B8A'] };
+const CATS = {
+  it: { incident:['Workstation / PC','HIS / EMR issue','PACS / imaging','LIS / lab system','Printer / scanner','Network / LAN down','Wi-Fi problem','Telephone / intercom','Email issue','Other IT issue'],
+        request:['New HIS user / access','Access change / revoke','Password reset','New hardware','Software installation','Email ID creation','Report / data extract','Move equipment'] },
+  fac:{ incident:['Electrical / power','Lights / fixtures','Plumbing / leak','AC / HVAC','Medical gas','Lift / elevator','Door / furniture / civil','Seepage / painting','Pest control','Other facility'] },
+  hk: { incident:['Cleaning needed','Spill — biohazard','Spill — general','Washroom complaint','Waste not collected','Linen issue','Odour / other'] },
+  bm: { incident:['Equipment breakdown','Equipment alarm issue','Calibration due / expired','Accessory / consumable','Other biomedical'] },
+  sec:{ incident:['Unauthorized access','Security assistance','Lost & found','Parking issue','Visitor management','CCTV request'] }
+};
+const ZONES = ['Data Centre','Reception & Billing','Wards Tower','ICU Complex','OT Complex','Cath Lab',
+  'Radiology & Imaging','Central Lab','Oncology Block','OP Block','Pharmacy','Emergency & Trauma',
+  'Admin Block','Cafeteria','Main Gate & Parking','Other / Not sure'];
+const PRI_HINT = { P1:'response in 15 min', P2:'response in 1 h', P3:'response in 4 h', P4:'response in 1 day' };
+
+/* ============ keyword triage — same logic as the server fallback ============ */
+function triage(text){
+  const t = ' ' + String(text).toLowerCase() + ' ';
+  const score = ws => ws.reduce((n, w) => n + (t.includes(w) ? 1 : 0), 0);
+  const modScores = {
+    it:  score(['computer','pc','system','his ','emr','pacs','lis ','printer','network','lan','wifi','wi-fi','internet','password','login','email','phone line','intercom','software','monitor screen','server']),
+    fac: score(['power','electric','light','plumb','leak','tap','water','ac ','a/c','hvac','air condition','oxygen line','medical gas','lift','elevator','door','furniture','ceiling','seepage','paint','pest','genset']),
+    hk:  score(['clean','spill','blood on','vomit','washroom','toilet','bathroom','waste','garbage','dustbin','linen','bedsheet','smell','odour','odor','mop']),
+    bm:  score(['ventilator','monitor alarm','infusion','syringe pump','defib','ecg','ultrasound machine','x-ray machine','equipment','calibration','probe','bipap','cpap','dialysis machine','suction']),
+    sec: score(['security','unauthorized','theft','stolen','lost','found','parking','visitor','fight','cctv','guard'])
+  };
+  let mod = 'it', best = -1;
+  for (const [m, s] of Object.entries(modScores)) if (s > best){ best = s; mod = m; }
+  if (best <= 0) mod = 'fac';
+  const isRequest = mod === 'it' && score(['need ','request','new user','create ','install','access to','id for','extract','provide']) > 0
+    && score(['down','not working','broken','error','fail','issue','problem','slow']) === 0;
+  const type = isRequest ? 'request' : 'incident';
+  const cats = CATS[mod][type] || CATS[mod].incident;
+  let cat = type === 'request' ? 'New hardware' : cats[cats.length - 1];
+  const catWords = {
+    'Email ID creation':['email id','email account','new email'], 'New HIS user / access':['his user','new user','his access','access for'],
+    'Software installation':['install','software'], 'Report / data extract':['report','extract','data from'],
+    'New hardware':['new pc','new computer','new printer','new monitor','hardware'], 'Access change / revoke':['revoke','change access','transfer access'],
+    'Wi-Fi problem':['wifi','wi-fi'], 'Network / LAN down':['network','lan','internet'],
+    'HIS / EMR issue':['his ','emr'], 'Printer / scanner':['printer','scanner','print'],
+    'Password reset':['password'], 'Workstation / PC':['computer','pc ','desktop'],
+    'AC / HVAC':['ac ','a/c','hvac','air condition','cooling'], 'Plumbing / leak':['leak','plumb','tap','water'],
+    'Electrical / power':['power','electric','socket'], 'Lift / elevator':['lift','elevator'],
+    'Medical gas':['oxygen','medical gas','o2'], 'Lights / fixtures':['light','tube','bulb'],
+    'Spill — biohazard':['blood spill','blood on','blood near','vomit','biohazard','body fluid'], 'Spill — general':['spill','water on floor'],
+    'Cleaning needed':['clean','dirty','mop'], 'Washroom complaint':['washroom','toilet','bathroom'],
+    'Waste not collected':['waste','garbage','dustbin'], 'Linen issue':['linen','bedsheet'],
+    'Equipment breakdown':['not working','broken','breakdown','dead'], 'Equipment alarm issue':['alarm','beeping'],
+    'Calibration due / expired':['calibration'], 'Unauthorized access':['unauthorized','intruder'],
+    'Lost & found':['lost','found','missing'], 'Parking issue':['parking'], 'CCTV request':['cctv','camera footage'],
+    'Security assistance':['fight','aggressive','security help']
+  };
+  let bestLen = 0;
+  for (const c of cats) for (const w of (catWords[c] || [])) if (t.includes(w) && w.length >= bestLen){ cat = c; bestLen = w.length; }
+  const zoneAlias = [
+    ['ICU Complex',['icu','intensive care','hdu']], ['OT Complex',['ot ',' ot','theatre','theater','operation']],
+    ['Emergency & Trauma',['emergency','casualty','trauma',' er ']], ['Wards Tower',['ward','room 3','room 4','room 5']],
+    ['Central Lab',['lab ','laboratory']], ['Radiology & Imaging',['radiology','x-ray','xray','ct ','mri','imaging','scan']],
+    ['Pharmacy',['pharmacy','medical store']], ['Oncology Block',['oncology','chemo']],
+    ['Cath Lab',['cath']], ['OP Block',['opd','op block','outpatient','consult']],
+    ['Reception & Billing',['reception','billing','front office']], ['Admin Block',['admin','hr ','office']],
+    ['Cafeteria',['cafeteria','canteen','kitchen']], ['Main Gate & Parking',['gate','parking']],
+    ['Data Centre',['data centre','data center','server room']]
+  ];
+  const zone = ZONES.find(z => t.includes(z.toLowerCase()))
+    || (zoneAlias.find(([, ws]) => ws.some(w => t.includes(w))) || [])[0]
+    || 'Other / Not sure';
+  const impact = score(['patient','icu','ot ','operation','ventilator','oxygen','o2','emergency','casualty','critical','surgery']) > 0;
+  let pri = 'P3';
+  if (score(['down','all ','entire','fire','flood','no power','oxygen','o2 ']) > 0) pri = 'P2';
+  if (impact && score(['down','not working','alarm','leak','no power','stopped','fail']) > 0) pri = 'P1';
+  else if (impact) pri = 'P2';
+  if (type === 'request') pri = 'P4';
+  const title = String(text).replace(/\s+/g, ' ').trim().slice(0, 120);
+  return { mod, type, cat, title, zone, pri, impact };
+}
+
+/* ================= the simulated conversation ================= */
+const chat = document.getElementById('chat'), chipsEl = document.getElementById('chips'),
+      inp = document.getElementById('inp'), sendBtn = document.getElementById('send');
+let linked = null, seq = 100;
+const tickets = [];
+
+const now = () => new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+function bubble(text, dir){
+  const d = document.createElement('div');
+  d.className = 'msg ' + dir;
+  d.textContent = text;
+  const t = document.createElement('span'); t.className = 'time'; t.textContent = now();
+  d.appendChild(t);
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+function botReply(text, delay){
+  const typing = document.createElement('div');
+  typing.className = 'msg in typing'; typing.textContent = 'typing…';
+  chat.appendChild(typing); chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => { typing.remove(); bubble(text, 'in'); }, delay || 800);
+}
+function lightStep(n, delay){
+  setTimeout(() => document.querySelector('.step[data-s="' + n + '"]').classList.add('on'), delay || 0);
+}
+function setChips(list){
+  chipsEl.innerHTML = '';
+  for (const c of list){
+    const b = document.createElement('button');
+    b.textContent = c;
+    b.onclick = () => send(c);
+    chipsEl.appendChild(b);
+  }
+}
+function showTriage(tri, id){
+  const row = document.getElementById('triRow');
+  const [label, color] = MOD_META[tri.mod];
+  row.innerHTML =
+    '<span class="chip mod" style="background:' + color + '">' + label + '</span>' +
+    '<span class="chip">' + tri.cat + '</span>' +
+    '<span class="chip ' + tri.pri.toLowerCase() + '">' + tri.pri + ' · ' + PRI_HINT[tri.pri] + '</span>' +
+    '<span class="chip">📍 ' + tri.zone + '</span>' +
+    (tri.impact ? '<span class="chip impact">⚠ patient care affected</span>' : '');
+  document.getElementById('triTitle').textContent = id + ' — “' + tri.title + '”';
+  document.getElementById('tri').classList.add('show');
+}
+function renderQueue(){
+  const q = document.getElementById('queue'), body = document.getElementById('qBody');
+  if (!tickets.length) return;
+  q.classList.add('show');
+  body.innerHTML = tickets.map(t =>
+    '<div class="qrow"><span class="qdot" style="background:' + MOD_META[t.mod][1] + '"></span>' +
+    '<span class="qid">' + t.id + '</span><span class="qt">' + t.title + '</span>' +
+    '<span class="qp">' + t.pri + (t.status === 'closed' ? ' · closed' : '') + '</span></div>').join('');
+}
+
+function handle(text){
+  const cmd = text.trim().toUpperCase();
+
+  if (!linked){
+    lightStep(1, 300);
+    if (/^[A-Z]{2}-[A-Z0-9]{2,}$/.test(cmd.replace(/\s+/g, ''))){
+      linked = cmd.replace(/\s+/g, '');
+      botReply('Welcome, Dr. Anitha Menon ✔\n\nThis number is now linked to ' + linked +
+        '. Describe any problem in one message (photo optional) and it becomes a ticket automatically.\n\nReply HELP for commands.');
+      setChips(['AC leaking in ICU corridor near ventilator bed 7',
+        'HIS not opening in OP block room 4, patients waiting',
+        'Blood spill near lift lobby wards tower',
+        'Ventilator alarm not resetting in ICU bed 3',
+        'Need new email ID for the new cardiology nurse']);
+    } else {
+      botReply('Welcome to Lakeshore One — the VPS Lakeshore service desk on WhatsApp.\n\nFirst, reply with your employee ID (e.g. LH-DOC01) to link this number.');
+      setChips(['LH-DOC01']);
+    }
+    return;
+  }
+
+  if (cmd === 'HELP'){
+    return botReply('Lakeshore One on WhatsApp 🏥\n\nJust describe the problem — what and where. Photo optional.\n\nSTATUS — your open tickets\nCANCEL <no.> — withdraw a ticket\nCLOSE <no.> — confirm a fix\nHELP — this message');
+  }
+  if (cmd === 'STATUS'){
+    const open = tickets.filter(t => t.status !== 'closed');
+    return botReply(open.length
+      ? 'Your tickets:\n' + open.map(t => '• ' + t.id + ' (' + t.pri + ') — ' + t.title + '\n   Open').join('\n')
+      : 'You have no open tickets. Describe a problem in one message to raise one.');
+  }
+  const mc = cmd.match(/^(CANCEL|CLOSE)\s+(?:LSO-)?(\d+)$/);
+  if (mc){
+    const t = tickets.find(x => x.id === 'LSO-' + mc[2]);
+    if (t && t.status !== 'closed'){ t.status = 'closed'; renderQueue(); return botReply(t.id + ' closed ✔'); }
+    return botReply("Couldn't find that ticket. Reply STATUS to see your tickets.");
+  }
+  if (text.trim().length < 8)
+    return botReply('Please describe the problem in a bit more detail — what is wrong and where (e.g. "AC leaking in ICU corridor near bed 7").');
+
+  lightStep(1, 200); lightStep(2, 900);
+  const tri = triage(text);
+  const id = 'LSO-' + (++seq);
+  setTimeout(() => {
+    tickets.unshift({ id, ...tri, status:'open' });
+    showTriage(tri, id); renderQueue(); lightStep(3);
+  }, 1500);
+  botReply('✅ Ticket ' + id + ' raised\n' +
+    MOD_META[tri.mod][0] + ' · ' + tri.cat + '\n' +
+    'Priority ' + tri.pri + ' — ' + PRI_HINT[tri.pri] + '\n' +
+    'Zone: ' + tri.zone + (tri.impact ? '\n⚠ Marked patient-care affected' : '') + '\n\n' +
+    '“' + tri.title + '”\n\n' +
+    "You'll get updates here. STATUS = your tickets · CANCEL " + (seq) + ' = withdraw.', 2100);
+  /* simulate the agent picking it up a little later */
+  setTimeout(() => { lightStep(4); botReply('🔧 ' + id + ' is being worked on by ' +
+    ({ it:'Ajith Kumar (IT)', fac:'Suresh Nair (Engineering)', hk:'Beena Thomas (Housekeeping)',
+       bm:'Rahul Menon (Biomedical)', sec:'Vinod PS (Security)' })[tri.mod] + '.', 400); }, 7000);
+  setChips(['STATUS', 'CANCEL ' + seq,
+    'Lift not working near pharmacy', 'Printer out of toner in billing', 'Wifi down in oncology block']);
+}
+
+function send(text){
+  const v = (text !== undefined ? text : inp.value).trim();
+  if (!v) return;
+  inp.value = '';
+  bubble(v, 'out');
+  setTimeout(() => handle(v), 250);
+}
+sendBtn.onclick = () => send();
+inp.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+/* opening state */
+botReply('Welcome to Lakeshore One — the VPS Lakeshore service desk on WhatsApp.\n\nFirst, reply with your employee ID (e.g. LH-DOC01) to link this number.', 500);
+setChips(['LH-DOC01']);
+</script>
+</body>
+</html>

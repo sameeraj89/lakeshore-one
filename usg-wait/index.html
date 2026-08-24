@@ -88,7 +88,7 @@
     color:var(--ink-3); margin:14px 2px 6px}
   label.fl:first-child{margin-top:0}
   label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
-  input[type=text], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
+  input[type=text], input[type=password], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
     border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:16px; color:var(--ink); outline:none}
   input:focus, select:focus{border-color:var(--brand)}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
@@ -192,10 +192,25 @@
   <header>
     <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
       <small>USG Wait &middot; Radiology &amp; Imaging</small></div>
-    <span class="mode-tag">Pilot &middot; this device</span>
+    <span class="mode-tag" id="modeTag">Pilot &middot; this device</span>
   </header>
 
   <main>
+    <!-- ============ SIGN IN (live server mode) ============ -->
+    <section id="gate" style="display:none; padding:12px 16px 20px">
+      <h1 class="page">Sign in</h1>
+      <p class="page-sub">This device is connected to the live Lakeshore One server &mdash; sign in with your employee ID and PIN to continue. The queue is shared across the counter, the rooms and the in-charge.</p>
+      <div class="fcard">
+        <label class="fl" for="gEmp">Employee ID</label>
+        <input type="text" id="gEmp" placeholder="e.g. LH-NUR01" autocapitalize="characters" autocomplete="username">
+        <label class="fl" for="gPin">PIN</label>
+        <input type="password" id="gPin" inputmode="numeric" maxlength="6" placeholder="4&ndash;6 digits" autocomplete="current-password">
+        <p class="hint" id="gErr" style="color:var(--crit)"></p>
+        <button class="submit" id="gGo">Sign in</button>
+        <p class="hint">First sign-in? The PIN you enter becomes your PIN. Accounts are provisioned by admin in the Lakeshore One main app.</p>
+      </div>
+    </section>
+
     <!-- ============ QUEUE ============ -->
     <section class="tab active" id="tab-queue">
       <h1 class="page">Ultrasound queue</h1>
@@ -290,7 +305,57 @@ const WAIT_TARGET = 30;                /* minutes — service promise for OP USG
 const KEY = 'lakeshore-usg-wait-v1';
 let db = { daySeq: 0, day: '', items: [] };
 try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast('Could not save — storage may be full.', true); } }
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast('Could not save — storage may be full.', true); } }
+
+/* ---------- live server mode (Lakeshore One backend) ---------- */
+let mode = 'local', token = null, user = null, sseStarted = false;
+async function api(path, body){
+  const r = await fetch('/api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchServer(){
+  const r = await api('mod-state?mod=usg');
+  if (!r.ok) return false;
+  db.items = r.items.map(x => ({ id:x.id, token:x.token_no, name:x.name || '', uhid:x.uhid || '',
+    cls:x.cls, room:x.room, regAt:Date.parse(x.reg_at),
+    startAt:x.start_at ? Date.parse(x.start_at) : null, endAt:x.end_at ? Date.parse(x.end_at) : null,
+    status:x.status }));
+  return true;
+}
+function startSSE(){
+  if (sseStarted || !token) return;
+  sseStarted = true;
+  try{
+    new EventSource('/api/events?token=' + encodeURIComponent(token)).onmessage = async () => {
+      if (await fetchServer()) renderAll();
+    };
+  }catch(e){}
+}
+function showGate(on){
+  $('gate').style.display = on ? 'block' : 'none';
+  document.querySelector('nav').style.display = on ? 'none' : 'flex';
+  if (on) for (const t of document.querySelectorAll('.tab')) t.classList.remove('active');
+  else setTab('queue');
+}
+$('gGo').onclick = async () => {
+  const empId = $('gEmp').value.trim().toUpperCase(), pin = $('gPin').value.trim();
+  $('gErr').textContent = '';
+  if (!empId || !pin){ $('gErr').textContent = 'Enter your employee ID and PIN.'; return; }
+  let r = await api('login', { empId, pin });
+  if (r.needPin) r = await api('set-pin', { empId, pin });
+  if (!r.ok || !r.token){ $('gErr').textContent = r.error || 'Sign-in failed — try again.'; return; }
+  token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+  const m = await api('me'); if (m.ok) user = m;
+  await fetchServer(); startSSE(); showGate(false); renderAll();
+};
+$('gPin').addEventListener('keydown', e => { if (e.key === 'Enter') $('gGo').click(); });
 function todayStr(){ const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function isToday(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
@@ -396,17 +461,44 @@ function renderRegister(){
   const best = ROOMS.reduce((a,r) => expectedWait(r.id) < expectedWait(a.id) ? r : a, ROOMS[0]);
   $('rHint').textContent = 'Shortest queue right now: ' + best.name + ' — expected wait ~' + expectedWait(best.id) + ' min.';
 }
-$('rSubmit').onclick = () => {
+$('rSubmit').onclick = async () => {
   let room = $('rRoom').value;
   if (room === 'auto')
     room = ROOMS.reduce((a,r) => expectedWait(r.id) < expectedWait(a.id) ? r : a, ROOMS[0]).id;
-  const it = { id: uid(), token: nextToken(), name: $('rName').value.trim(), uhid: $('rUhid').value.trim(),
-    cls: clsSel, room, regAt: Date.now(), startAt: null, endAt: null, status:'waiting' };
-  db.items.push(it); save();
+  const name = $('rName').value.trim(), uhid = $('rUhid').value.trim();
+  let tokenNo;
+  if (mode === 'server'){
+    const r = await api('op', { op:{ kind:'usg_add', name, uhid, cls: clsSel, room } });
+    if (!r.ok){ toast(r.error || 'Could not register — check the connection and try again.', true); return; }
+    tokenNo = r.tokenNo; await fetchServer();
+  } else {
+    tokenNo = nextToken();
+    db.items.push({ id: uid(), token: tokenNo, name, uhid,
+      cls: clsSel, room, regAt: Date.now(), startAt: null, endAt: null, status:'waiting' });
+    save();
+  }
   $('rName').value = ''; $('rUhid').value = ''; clsSel = 'OP';
   renderAll();
-  toast('Token <b>' + it.token + '</b> issued — ' + ROOMS.find(r => r.id === room).name + ' · expected start ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
+  toast('Token <b>' + tokenNo + '</b> issued — ' + ROOMS.find(r => r.id === room).name + ' · expected start ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
 };
+
+async function moveEntry(id, to){
+  if (mode === 'server'){
+    const r = await api('op', { op:{ kind:'usg_move', id, to } });
+    if (!r.ok){ alert(r.error || 'Not allowed.'); return; }
+    await fetchServer();
+  } else {
+    const i = db.items.find(x => x.id === id);
+    if (!i) return;
+    i.status = to;
+    if (to === 'scanning') i.startAt = Date.now();
+    if (to === 'done') i.endAt = Date.now();
+    if (to === 'noshow') i.noShowAt = Date.now();
+    if (to === 'waiting') delete i.noShowAt;
+    save();
+  }
+  renderAll();
+}
 
 /* ---------- queue board ---------- */
 function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
@@ -459,22 +551,19 @@ function renderQueue(){
   }
   $('queueList').innerHTML = html;
   for (const b of $('queueList').querySelectorAll('[data-start]'))
-    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.start);
-      if (i){ i.status = 'scanning'; i.startAt = Date.now(); save(); renderAll(); } };
+    b.onclick = () => moveEntry(b.dataset.start, 'scanning');
   for (const b of $('queueList').querySelectorAll('[data-done]'))
-    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.done);
-      if (i){ i.status = 'done'; i.endAt = Date.now(); save(); renderAll(); } };
+    b.onclick = () => moveEntry(b.dataset.done, 'done');
   for (const b of $('queueList').querySelectorAll('[data-noshow]'))
     b.onclick = () => { confirmNoShow = b.dataset.noshow; renderQueue(); };
   for (const b of $('queueList').querySelectorAll('[data-noshow-no]'))
     b.onclick = () => { confirmNoShow = null; renderQueue(); };
   for (const b of $('queueList').querySelectorAll('[data-noshow-yes]'))
-    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.noshowYes);
-      if (i){ i.status = 'noshow'; i.noShowAt = Date.now(); confirmNoShow = null; save(); renderAll(); } };
+    b.onclick = async () => { confirmNoShow = null; await moveEntry(b.dataset.noshowYes, 'noshow'); };
   for (const b of $('queueList').querySelectorAll('[data-requeue]'))
-    b.onclick = () => { const i = db.items.find(x => x.id === b.dataset.requeue);
-      if (i){ i.status = 'waiting'; delete i.noShowAt; save(); renderAll();
-        toast('Token <b>' + i.token + '</b> back in queue — ' + (ROOMS.find(r => r.id === i.room) || { name:i.room }).name); } };
+    b.onclick = async () => { const i = db.items.find(x => x.id === b.dataset.requeue);
+      await moveEntry(b.dataset.requeue, 'waiting');
+      if (i) toast('Token <b>' + i.token + '</b> back in queue — ' + (ROOMS.find(r => r.id === i.room) || { name:i.room }).name); };
 }
 
 /* ---------- rooms ---------- */
@@ -551,7 +640,29 @@ for (const k of ['queue','rooms','trends']) $('nav-' + k).onclick = () => setTab
 
 function renderLive(){ renderQueue(); renderRooms(); renderTrends(); }
 function renderAll(){ renderRegister(); renderLive(); }
-seedToday(); renderAll();
+(async () => {
+  try{
+    const r = await fetch('/api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one') mode = 'server';
+  }catch(e){}
+  if (mode === 'server'){
+    $('modeTag').textContent = 'Live · shared';
+    $('modeTag').style.color = 'var(--good)'; $('modeTag').style.background = 'var(--good-bg)';
+    document.querySelector('footer').innerHTML =
+      '<b style="color:var(--ink-2)">Live system — connected to the hospital server.</b><br>' +
+      'The queue is shared across all devices in real time; sign-ins and every action are audited. ' +
+      'A later build can read HIS order timestamps instead of manual taps.' +
+      '<br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>';
+    db.items = [];
+    try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+    if (token){ const m = await api('me'); if (m.ok) user = m; else token = null; }
+    if (user){ await fetchServer(); startSSE(); }
+    else showGate(true);
+  } else {
+    seedToday();
+  }
+  renderAll();
+})();
 setInterval(renderLive, 30e3);         /* live waits tick over — registration form left untouched */
 </script>
 

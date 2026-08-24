@@ -25,10 +25,12 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 /* Google SSO: set GOOGLE_CLIENT_ID to the OAuth web client ID to enable the
-   "Sign in with Google" button. GOOGLE_HOSTED_DOMAIN (optional) auto-provisions
-   staff accounts for that Workspace domain; otherwise an admin must add the
-   user with a matching email first. DEMO_LOGIN=1 enables the one-tap demo
-   nurse sign-in (never enable on a production instance). */
+   "Sign in with Google" button. Emails an admin has linked to an account sign
+   in with that account's role. Unrecognised emails are auto-provisioned:
+   GOOGLE_HOSTED_DOMAIN Workspace accounts as staff, any other verified Google
+   account (e.g. Gmail) as guest — same limits as the Guest button, but with a
+   persistent identity. DEMO_LOGIN=1 enables the one-tap demo nurse sign-in
+   (never enable on a production instance). */
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_HOSTED_DOMAIN = (process.env.GOOGLE_HOSTED_DOMAIN || '').toLowerCase();
 const DEMO_LOGIN = process.env.DEMO_LOGIN === '1';
@@ -80,14 +82,45 @@ CREATE TABLE IF NOT EXISTS ot_milestones (
   id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL, stage TEXT NOT NULL,
   actor_name TEXT NOT NULL, at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS praise (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, for_id TEXT, for_name TEXT NOT NULL, for_dept TEXT,
+  value TEXT NOT NULL, body TEXT, author TEXT NOT NULL, author_name TEXT NOT NULL, at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ideas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, idea TEXT NOT NULL, theme TEXT,
+  name TEXT, dept TEXT, at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, action TEXT NOT NULL, at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS applied_ops (uid TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
+/* module tables: patient inputs, USG wait queue, OT bookings (added with the module apps) */
+db.exec(`
+CREATE TABLE IF NOT EXISTS patient_inputs (
+  id TEXT PRIMARY KEY, who TEXT NOT NULL, type TEXT NOT NULL, sev TEXT, place TEXT NOT NULL,
+  about TEXT NOT NULL, patient_name TEXT, uhid TEXT, descr TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'New', created_at TEXT NOT NULL, resolved_at TEXT, created_by TEXT
+);
+CREATE TABLE IF NOT EXISTS usg_entries (
+  id TEXT PRIMARY KEY, token_no TEXT NOT NULL, name TEXT, uhid TEXT, cls TEXT NOT NULL,
+  room TEXT NOT NULL, reg_at TEXT NOT NULL, start_at TEXT, end_at TEXT,
+  status TEXT NOT NULL DEFAULT 'waiting', created_by TEXT
+);
+CREATE TABLE IF NOT EXISTS ot_bookings (
+  id TEXT PRIMARY KEY, case_date TEXT NOT NULL, ot TEXT NOT NULL, start TEXT NOT NULL,
+  dur_min INTEGER NOT NULL, patient TEXT NOT NULL, uhid TEXT, procedure_name TEXT NOT NULL,
+  surgeon TEXT NOT NULL, anaes TEXT, prio TEXT, status TEXT NOT NULL DEFAULT 'booked', created_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_pi_stage ON patient_inputs (stage, created_at);
+CREATE INDEX IF NOT EXISTS idx_usg_day ON usg_entries (reg_at);
+CREATE INDEX IF NOT EXISTS idx_otb_day ON ot_bookings (case_date, ot, start);
+`);
 /* migration: photo column on tickets (added after first release) */
 try{ db.exec('ALTER TABLE tickets ADD COLUMN photo TEXT'); }catch(e){ /* exists */ }
+/* migration: link a confirmed OT booking to its case on the live stage board */
+try{ db.exec('ALTER TABLE ot_bookings ADD COLUMN case_id TEXT'); }catch(e){ /* exists */ }
 /* migration: email column on users (Google SSO account linking) */
 try{ db.exec('ALTER TABLE users ADD COLUMN email TEXT'); }catch(e){ /* exists */ }
 db.exec(`
@@ -109,8 +142,20 @@ const BED_STATUS = ['occupied','dirty','cleaning','ready','blocked'];
 const BED_WARDS = [['3A',20],['4B',16],['5A',14],['ON',16],['ICU',12],['HDU',8]];
 const OT_STAGES = ['scheduled','in_ot','anaesthesia','incision','closure','out','cleaning','done'];
 const OT_SUITES = ['OT-1 · Cardiac','OT-2 · Neuro','OT-3 · Ortho','OT-4 · Gen & GI','OT-5 · Onco','OT-6 · Uro & Gyn'];
+const PRAISE_VALUES = ['Patient first','Team player','Went the extra mile','Calm in a crisis','Always improving'];
 const canSeeAll = r => ['management','quality','admin'].includes(r);
 const isClinical = r => ['doctor','nurse','staff'].includes(r);
+/* module apps (patient-inputs / usg-wait / ot-schedule) */
+const PI_TYPES = ['Complaint','Suggestion','Appreciation','Query'];
+const PI_SEV = ['High','Medium','Low'];
+const PI_STAGES = ['New','Acknowledged','In progress','Resolved','Closed'];
+const USG_ROOMS = ['USG-1','USG-2','USG-3','USG-4'];
+const USG_CLS = ['OP','IP','Emergency'];
+const OTB_IDS = ['OT-1','OT-2','OT-3','OT-4','OT-5','OT-6'];
+const OTB_STATUS = ['booked','confirmed','in_ot','done','delayed','cancelled'];
+const OTB_DAY_START = 7*60, OTB_DAY_END = 21*60, OTB_TURNOVER = 20;
+const toMin = hhmm => { const m = /^(\d{2}):(\d{2})$/.exec(String(hhmm)); return m ? (+m[1])*60 + (+m[2]) : NaN; };
+const toHM = min => String(Math.floor(min/60)).padStart(2,'0') + ':' + String(min%60).padStart(2,'0');
 
 /* ---------- seed ---------- */
 function seed(){
@@ -237,6 +282,16 @@ function noteFailure(empId){
   attempts.set(empId, a);
 }
 
+/* ---------- suggestion-box throttle (unauthenticated endpoint) ---------- */
+const ideaLast = new Map();   // ip -> last accepted submission (ms)
+function ideaThrottled(ip){
+  const last = ideaLast.get(ip) || 0;
+  if (Date.now() - last < 30e3) return true;
+  ideaLast.set(ip, Date.now());
+  if (ideaLast.size > 5000) ideaLast.clear();
+  return false;
+}
+
 /* ---------- SSE ---------- */
 const sseClients = new Set();
 function broadcast(){
@@ -336,7 +391,7 @@ function applyOp(op, u){
     case 'ot_add': {
       if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
       if (!OT_SUITES.includes(op.suite) || !op.procedure || !op.surgeon) return { ok:false, error:'invalid case' };
-      const seq = nextSeq(), id = 'OTC-' + seq;
+      const id = 'OTC-' + nextSeq();
       db.prepare('INSERT INTO ot_cases (id,suite,case_date,planned,dur_min,procedure_name,surgeon,status,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
         .run(id, op.suite, s(op.date,10), s(op.planned,5), Math.min(720, parseInt(op.durMin)||120),
              s(op.procedure,120), s(op.surgeon,60), 'scheduled', empId);
@@ -353,7 +408,35 @@ function applyOp(op, u){
       if (!validNext) return { ok:false, error:'invalid stage transition' };
       db.prepare('UPDATE ot_cases SET status=? WHERE id=?').run(op.to, c.id);
       db.prepare('INSERT INTO ot_milestones (case_id,stage,actor_name,at) VALUES (?,?,?,?)').run(c.id, op.to, name, at);
+      /* reflect execution onto the linked planning-board booking, if any */
+      const bk = db.prepare('SELECT * FROM ot_bookings WHERE case_id=?').get(c.id);
+      if (bk){
+        const to = op.to === 'in_ot' ? 'in_ot' : op.to === 'done' ? 'done' : op.to === 'cancelled' ? 'cancelled' : null;
+        if (to && bk.status !== to && bk.status !== 'cancelled')
+          db.prepare('UPDATE ot_bookings SET status=? WHERE id=?').run(to, bk.id);
+      }
       audit(empId, `${c.id} → ${op.to}`);
+      return { ok:true };
+    }
+    case 'praise': {
+      if (isLimited(role)) return { ok:false, error:'not allowed' };
+      const forName = s(op.forName, 60), value = s(op.value, 40);
+      if (!forName || !PRAISE_VALUES.includes(value)) return { ok:false, error:'invalid praise' };
+      let forId = op.forId ? s(op.forId, 20).toUpperCase() : null;
+      if (forId && !db.prepare('SELECT emp_id FROM users WHERE emp_id=? AND active=1').get(forId)) forId = null;
+      if (forId === empId || forName === name) return { ok:false, error:'you cannot praise yourself' };
+      db.prepare('INSERT INTO praise (for_id,for_name,for_dept,value,body,author,author_name,at) VALUES (?,?,?,?,?,?,?,?)')
+        .run(forId, forName, s(op.forDept,60), value, s(op.text,500), empId, name, at);
+      audit(empId, `praised ${forName} (${value})`);
+      return { ok:true };
+    }
+    case 'praise_del': {
+      if (!canSeeAll(role)) return { ok:false, error:'management only' };
+      const pid = parseInt(String(op.id || '').replace(/^PRS-/, ''), 10);
+      const row = Number.isInteger(pid) ? db.prepare('SELECT * FROM praise WHERE id=?').get(pid) : null;
+      if (!row) return { ok:false, error:'no such praise' };
+      db.prepare('DELETE FROM praise WHERE id=?').run(pid);
+      audit(empId, `removed praise PRS-${pid} for ${row.for_name} (from ${row.author_name})`);
       return { ok:true };
     }
     case 'user_add': {
@@ -382,10 +465,152 @@ function applyOp(op, u){
       audit(empId, 'reset PIN for ' + op.empId);
       return { ok:true };
     }
+    /* ----- Patient Inputs (voice of the patient) ----- */
+    case 'pi_add': {
+      /* any signed-in identity may capture an input — including guests & patients themselves */
+      if (!PI_TYPES.includes(op.type) || !op.desc) return { ok:false, error:'invalid input' };
+      const sev = op.type === 'Complaint' ? (PI_SEV.includes(op.sev) ? op.sev : 'Medium') : null;
+      const id = 'PI-' + nextSeq();
+      db.prepare(`INSERT INTO patient_inputs (id,who,type,sev,place,about,patient_name,uhid,descr,stage,created_at,created_by)
+        VALUES (?,?,?,?,?,?,?,?,?,'New',?,?)`).run(
+        id, s(op.who,40), op.type, sev, s(op.where,60), s(op.about,60),
+        s(op.name,60), s(op.uhid,20), s(op.desc,2000), at, empId);
+      audit(empId, `logged patient input ${id} (${op.type}${sev ? ' · ' + sev : ''} · ${s(op.about,60)})`);
+      return { ok:true, id };
+    }
+    case 'pi_stage': {
+      /* triage board is the Patient Experience team's — management / quality / admin only */
+      if (!canSeeAll(role)) return { ok:false, error:'Patient Experience team (quality / management) only' };
+      const it = db.prepare('SELECT * FROM patient_inputs WHERE id=?').get(String(op.id));
+      if (!it) return { ok:false, error:'no such input' };
+      if (PI_STAGES.indexOf(op.to) !== PI_STAGES.indexOf(it.stage) + 1) return { ok:false, error:'invalid stage transition' };
+      db.prepare('UPDATE patient_inputs SET stage=?, resolved_at=? WHERE id=?')
+        .run(op.to, op.to === 'Resolved' ? at : it.resolved_at, it.id);
+      audit(empId, `${it.id} → ${op.to}`);
+      return { ok:true };
+    }
+
+    /* ----- USG wait queue ----- */
+    case 'usg_add': {
+      if (isLimited(role)) return { ok:false, error:'staff sign-in required' };
+      if (!USG_ROOMS.includes(op.room) || !USG_CLS.includes(op.cls)) return { ok:false, error:'invalid entry' };
+      const day = at.slice(0,10);
+      if (db.prepare("SELECT value FROM meta WHERE key='usg_day'").get()?.value !== day){
+        db.prepare("INSERT INTO meta (key,value) VALUES ('usg_day',?) ON CONFLICT(key) DO UPDATE SET value=?").run(day, day);
+        db.prepare("INSERT INTO meta (key,value) VALUES ('usg_seq','0') ON CONFLICT(key) DO UPDATE SET value='0'").run();
+      }
+      const n = parseInt(db.prepare("SELECT value FROM meta WHERE key='usg_seq'").get().value, 10) + 1;
+      db.prepare("UPDATE meta SET value=? WHERE key='usg_seq'").run(String(n));
+      const tokenNo = 'U-' + String(n).padStart(2,'0');
+      const id = 'USG-' + nextSeq();
+      db.prepare(`INSERT INTO usg_entries (id,token_no,name,uhid,cls,room,reg_at,status,created_by)
+        VALUES (?,?,?,?,?,?,?,'waiting',?)`).run(id, tokenNo, s(op.name,60), s(op.uhid,20), op.cls, op.room, at, empId);
+      audit(empId, `USG token ${tokenNo} → ${op.room} (${op.cls})`);
+      return { ok:true, id, tokenNo };
+    }
+    case 'usg_move': {
+      if (isLimited(role)) return { ok:false, error:'staff sign-in required' };
+      const e = db.prepare('SELECT * FROM usg_entries WHERE id=?').get(String(op.id));
+      if (!e) return { ok:false, error:'no such entry' };
+      const valid = (op.to === 'scanning' && e.status === 'waiting') ||
+                    (op.to === 'done' && e.status === 'scanning') ||
+                    (op.to === 'noshow' && e.status === 'waiting');
+      if (!valid) return { ok:false, error:'invalid transition' };
+      db.prepare('UPDATE usg_entries SET status=?, start_at=COALESCE(start_at,?), end_at=? WHERE id=?')
+        .run(op.to, op.to === 'scanning' ? at : null, op.to === 'done' ? at : e.end_at, e.id);
+      audit(empId, `USG ${e.token_no} → ${op.to}`);
+      return { ok:true };
+    }
+
+    /* ----- OT bookings (planning board; the live stage board stays on ot_cases) ----- */
+    case 'otb_add': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const start = toMin(op.start), dur = Math.min(720, parseInt(op.durMin) || 0);
+      const date = s(op.date,10);
+      if (!OTB_IDS.includes(op.ot) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(start) || dur < 15 ||
+          !op.patient || !op.procedure || !op.surgeon) return { ok:false, error:'invalid booking' };
+      if (start < OTB_DAY_START || start + dur > OTB_DAY_END)
+        return { ok:false, error:'outside the OT day (07:00–21:00)' };
+      const clash = db.prepare("SELECT * FROM ot_bookings WHERE case_date=? AND ot=? AND status!='cancelled'").all(date, op.ot)
+        .find(c => start < toMin(c.start) + c.dur_min + OTB_TURNOVER && toMin(c.start) < start + dur + OTB_TURNOVER);
+      if (clash) return { ok:false, error:'table clash with ' + clash.id + ' (' + clash.start + '–' +
+        toHM(toMin(clash.start) + clash.dur_min) + ' + turnover) — pick another slot' };
+      const id = 'OTB-' + nextSeq();
+      db.prepare(`INSERT INTO ot_bookings (id,case_date,ot,start,dur_min,patient,uhid,procedure_name,surgeon,anaes,prio,status,created_by)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,'booked',?)`).run(
+        id, date, op.ot, toHM(start), dur, s(op.patient,60), s(op.uhid,20), s(op.procedure,120),
+        s(op.surgeon,60), s(op.anaes,20), op.prio === 'Emergency' ? 'Emergency' : 'Elective', empId);
+      audit(empId, `booked ${id} (${op.ot} ${date} ${toHM(start)} · ${s(op.procedure,120)})`);
+      return { ok:true, id };
+    }
+    case 'otb_move': {
+      if (!(isClinical(role) || canSeeAll(role))) return { ok:false, error:'not allowed' };
+      const c = db.prepare('SELECT * FROM ot_bookings WHERE id=?').get(String(op.id));
+      if (!c || !OTB_STATUS.includes(op.to)) return { ok:false, error:'no such booking' };
+      const from = c.status, to = op.to;
+      const valid = (to === 'confirmed' && from === 'booked') ||
+                    (to === 'in_ot' && ['confirmed','delayed'].includes(from)) ||
+                    (to === 'done' && from === 'in_ot') ||
+                    (to === 'delayed' && ['booked','confirmed'].includes(from)) ||
+                    (to === 'cancelled' && ['booked','confirmed','delayed'].includes(from));
+      if (!valid) return { ok:false, error:'invalid transition' };
+      const linked = c.case_id ? db.prepare('SELECT * FROM ot_cases WHERE id=?').get(c.case_id) : null;
+      /* once a booking is on the live stage board, execution is driven there */
+      if (linked && (to === 'in_ot' || to === 'done'))
+        return { ok:false, error:'this case is on the live OT board (' + c.case_id + ') — wheel-in and completion are recorded there' };
+      if (linked && linked.status !== 'scheduled' && (to === 'delayed' || to === 'cancelled'))
+        return { ok:false, error:'too late — ' + c.case_id + ' is already ' + linked.status + ' on the live OT board' };
+      const start = to === 'delayed' ? toHM(Math.min(OTB_DAY_END - c.dur_min, toMin(c.start) + 30)) : c.start;
+      let caseId = c.case_id;
+      if (to === 'confirmed' && !caseId){
+        /* push onto the live stage board — procedure & surgeon only, patient identity stays here */
+        caseId = 'OTC-' + nextSeq();
+        const suite = OT_SUITES.find(s => s.startsWith(c.ot + ' ')) || c.ot;
+        db.prepare('INSERT INTO ot_cases (id,suite,case_date,planned,dur_min,procedure_name,surgeon,status,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
+          .run(caseId, suite, c.case_date, start, c.dur_min, c.procedure_name, c.surgeon, 'scheduled', empId);
+      }
+      if (linked && to === 'delayed')
+        db.prepare("UPDATE ot_cases SET planned=? WHERE id=? AND status='scheduled'").run(start, c.case_id);
+      if (linked && to === 'cancelled'){
+        db.prepare("UPDATE ot_cases SET status='cancelled' WHERE id=? AND status='scheduled'").run(c.case_id);
+        db.prepare('INSERT INTO ot_milestones (case_id,stage,actor_name,at) VALUES (?,?,?,?)').run(c.case_id, 'cancelled', name, at);
+      }
+      db.prepare('UPDATE ot_bookings SET status=?, start=?, case_id=? WHERE id=?').run(to, start, caseId, c.id);
+      audit(empId, `${c.id} → ${to}` + (to === 'confirmed' && caseId ? ` (live board ${caseId})` : ''));
+      return { ok:true, caseId };
+    }
+
     default:
       return { ok:false, error:'unknown op' };
   }
 }
+
+/* ---------- module state (patient-inputs / usg-wait / ot-schedule apps) ---------- */
+function moduleState(mod, u){
+  const iso = d => new Date(d).toISOString();
+  if (mod === 'pi'){
+    /* the full board (patient names, UHIDs) is Patient Experience only; others see their own captures */
+    const rows = canSeeAll(u.role)
+      ? db.prepare('SELECT * FROM patient_inputs WHERE created_at>=? ORDER BY created_at DESC LIMIT 500')
+          .all(iso(Date.now() - 90*86400e3))
+      : db.prepare('SELECT * FROM patient_inputs WHERE created_by=? ORDER BY created_at DESC LIMIT 200').all(u.emp_id);
+    return { full: canSeeAll(u.role), items: rows };
+  }
+  if (mod === 'usg'){
+    if (isLimited(u.role)) return null;
+    return { full:true, items: db.prepare('SELECT * FROM usg_entries WHERE reg_at>=? ORDER BY reg_at LIMIT 1000')
+      .all(iso(Date.now() - 7*86400e3)) };
+  }
+  if (mod === 'otb'){
+    if (isLimited(u.role)) return null;
+    const from = iso(Date.now() - 10*86400e3).slice(0,10);
+    return { full:true, items: db.prepare('SELECT * FROM ot_bookings WHERE case_date>=? ORDER BY case_date, start LIMIT 1000').all(from) };
+  }
+  return null;
+}
+
+/* ---------- WhatsApp intake channel (AI triage) — see server/WHATSAPP.md ---------- */
+const whatsapp = require('./whatsapp')({ db, dataDir: DATA_DIR, applyOp, broadcast, audit });
 
 /* ---------- state projection (role-filtered, matches the client shape) ---------- */
 function buildState(u){
@@ -430,10 +655,19 @@ function buildState(u){
                    pinHash: x.pin_hash ? 'set' : null }));
   else
     users = [{ empId:u.emp_id, name:u.name, role:u.role, dept:u.dept, active:true, pinHash:'set' }];
+  /* praise wall + a minimal people directory (for the recipient picker) — staff only,
+     never sent to guest/patient sessions */
+  let praise = [], people = [];
+  if (!isLimited(role)){
+    praise = db.prepare(`SELECT id, for_id forId, for_name forName, for_dept forDept, value,
+      body text, author "by", author_name byName, at FROM praise ORDER BY id DESC LIMIT 200`).all()
+      .map(x => ({ ...x, id:'PRS-' + x.id, text:x.text || '', forDept:x.forDept || '' }));
+    people = db.prepare("SELECT emp_id empId, name, dept FROM users WHERE active=1 AND role NOT IN ('guest','patient') ORDER BY name").all();
+  }
   const auditRows = canSeeAll(role)
     ? db.prepare('SELECT actor "by", action, at FROM audit ORDER BY id DESC LIMIT 40').all()
     : [];
-  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, audit:auditRows };
+  return { seq, ops:[], users, tickets:tix, beds, bedlog, ot:{ cases }, praise, people, audit:auditRows };
 }
 
 /* ---------- HTTP plumbing ---------- */
@@ -501,19 +735,31 @@ const server = http.createServer(async (req, res) => {
       if (!g) return json(res, 401, { error:'Google sign-in could not be verified — try again.' });
       const email = g.email.toLowerCase();
       let u = db.prepare('SELECT * FROM users WHERE email IS NOT NULL AND lower(email)=? AND active=1').get(email);
-      if (!u && GOOGLE_HOSTED_DOMAIN &&
-          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN))){
-        let eid = ('G-' + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+      if (!u){
+        /* a deactivated account with this email stays blocked — never silently re-created */
+        if (db.prepare('SELECT emp_id FROM users WHERE email IS NOT NULL AND lower(email)=?').get(email))
+          return json(res, 403, { error:'This account has been deactivated. Contact IT / admin.' });
+        /* auto-provision: hospital Workspace domain → staff; any other verified
+           Google account → guest access (same limits as the Guest button), with a
+           persistent identity so they get the same account back every sign-in */
+        const hosted = !!(GOOGLE_HOSTED_DOMAIN &&
+          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN)));
+        if (!hosted && guestThrottled()) return json(res, 429, { error:'Too many sign-ups right now — try again later.' });
+        let eid = ((hosted ? 'G-' : 'GV-') + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
         if (db.prepare('SELECT emp_id FROM users WHERE emp_id=?').get(eid)) eid = eid.slice(0, 14) + '-' + nextSeq();
         db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at,email) VALUES (?,?,?,?,?,1,?,?)')
-          .run(eid, String(g.name || email).slice(0, 60), 'staff', '', 'locked', new Date().toISOString(), email);
-        audit(eid, 'auto-provisioned via Google SSO (' + email + ')');
+          .run(eid, String(g.name || email).slice(0, 60), hosted ? 'staff' : 'guest', hosted ? '' : 'Visitor',
+               'locked', new Date().toISOString(), email);
+        audit(eid, 'auto-provisioned via Google SSO (' + email + (hosted ? '' : ' · guest access') + ')');
         u = db.prepare('SELECT * FROM users WHERE emp_id=?').get(eid);
       }
-      if (!u) return json(res, 403, { error:'No Lakeshore One account is linked to ' + email + '. Ask an admin to add your email to your account.' });
       audit(u.emp_id, 'signed in with Google (' + email + ')');
       return json(res, 200, { token:sign(u.emp_id), empId:u.emp_id });
     }
+
+    /* WhatsApp Cloud API webhook — unauthenticated by design (Meta calls it);
+       verified by hub.verify_token (GET) and X-Hub-Signature-256 (POST). */
+    if (p === '/api/whatsapp/webhook') return whatsapp.handleWebhook(req, res, url);
 
     if (p === '/api/login' && req.method === 'POST'){
       const { empId, pin } = await readBody(req);
@@ -543,6 +789,20 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { token:sign(eid), empId:eid });
     }
 
+    /* staff suggestion box — deliberately open so ideas can be anonymous */
+    if (p === '/api/idea' && req.method === 'POST'){
+      const ip = req.socket.remoteAddress || '?';
+      if (ideaThrottled(ip)) return json(res, 429, { error:'One idea per 30 seconds — please try again shortly.' });
+      const b = await readBody(req);
+      const idea = String(b.idea || '').trim();
+      if (idea.length < 10 || idea.length > 1000) return json(res, 400, { error:'Idea must be 10–1000 characters.' });
+      const s = (v, n) => String(v ?? '').trim().slice(0, n);
+      db.prepare('INSERT INTO ideas (idea,theme,name,dept,at) VALUES (?,?,?,?,?)')
+        .run(idea, s(b.theme,40), s(b.name,60), s(b.dept,60), new Date().toISOString());
+      audit(s(b.name,60) || 'anonymous', 'shared a workplace idea (' + s(b.theme,40) + ')');
+      return json(res, 200, { ok:true });
+    }
+
     /* authenticated routes */
     if (p.startsWith('/api/')){
       const u = verifyToken(bearer(req, url));
@@ -550,6 +810,15 @@ const server = http.createServer(async (req, res) => {
 
       if (p === '/api/me') return json(res, 200, { empId:u.emp_id, name:u.name, role:u.role, dept:u.dept });
       if (p === '/api/state') return json(res, 200, buildState(u));
+      if (p === '/api/mod-state'){
+        const st = moduleState(url.searchParams.get('mod'), u);
+        if (!st) return json(res, 403, { error:'not allowed' });
+        return json(res, 200, st);
+      }
+      if (p === '/api/ideas'){
+        if (!canSeeAll(u.role)) return json(res, 403, { error:'not allowed' });
+        return json(res, 200, { ideas: db.prepare('SELECT * FROM ideas ORDER BY id DESC LIMIT 200').all() });
+      }
       if (p.startsWith('/api/photo/')){
         const t = db.prepare('SELECT module,reporter,photo FROM tickets WHERE id=?').get(p.slice(11));
         if (!t || !t.photo) return json(res, 404, { error:'no photo' });
@@ -561,7 +830,7 @@ const server = http.createServer(async (req, res) => {
         const { op } = await readBody(req);
         if (!op || typeof op !== 'object') return json(res, 400, { error:'missing op' });
         const result = applyOp(op, u);
-        if (result.ok) broadcast();
+        if (result.ok){ broadcast(); whatsapp.onOp(op, u); }
         return json(res, result.ok ? 200 : 403, result);
       }
       if (p === '/api/events'){

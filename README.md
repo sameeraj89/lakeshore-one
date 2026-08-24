@@ -8,13 +8,14 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 
 | Folder | App | What it does |
 |---|---|---|
-| `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, management dashboard with campus map, admin user management + audit trail |
+| `lakeshore-one/` | **Lakeshore One** (main) | Unified service desk: sign in with employee ID + PIN, raise IT / facility / housekeeping / biomedical / security tickets (ITIL incident vs service request), SLA targets by priority, agent queues, praise wall (send recognition to a colleague, everyone sees it), management dashboard with campus map, admin user management + audit trail |
 | `patient-inputs/` | Patient Inputs | Voice-of-the-patient desk — capture complaints / suggestions / appreciation / queries at any touchpoint, Patient Experience triage board with response targets (high 24 h, medium 48 h, low 72 h), experience trends |
 | `usg-wait/` | USG Wait | Ultrasound wait-time tracker — token queue per machine, register → start → complete taps, live estimated waits and auto room assignment, machine load view, hourly wait trends |
-| `ot-schedule/` | OT Schedule | Operation theatre planning — book cases with table-clash checks (20-min turnover protected), six-theatre day timeline 07:00–21:00, case list with statuses, utilisation insights. Complements the live OT stage board inside the main app |
-| `it-pulse/` | IT Pulse | Live campus IT monitoring map (network / Wi-Fi / servers / power / CCTV layers, 12-h zone trends) — simulated telemetry, adapter point documented in-page |
+| `ot-schedule/` | OT Schedule | Operation theatre planning — book cases with table-clash checks (20-min turnover protected), six-theatre day timeline 07:00–21:00, case list with statuses, utilisation insights. Linked to the live OT stage board in the main app: confirming a booking puts the case (procedure & surgeon only — patient identity stays on the planning board) on the stage board; wheel-in/done/cancel there reflect back, and delays/cancellations here follow the case there |
+| `it-pulse/` | IT Pulse | Live campus IT & facility monitoring map, 13 layers — IT: network / Wi-Fi / servers & apps / WAN links / clinical app interfaces; facility: power & UPS / DG & changeover / medical gas / cold chain / lifts / fire panel / water & RO; plus CCTV — 12-h zone trends, simulated telemetry, adapter point documented in-page |
 | `ops-desk/` | Ops Desk | Earlier shared incident board (superseded by Lakeshore One) |
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
+| `whatsapp/` | WhatsApp Intake | **Simulator** for the WhatsApp reporting channel — staff text the hospital number in plain language (photo optional), AI triage files a classified ticket into the Lakeshore One queues, updates flow back on WhatsApp. The real channel is built into the backend (`server/whatsapp.js`, setup in `server/WHATSAPP.md`) |
 
 ## Access control (pilot)
 
@@ -23,8 +24,10 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 - **Sign in with Google** (server mode): set `GOOGLE_CLIENT_ID` on the backend
   and a Google button appears on the login page. The server verifies the ID
   token and matches the Google email to the account's linked email (admin adds
-  it in user management); optionally `GOOGLE_HOSTED_DOMAIN` auto-provisions
-  staff accounts for the hospital's Workspace domain.
+  it in user management). Unrecognised emails are auto-provisioned:
+  `GOOGLE_HOSTED_DOMAIN` (hospital Workspace) accounts as staff, and any other
+  verified Google account — e.g. a patient's personal Gmail — as a guest-level
+  account with a persistent identity and ticket history.
 - **Guest / Patient sign-in** (all modes): one tap, no account. Guests and
   patients get a limited view — raise facility, housekeeping and security
   requests and track their own tickets only; no ops boards, queues or
@@ -54,9 +57,21 @@ least P2 — the healthcare-specific rule ITIL guides call out.
 
 `server/server.js` is a zero-dependency Node.js (>= 22.5) backend: sign-in,
 server-enforced roles, SQLite storage, live updates via SSE, and it serves
-this same frontend. `node server/server.js` and the apps switch from demo
+this same frontend. The Patient Inputs, USG Wait and OT Schedule modules
+detect the server automatically and switch from single-device demo mode to
+the shared system: employee ID + PIN sign-in, role-checked operations
+(`pi_*`, `usg_*`, `otb_*` on `/api/op`), server-side OT clash checks, and
+real-time updates over the same SSE stream. Patient-input details are
+restricted server-side to the Patient Experience team (quality /
+management); other staff see only their own captures. `node server/server.js` and the apps switch from demo
 mode to the real system automatically. See `server/README.md` for the VPS
 deployment guide (systemd + Caddy HTTPS, ~5 minutes) and `Dockerfile`.
+
+The backend also carries the **WhatsApp intake channel**: a Meta WhatsApp
+Cloud API webhook where staff report incidents by texting the hospital
+number, Claude triages the free-text (any language) into the ticket
+taxonomy, and status updates are pushed back to the reporter on WhatsApp —
+`server/WHATSAPP.md` has the 30-minute setup guide.
 
 ## Data
 

@@ -255,10 +255,25 @@
   <header>
     <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
       <small>OT Schedule &middot; Theatre Planning</small></div>
-    <span class="mode-tag">Pilot &middot; this device</span>
+    <span class="mode-tag" id="modeTag">Pilot &middot; this device</span>
   </header>
 
   <main>
+    <!-- ============ SIGN IN (live server mode) ============ -->
+    <section id="gate" style="display:none; padding:12px 16px 20px">
+      <h1 class="page">Sign in</h1>
+      <p class="page-sub">This device is connected to the live Lakeshore One server &mdash; sign in with your employee ID and PIN to continue. The theatre board is shared across booking desks, the OT complex and surgeons&rsquo; phones.</p>
+      <div class="fcard">
+        <label class="fl" for="gEmp">Employee ID</label>
+        <input type="text" id="gEmp" placeholder="e.g. LH-DOC01" autocapitalize="characters" autocomplete="username">
+        <label class="fl" for="gPin">PIN</label>
+        <input type="password" id="gPin" inputmode="numeric" maxlength="6" placeholder="4&ndash;6 digits" autocomplete="current-password">
+        <p class="hint" id="gErr" style="color:var(--crit)"></p>
+        <button class="submit" id="gGo">Sign in</button>
+        <p class="hint">First sign-in? The PIN you enter becomes your PIN. Accounts are provisioned by admin in the Lakeshore One main app.</p>
+      </div>
+    </section>
+
     <!-- ============ DAY BOARD ============ -->
     <section class="tab active" id="tab-day">
       <h1 class="page">Theatre board</h1>
@@ -330,7 +345,7 @@
     <section class="tab" id="tab-list">
       <span class="viewtag">OT coordinator view</span>
       <h1 class="page">Case list</h1>
-      <p class="page-sub">Confirm bookings the evening before, mark wheel-in and completion on the day, log delays and cancellations with the reason visible to everyone.</p>
+      <p class="page-sub">Confirm bookings the evening before &mdash; on the live system, confirming puts the case (procedure &amp; surgeon only) on the OT stage board in the main app, where wheel-in to cleaning is tracked and reflected back here. Delays and cancellations from this board follow the case there.</p>
       <div class="daynav">
         <button id="lPrev" aria-label="Previous day">&lsaquo;</button>
         <div class="dlabel" id="lLabel"></div>
@@ -423,10 +438,59 @@ function esc(s){ const d = document.createElement('div'); d.textContent = s || '
 const KEY = 'lakeshore-ot-schedule-v1';
 let db = { seq: 200, cases: [] };
 try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.cases) db = s; }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){
   const t = $('saveToast'); t.classList.add('show');
   clearTimeout(save._t); save._t = setTimeout(() => t.classList.remove('show'), 6000);
 } }
+
+/* ---------- live server mode (Lakeshore One backend) ---------- */
+let mode = 'local', token = null, user = null, sseStarted = false;
+async function api(path, body){
+  const r = await fetch('/api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchServer(){
+  const r = await api('mod-state?mod=otb');
+  if (!r.ok) return false;
+  db.cases = r.items.map(x => ({ id:x.id, date:x.case_date, ot:x.ot, start:x.start, dur:x.dur_min,
+    patient:x.patient, uhid:x.uhid || '', proc:x.procedure_name, surgeon:x.surgeon,
+    anaes:x.anaes || 'GA', prio:x.prio || 'Elective', status:x.status, caseId:x.case_id || null }));
+  return true;
+}
+function startSSE(){
+  if (sseStarted || !token) return;
+  sseStarted = true;
+  try{
+    new EventSource('/api/events?token=' + encodeURIComponent(token)).onmessage = async () => {
+      if (await fetchServer()){ renderAll(); checkConflict(); }
+    };
+  }catch(e){}
+}
+function showGate(on){
+  $('gate').style.display = on ? 'block' : 'none';
+  document.querySelector('nav').style.display = on ? 'none' : 'flex';
+  if (on) for (const t of document.querySelectorAll('.tab')) t.classList.remove('active');
+  else setTab('day');
+}
+$('gGo').onclick = async () => {
+  const empId = $('gEmp').value.trim().toUpperCase(), pin = $('gPin').value.trim();
+  $('gErr').textContent = '';
+  if (!empId || !pin){ $('gErr').textContent = 'Enter your employee ID and PIN.'; return; }
+  let r = await api('login', { empId, pin });
+  if (r.needPin) r = await api('set-pin', { empId, pin });
+  if (!r.ok || !r.token){ $('gErr').textContent = r.error || 'Sign-in failed — try again.'; return; }
+  token = r.token; try{ sessionStorage.setItem('l1-token', token); }catch(e){}
+  const m = await api('me'); if (m.ok) user = m;
+  await fetchServer(); startSSE(); showGate(false); renderAll(); checkConflict();
+};
+$('gPin').addEventListener('keydown', e => { if (e.key === 'Enter') $('gGo').click(); });
 function mkId(){ db.seq++; return 'OTC-' + db.seq; }
 const onDay = ds => db.cases.filter(c => c.date === ds);
 const active = ds => onDay(ds).filter(c => c.status !== 'cancelled');
@@ -631,7 +695,7 @@ function bookErr(msg, field){
 }
 for (const id of ['bPatient','bProc','bSurgeon'])
   $(id).addEventListener('input', () => { $('bErr').classList.remove('show'); });
-$('bSubmit').onclick = () => {
+$('bSubmit').onclick = async () => {
   const patient = $('bPatient').value.trim(), proc = $('bProc').value.trim(), surgeon = $('bSurgeon').value.trim();
   if (!patient){ bookErr('Patient name is missing — enter it to book.', $('bPatient')); return; }
   if (!proc){ bookErr('Procedure is missing — enter it to book.', $('bProc')); return; }
@@ -642,9 +706,24 @@ $('bSubmit').onclick = () => {
       ' (' + clashCase.start + '–' + toHM(toMin(clashCase.start) + clashCase.dur) + ').' +
       ' The board will show the clash honestly.')) return;
   }
-  const c = { id: mkId(), date: $('bDate').value, ot: $('bOt').value, start: $('bStart').value, dur: durSel,
+  const c = { id: null, date: $('bDate').value, ot: $('bOt').value, start: $('bStart').value, dur: durSel,
     patient, uhid: $('bUhid').value.trim(), proc, surgeon, anaes: anaesSel, prio: prioSel, status:'booked' };
-  db.cases.push(c); save();
+  if (mode === 'server'){
+    /* the server re-checks the clash — another desk may have booked the slot meanwhile */
+    const r = await api('op', { op:{ kind:'otb_add', date:c.date, ot:c.ot, start:c.start, durMin:c.dur,
+      patient, uhid:c.uhid, procedure:proc, surgeon, anaes:c.anaes, prio:c.prio } });
+    if (!r.ok){
+      await fetchServer(); renderAll(); checkConflict();
+      const box = $('conflictBox');
+      box.className = 'conflict bad';
+      box.textContent = r.error || 'Could not book — try again.';
+      return;
+    }
+    c.id = r.id; await fetchServer();
+  } else {
+    c.id = mkId();
+    db.cases.push(c); save();
+  }
   $('bRef').textContent = c.id;
   $('bMsg').innerHTML = esc(c.patient) + ' &mdash; ' + esc(c.proc) + '<br>' + c.ot + ' &middot; ' +
     new Date(c.date + 'T12:00').toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'}) +
@@ -669,19 +748,23 @@ function renderList(){
     '<span class="badge b-booked" style="background:var(--neutral-bg); color:var(--neutral)">' + c.ot + '</span>' +
     '<span class="badge b-' + c.status + '">' + ST_LABEL[c.status] + '</span>' +
     (c.prio === 'Emergency' ? '<span class="badge b-emg">Emergency</span>' : '') +
-    (hasClash(c) ? '<span class="badge b-emg">Clash</span>' : '') + '</div>' +
+    (hasClash(c) ? '<span class="badge b-emg">Clash</span>' : '') +
+    (c.caseId ? '<span class="badge b-confirmed">Live board &middot; ' + c.caseId + '</span>' : '') + '</div>' +
     '<div class="qtitle">' + c.start + '&ndash;' + toHM(toMin(c.start) + c.dur) + ' &middot; ' + esc(c.patient) +
       (c.uhid ? ' <span style="font-weight:500; color:var(--ink-3)">(' + esc(c.uhid) + ')</span>' : '') + '</div>' +
-    '<div class="qmeta">' + esc(c.proc) + ' &middot; ' + esc(c.surgeon) + ' &middot; ' + c.anaes + '</div>' +
+    '<div class="qmeta">' + esc(c.proc) + ' &middot; ' + esc(c.surgeon) + ' &middot; ' + c.anaes +
+      (c.caseId && ['confirmed','delayed','in_ot'].includes(c.status)
+        ? ' &middot; wheel-in &amp; completion are recorded on the live OT board in the main app' : '') + '</div>' +
     '<div class="qact">' +
-    (NEXT[c.status] ? '<button class="primary" data-adv="' + c.id + '">' + NEXT[c.status][0] + '</button>' : '') +
+    (NEXT[c.status] && !(c.caseId && ['confirmed','delayed','in_ot'].includes(c.status))
+      ? '<button class="primary" data-adv="' + c.id + '">' + NEXT[c.status][0] + '</button>' : '') +
     (c.status === 'booked' || c.status === 'confirmed' ?
       '<button data-delay="' + c.id + '">Delay 30 min</button><button class="ghost" data-cancel="' + c.id + '">Cancel</button>' : '') +
     '</div></div>').join('')
     : '<div class="empty">No cases on this day yet — book one from the Book tab.</div>';
   for (const b of $('caseList').querySelectorAll('[data-adv]'))
     b.onclick = () => { const c = db.cases.find(x => x.id === b.dataset.adv);
-      if (c){ c.status = NEXT[c.status][1]; save(); renderAll(); } };
+      if (c) moveCase(c, NEXT[c.status][1]); };
   for (const b of $('caseList').querySelectorAll('[data-delay]'))
     b.onclick = () => { const c = db.cases.find(x => x.id === b.dataset.delay);
       if (!c) return;
@@ -692,10 +775,22 @@ function renderList(){
         if (!confirm('Delaying creates a clash with ' + o.start + '–' + toHM(toMin(o.start) + o.dur) +
           ' ' + o.proc + '. Delay anyway? The board will show the clash.')) return;
       }
-      c.start = toHM(ns); c.status = 'delayed'; save(); renderAll(); };
+      moveCase(c, 'delayed'); };
   for (const b of $('caseList').querySelectorAll('[data-cancel]'))
     b.onclick = () => { const c = db.cases.find(x => x.id === b.dataset.cancel);
-      if (c && confirm('Cancel ' + c.id + ' — ' + c.patient + ', ' + c.proc + '?')){ c.status = 'cancelled'; save(); renderAll(); } };
+      if (c && confirm('Cancel ' + c.id + ' — ' + c.patient + ', ' + c.proc + '?')) moveCase(c, 'cancelled'); };
+}
+async function moveCase(c, to){
+  if (mode === 'server'){
+    const r = await api('op', { op:{ kind:'otb_move', id: c.id, to } });
+    if (!r.ok){ alert(r.error || 'Not allowed.'); return; }
+    await fetchServer();
+  } else {
+    if (to === 'delayed') c.start = toHM(Math.min(DAY_END - c.dur, toMin(c.start) + 30));
+    c.status = to;
+    save();
+  }
+  renderAll();
 }
 $('lPrev').onclick = () => { listDay = dstr(new Date(new Date(listDay + 'T12:00') - 864e5)); renderList(); };
 $('lNext').onclick = () => { listDay = dstr(new Date(+new Date(listDay + 'T12:00') + 864e5)); renderList(); };
@@ -750,7 +845,29 @@ for (const k of ['day','book','list','insights']) $('nav-' + k).onclick = () => 
 
 function renderAll(){ renderBoard(); renderList(); renderInsights(); }
 $('bDate').value = TODAY(); $('bDate').min = TODAY();
-seed(); renderBook(); renderAll();
+(async () => {
+  try{
+    const r = await fetch('/api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one') mode = 'server';
+  }catch(e){}
+  if (mode === 'server'){
+    $('modeTag').textContent = 'Live · shared';
+    $('modeTag').style.color = 'var(--good)'; $('modeTag').style.background = 'var(--good-bg)';
+    document.querySelector('footer').innerHTML =
+      '<b style="color:var(--ink-2)">Live system — connected to the hospital server.</b><br>' +
+      'The schedule is shared across all devices in real time; the server re-checks every booking for table ' +
+      'clashes, and every action is audited. This planning board is separate from the live OT stage board in the main app.' +
+      '<br><a href="../" style="color:var(--info); font-size:11px; text-decoration:none">&larr; Back to the Lakeshore One hub</a>';
+    db.cases = [];
+    try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+    if (token){ const m = await api('me'); if (m.ok) user = m; else token = null; }
+    if (user){ await fetchServer(); startSSE(); }
+    else showGate(true);
+  } else {
+    seed();
+  }
+  renderBook(); renderAll();
+})();
 setInterval(renderBoard, 60e3);        /* keep the now-line moving */
 </script>
 
