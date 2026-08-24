@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#001E5F">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lakeshore One">
+<title>Lakeshore Command Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --line:rgba(22,35,46,0.10);
+    --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07);
+    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --good:#0B7C3E; --good-bg:#E3F3E9;
+    --warn:#8A5A00; --warn-bg:#FCF1CE;
+    --crit:#B3261E; --crit-bg:#FBE4E2;
+    --info:#1B5A8E; --info-bg:#E3EEF8;
+    --neutral:#5B6B78; --neutral-bg:#ECF0F3;
+    --shadow-sm:0 2px 8px rgba(22,35,46,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --line:rgba(232,238,243,0.12);
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12);
+      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --good:#4FC97E; --good-bg:#173726;
+      --warn:#E5B84B; --warn-bg:#3D3319;
+      --crit:#F07A6A; --crit-bg:#43201C;
+      --info:#8FC1E8; --info-bg:#1D3348;
+      --neutral:#9DACB8; --neutral-bg:#242F38;
+      --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1418; --shell:#121A20; --card:#1A242C;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --line:rgba(232,238,243,0.12);
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12);
+    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --good:#4FC97E; --good-bg:#173726;
+    --warn:#E5B84B; --warn-bg:#3D3319;
+    --crit:#F07A6A; --crit-bg:#43201C;
+    --info:#8FC1E8; --info-bg:#1D3348;
+    --neutral:#9DACB8; --neutral-bg:#242F38;
+    --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  html, body{height:100%}
+  body{background:var(--bg); color:var(--ink); font-family:'Figtree',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; display:flex; flex-direction:column}
+
+  header{background:#001E5F; padding:12px 20px; display:flex; align-items:center; gap:16px; flex:none}
+  .wordmark img{height:34px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
+    text-transform:uppercase; margin-top:5px}
+  .hspacer{flex:1}
+  .clock{font-weight:800; font-size:30px; letter-spacing:0.5px; color:#fff; font-variant-numeric:tabular-nums}
+  .clock small{display:block; font-size:10px; font-weight:600; letter-spacing:1.6px; color:#8FA9DC;
+    text-transform:uppercase; text-align:right}
+  .mode-tag{font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--warn); background:var(--warn-bg);
+    border-radius:999px; padding:5px 11px; text-transform:uppercase; flex:none}
+
+  /* sign-in reuses the module card look, centred */
+  #signin{max-width:420px; margin:40px auto; padding:0 16px; width:100%}
+  h1.page{font-weight:800; font-size:21px; margin:4px 2px 2px}
+  .page-sub{font-size:12.5px; color:var(--ink-2); margin:0 2px 14px; line-height:1.5}
+  .fcard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm)}
+  label.fl{display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 2px 6px}
+  label.fl:first-child{margin-top:0}
+  input{width:100%; background:var(--shell); border:1.5px solid var(--line); border-radius:10px; padding:11px 12px;
+    font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+  input:focus{border-color:var(--brand)}
+  .submit{width:100%; margin-top:16px; padding:13px; border:none; border-radius:12px; background:var(--brand);
+    color:#fff; font-family:'Figtree',sans-serif; font-weight:700; font-size:15px; cursor:pointer}
+  :root[data-theme="dark"] .submit{color:#0E1418}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .submit{color:#0E1418} }
+  .hint{font-size:11.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
+
+  /* KPI strip */
+  .kstrip{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; padding:12px 16px 0; flex:none}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 14px}
+  .kpi .n{font-weight:800; font-size:30px; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; line-height:1.1}
+  .kpi .n small{font-size:13px; color:var(--ink-2); font-weight:600}
+  .kpi .l{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-top:2px; line-height:1.35}
+
+  /* wall grid */
+  .wall{display:grid; grid-template-columns:1.12fr 1fr 1fr; grid-auto-rows:minmax(0,1fr);
+    gap:10px; padding:10px 16px 8px; flex:1; min-height:0}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 14px;
+    display:flex; flex-direction:column; min-height:0; overflow:hidden}
+  .panel.tall{grid-row:span 2}
+  .phead{display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:8px; flex:none}
+  .phead h2{font-size:14px; font-weight:800; letter-spacing:0.2px}
+  .phead .pc{font-size:11px; font-weight:700; color:var(--ink-3)}
+  .rows{flex:1; min-height:0; overflow:hidden}
+  .row{display:flex; align-items:center; gap:8px; padding:6.5px 0; border-bottom:1px solid var(--line);
+    font-size:13px; line-height:1.35}
+  .row:last-child{border-bottom:0}
+  .row .grow{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .row .grow b{font-weight:700}
+  .row .sub{color:var(--ink-2); font-size:12px}
+  .tok{font-weight:800; font-size:12px; color:var(--brand-ink); background:var(--brand-tint);
+    border-radius:7px; padding:2px 8px; flex:none; font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex; align-items:center; border-radius:999px; padding:2px 9px; font-size:10.5px;
+    font-weight:700; flex:none; white-space:nowrap}
+  .b-ok{background:var(--good-bg); color:var(--good)}
+  .b-due{background:var(--warn-bg); color:var(--warn)}
+  .b-late{background:var(--crit-bg); color:var(--crit)}
+  .b-st{background:var(--maroon-tint); color:var(--maroon)}
+  .b-info{background:var(--info-bg); color:var(--info)}
+  .b-mut{background:var(--neutral-bg); color:var(--neutral)}
+  .empty{color:var(--ink-3); font-size:12.5px; padding:14px 2px; line-height:1.5}
+  .wbar{display:grid; grid-template-columns:118px 1fr 52px; gap:8px; align-items:center; padding:5px 0; font-size:12px}
+  .wbar .tr{height:12px; border-radius:4px; background:var(--neutral-bg); overflow:hidden}
+  .wbar .tr i{display:block; height:100%; border-radius:4px; background:var(--good)}
+  .wbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:var(--ink-2); font-size:11px}
+
+  /* activity ticker */
+  .ticker{flex:none; border-top:1px solid var(--line); background:var(--card); overflow:hidden;
+    padding:8px 0; white-space:nowrap; position:relative}
+  .ticker .inner{display:inline-block; padding-left:100%; animation:tick 60s linear infinite;
+    font-size:12.5px; color:var(--ink-2)}
+  .ticker b{color:var(--ink); font-weight:700}
+  .ticker .sep{color:var(--maroon); margin:0 14px}
+  @keyframes tick{ from{transform:translateX(0)} to{transform:translateX(-100%)} }
+
+  footer{flex:none; padding:6px 16px 10px; font-size:10.5px; color:var(--ink-3); text-align:center; line-height:1.5}
+  footer a{color:var(--info); text-decoration:none}
+
+  @media (max-width:1100px){
+    .kstrip{grid-template-columns:repeat(3,1fr)}
+    .wall{grid-template-columns:1fr 1fr; grid-auto-rows:auto}
+    .panel.tall{grid-row:auto}
+    body{display:block}
+  }
+  @media (max-width:700px){
+    header{flex-wrap:wrap; gap:10px; padding:10px 14px}
+    .kstrip{grid-template-columns:repeat(2,1fr)}
+    .wall{grid-template-columns:1fr}
+    .clock{font-size:20px}
+    .clock small{display:none}
+    .wordmark img{height:28px}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
+      <small>Command Centre &middot; Live Operations Wall</small></div>
+    <div class="hspacer"></div>
+    <div class="clock"><span id="clock">--:--</span><small id="clockDate"></small></div>
+    <span class="mode-tag" id="modeTag">Pilot &middot; demo data</span>
+  </header>
+
+  <!-- ============ SIGN IN (live server mode only) ============ -->
+  <div id="signin" style="display:none">
+    <h1 class="page">Sign in</h1>
+    <p class="page-sub">The command centre shows everything &mdash; sign in with a management, quality or admin account. Ward and desk accounts see only their own slice.</p>
+    <div class="fcard">
+      <label class="fl" for="siEmp">Employee ID</label>
+      <input type="text" id="siEmp" placeholder="e.g. LH-MGT01" maxlength="20" autocapitalize="characters">
+      <label class="fl" for="siPin">PIN</label>
+      <input type="password" id="siPin" placeholder="4&ndash;6 digits" maxlength="6" inputmode="numeric">
+      <div id="siNew" style="display:none">
+        <label class="fl" for="siPin2">Confirm new PIN</label>
+        <input type="password" id="siPin2" placeholder="repeat PIN" maxlength="6" inputmode="numeric">
+      </div>
+      <button class="submit" id="siGo">Sign in</button>
+      <p class="hint" id="siMsg">Ask an admin to add you if your ID isn&rsquo;t recognised.</p>
+    </div>
+  </div>
+
+  <div id="board" style="display:contents">
+    <div class="kstrip" id="kstrip"></div>
+    <div class="wall">
+      <div class="panel tall">
+        <div class="phead"><h2>Discharges in progress</h2><span class="pc" id="disCount"></span></div>
+        <div class="rows" id="disRows"></div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h2>Bed turnaround</h2><span class="pc" id="bedCount"></span></div>
+        <div class="rows" id="bedRows"></div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h2>Beds ready by ward</h2><span class="pc" id="wardCount"></span></div>
+        <div class="rows" id="wardRows"></div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h2>Patient transport</h2><span class="pc" id="ptCount"></span></div>
+        <div class="rows" id="ptRows"></div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h2>Service desk &middot; P1 &amp; P2</h2><span class="pc" id="tkCount"></span></div>
+        <div class="rows" id="tkRows"></div>
+      </div>
+    </div>
+    <div class="ticker"><div class="inner" id="ticker"></div></div>
+  </div>
+
+  <footer>
+    <span id="footNote"><b style="color:var(--ink-2)">Pilot &mdash; demo data.</b>
+    When served by the Lakeshore One backend this wall goes live automatically: discharges, beds, transport,
+    service desk and the activity ticker, pushed in real time from the same store the working apps write to.</span>
+    <a href="../">&larr; Lakeshore One hub</a>
+  </footer>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const M = 6e4, H = 36e5;
+
+/* mirrors of the working apps' domain config (read-only here) */
+const DC_STEPS = [
+  { key:'summary',  label:'summary',  tgt:60 },
+  { key:'pharmacy', label:'pharmacy', tgt:45 },
+  { key:'billing',  label:'bill',     tgt:60 },
+  { key:'tpa',      label:'TPA',      tgt:120, insOnly:true },
+  { key:'settle',   label:'settle',   tgt:30 },
+  { key:'depart',   label:'out',      tgt:30 }
+];
+const dcPath = it => DC_STEPS.filter(s => !s.insOnly || it.payer !== 'Cash');
+const dcCur = it => dcPath(it).find(s => !it.done[s.key]) || null;
+const dcTarget = it => dcPath(it).reduce((a,s) => a + s.tgt, 0);
+const WARD_NAMES = { '3A':'Ward 3A', '4B':'Ward 4B', '5A':'Ward 5A', 'ON':'Oncology', 'ICU':'ICU', 'HDU':'HDU' };
+const BED_WARDS = [['3A',20],['4B',16],['5A',14],['ON',16],['ICU',12],['HDU',8]];
+const RESP_TGT = 15, CLEAN_TGT = 30, PT_ACCEPT_TGT = 10;
+const PRI_RANK = { Emergency:0, Urgent:1, Routine:2 };
+const MOD_LABEL = { it:'IT', fac:'Facility', hk:'Housekeeping', bm:'Biomedical', sec:'Security' };
+
+let db = { discharges:[], beds:{}, transports:[], tickets:[], audit:[] };
+
+function hhmm(ts){ const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function fmtMin(mins){
+  if (mins < 90) return mins + 'm';
+  const h = Math.floor(mins/60), m = mins % 60;
+  return h + 'h' + (m ? ' ' + m + 'm' : '');
+}
+const minsSince = ts => Math.round((Date.now() - (typeof ts === 'string' ? Date.parse(ts) : ts))/M);
+function badge(mins, tgt, prefix){
+  const cls = mins <= tgt ? 'b-ok' : mins <= tgt*2 ? 'b-due' : 'b-late';
+  return '<span class="badge ' + cls + '">' + (prefix || '') + fmtMin(mins) + '</span>';
+}
+
+/* ---------- demo snapshot — relative to now, so the wall is alive at any hour ---------- */
+function seedDemo(){
+  const now = Date.now();
+  const ago = m => now - m*M;
+  db.discharges = [
+    { bed:'5B-14', payer:'Insurance / TPA', name:'Georgekutty J', advisedAt:ago(305), done:{ summary:ago(250), pharmacy:ago(210), billing:ago(160) }, status:'active' },
+    { bed:'4A-07', payer:'Insurance / TPA', name:'Mariyam K', advisedAt:ago(190), done:{ summary:ago(140), pharmacy:ago(95) }, status:'active' },
+    { bed:'3A-16', payer:'Cash', name:'Suresh P', advisedAt:ago(150), done:{ summary:ago(95), pharmacy:ago(60), billing:ago(20) }, status:'active' },
+    { bed:'T6-03', payer:'Corporate', name:'Annie C', advisedAt:ago(95), done:{ summary:ago(40) }, status:'active' },
+    { bed:'3B-05', payer:'Cash', name:'Rahim A', advisedAt:ago(45), done:{}, status:'active' },
+    { bed:'5B-02', payer:'Cash', name:'Lakshmi D', advisedAt:ago(280), done:{ summary:ago(230), pharmacy:ago(190), billing:ago(140), settle:ago(120), depart:ago(105) }, status:'out', outAt:ago(105) },
+    { bed:'4A-12', payer:'Insurance / TPA', name:'Thomas V', advisedAt:ago(430), done:{ summary:ago(380), pharmacy:ago(340), billing:ago(280), tpa:ago(150), settle:ago(120), depart:ago(95) }, status:'out', outAt:ago(95) }
+  ];
+  db.beds = {};
+  for (const [w, n] of BED_WARDS) for (let i = 1; i <= n; i++){
+    const id = w + '-' + String(i).padStart(2,'0');
+    let h = 0; for (const ch of id) h = (h*31 + ch.charCodeAt(0))|0;
+    h = Math.abs(h) % 20;
+    db.beds[id] = { status: h < 13 ? 'occupied' : h < 17 ? 'ready' : 'occupied', since:null };
+  }
+  const mkQ = (id, st, agoMin) => db.beds[id] = { status:st, since:new Date(ago(agoMin)).toISOString() };
+  mkQ('4B-16','dirty',38); mkQ('ON-02','dirty',17); mkQ('3A-09','dirty',6);
+  mkQ('5A-05','cleaning',24); mkQ('HDU-03','cleaning',8);
+  db.transports = [
+    { mode:'Stretcher', priority:'Urgent', from:'Ward 4B', to:'Radiology & Imaging', status:'requested', requestedAt:ago(13) },
+    { mode:'Wheelchair', priority:'Routine', from:'OPD Block', to:'Cath Lab', status:'requested', requestedAt:ago(5) },
+    { mode:'Item run', priority:'Routine', from:'Blood Bank', to:'OT Complex', status:'requested', requestedAt:ago(2) },
+    { mode:'Bed', priority:'Routine', from:'ICU', to:'Ward 5A', status:'moving', requestedAt:ago(31), acceptAt:ago(24), pickupAt:ago(11), porterName:'Sunil Das' },
+    { mode:'Wheelchair', priority:'Routine', from:'Ward 3A', to:'Dialysis Unit', status:'accepted', requestedAt:ago(16), acceptAt:ago(7), porterName:'Mary A' }
+  ];
+  const iso = m => new Date(ago(m)).toISOString();
+  db.tickets = [
+    { id:'LSO-221', pri:'P1', mod:'it', title:'HIS slow in casualty — order entry timing out', zone:'Emergency', status:'in_progress', assigneeName:'Ajith Kumar', createdAt:iso(48), dueResolve:iso(48 - 240) },
+    { id:'LSO-224', pri:'P2', mod:'bm', title:'Ventilator alarm fault — bed ICU-07', zone:'ICU', status:'in_progress', assigneeName:'Rahul Menon', createdAt:iso(160), dueResolve:iso(160 - 480) },
+    { id:'LSO-226', pri:'P2', mod:'fac', title:'OT-3 AHU temperature drifting high', zone:'OT Complex', status:'open', assigneeName:null, createdAt:iso(75), dueResolve:iso(75 - 480) },
+    { id:'LSO-219', pri:'P2', mod:'hk', title:'Spill near lift lobby L2 — slip risk', zone:'OP Block', status:'in_progress', assigneeName:'Beena Thomas', createdAt:iso(510), dueResolve:iso(510 - 480) }
+  ];
+  db.audit = [
+    { by:'LH-HK01', action:'bed 4B-03 → ready', at:iso(4) },
+    { by:'LH-PT01', action:'PTR-312 → done', at:iso(9) },
+    { by:'LH-DOC01', action:'DIS-118 billing done', at:iso(14) },
+    { by:'LH-NUR04', action:'started discharge DIS-121 (bed 3B-05 · Cash)', at:iso(45) },
+    { by:'LH-IT01', action:'moved LSO-221 to in_progress', at:iso(41) },
+    { by:'LH-PT03', action:'PTR-314 → accepted', at:iso(7) },
+    { by:'LH-HK02', action:'bed 5A-05 → cleaning', at:iso(24) }
+  ];
+}
+
+/* ---------- live backend ---------- */
+let mode = 'local', token = null;
+try{ token = sessionStorage.getItem('l1-token'); }catch(e){}
+async function api(path, body){
+  const r = await fetch('../api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign({ 'Content-Type':'application/json' },
+      token ? { Authorization:'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  j.ok = r.ok && j.error === undefined;
+  return j;
+}
+async function fetchState(){
+  const r = await api('state');
+  if (r.ok){
+    db.discharges = r.discharges || [];
+    db.beds = r.beds || {};
+    db.transports = r.transports || [];
+    db.tickets = r.tickets || [];
+    db.audit = r.audit || [];
+  }
+  return r.ok;
+}
+function startSSE(){
+  try{
+    const es = new EventSource('../api/events?token=' + encodeURIComponent(token));
+    es.onmessage = async () => { if (await fetchState()) renderAll(); };
+  }catch(e){}
+}
+function setTag(m){
+  const el = $('modeTag');
+  if (m === 'live'){ el.innerHTML = 'Live &middot; shared'; el.style.color = 'var(--good)'; el.style.background = 'var(--good-bg)'; }
+  else if (m === 'signin'){ el.innerHTML = 'Live &middot; sign in'; el.style.color = 'var(--info)'; el.style.background = 'var(--info-bg)'; }
+}
+function showSignin(v){
+  $('signin').style.display = v ? 'block' : 'none';
+  $('board').style.display = v ? 'none' : 'contents';
+}
+async function enterLive(){
+  setTag('live'); showSignin(false);
+  $('footNote').innerHTML = '<b style="color:var(--ink-2)">Live system.</b> ' +
+    'Everything on this wall is the real store the working apps write to — discharges, beds, transport, ' +
+    'service desk and the audit ticker — pushed over SSE as it happens.';
+  await fetchState(); renderAll(); startSSE();
+}
+$('siGo').onclick = async () => {
+  const empId = $('siEmp').value.trim().toUpperCase(), pin = $('siPin').value.trim();
+  if (!empId){ $('siMsg').textContent = 'Enter your employee ID.'; return; }
+  $('siMsg').textContent = 'Signing in…';
+  let r;
+  if ($('siNew').style.display !== 'none'){
+    if (!/^\d{4,6}$/.test(pin) || pin !== $('siPin2').value.trim()){
+      $('siMsg').textContent = 'PINs must match and be 4–6 digits.'; return;
+    }
+    r = await api('set-pin', { empId, pin });
+  } else {
+    r = await api('login', { empId, pin });
+    if (r.needPin){
+      $('siNew').style.display = 'block'; $('siGo').textContent = 'Set PIN & sign in';
+      $('siMsg').textContent = 'First sign-in — choose a 4–6 digit PIN.'; return;
+    }
+  }
+  if (!r.ok || !r.token){ $('siMsg').textContent = r.error || 'Sign-in failed.'; return; }
+  token = r.token;
+  try{ sessionStorage.setItem('l1-token', token); localStorage.setItem('l1-last-emp', empId); }catch(e){}
+  await enterLive();
+};
+async function boot(){
+  try{
+    const r = await fetch('../api/health', { cache:'no-store' });
+    if (r.ok && (await r.json()).service === 'lakeshore-one'){
+      mode = 'server';
+      if (token && (await api('me')).ok){ await enterLive(); return; }
+      token = null;
+      setTag('signin'); showSignin(true);
+      try{ const le = localStorage.getItem('l1-last-emp'); if (le) $('siEmp').value = le; }catch(e){}
+      return;
+    }
+  }catch(e){}
+  seedDemo(); renderAll();
+}
+
+/* ---------- panels ---------- */
+const bedsWhere = st => Object.entries(db.beds).filter(([,b]) => b.status === st);
+const isToday = ts => new Date(ts).toDateString() === new Date().toDateString();
+
+function renderKpis(){
+  const dis = db.discharges.filter(d => d.status === 'active');
+  const disLate = dis.filter(d => minsSince(d.advisedAt) > dcTarget(d));
+  const ready = bedsWhere('ready').length;
+  const dirty = bedsWhere('dirty'), cleaning = bedsWhere('cleaning');
+  const worstDirty = dirty.length ? Math.max(...dirty.map(([,b]) => b.since ? minsSince(b.since) : 0)) : 0;
+  const ptQ = db.transports.filter(t => t.status === 'requested');
+  const ptWorst = ptQ.length ? Math.max(...ptQ.map(t => minsSince(t.requestedAt))) : 0;
+  const tk = db.tickets.filter(t => (t.pri === 'P1' || t.pri === 'P2') && (t.status === 'open' || t.status === 'in_progress'));
+  const tkBreach = tk.filter(t => Date.parse(t.dueResolve) < Date.now());
+  const outToday = db.discharges.filter(d => d.status === 'out' && d.outAt && isToday(d.outAt)).length;
+
+  const tile = (n, label, color, sub) =>
+    '<div class="kpi"><div class="n"' + (color ? ' style="color:' + color + '"' : '') + '>' + n +
+    (sub ? '<small> ' + sub + '</small>' : '') + '</div><div class="l">' + label + '</div></div>';
+  $('kstrip').innerHTML =
+    tile(ready, 'Beds ready now', 'var(--good)') +
+    tile(dirty.length + cleaning.length, 'Beds in turnaround', worstDirty > RESP_TGT ? 'var(--crit)' : null,
+      dirty.length ? 'worst ' + fmtMin(worstDirty) : '') +
+    tile(dis.length, 'Discharges in progress', disLate.length ? 'var(--crit)' : null,
+      disLate.length ? disLate.length + ' past target' : '') +
+    tile(outToday, 'Beds freed today', 'var(--good)') +
+    tile(ptQ.length, 'Transport queue', ptWorst > PT_ACCEPT_TGT ? 'var(--crit)' : null,
+      ptQ.length ? 'worst ' + fmtMin(ptWorst) : '') +
+    tile(tk.length, 'Open P1 / P2 tickets', tkBreach.length ? 'var(--crit)' : null,
+      tkBreach.length ? tkBreach.length + ' breached' : '');
+}
+
+function renderDischarges(){
+  const dis = db.discharges.filter(d => d.status === 'active')
+    .sort((a,b) => (minsSince(b.advisedAt) - dcTarget(b)) - (minsSince(a.advisedAt) - dcTarget(a)));
+  $('disCount').textContent = dis.length + ' active · most overdue first';
+  $('disRows').innerHTML = dis.length ? dis.slice(0, 14).map(d => {
+    const cur = dcCur(d), el = minsSince(d.advisedAt);
+    return '<div class="row"><span class="tok">' + esc(d.bed) + '</span>' +
+      '<span class="badge ' + (d.payer === 'Cash' ? 'b-mut' : 'b-info') + '">' +
+        (d.payer === 'Cash' ? 'Cash' : d.payer === 'Corporate' ? 'Corp' : 'TPA') + '</span>' +
+      '<span class="grow"><b>' + esc(d.name) + '</b> <span class="sub">· at ' + (cur ? cur.label : '—') +
+        ' since ' + hhmm(d.advisedAt) + '</span></span>' +
+      badge(el, dcTarget(d)) + '</div>';
+  }).join('') : '<div class="empty">No discharges in progress.</div>';
+}
+
+function renderBeds(){
+  const dirty = bedsWhere('dirty').sort((a,b) => Date.parse(a[1].since || 0) - Date.parse(b[1].since || 0));
+  const cleaning = bedsWhere('cleaning').sort((a,b) => Date.parse(a[1].since || 0) - Date.parse(b[1].since || 0));
+  $('bedCount').textContent = dirty.length + ' waiting · ' + cleaning.length + ' cleaning';
+  const rows = dirty.map(([id, b]) =>
+    '<div class="row"><span class="tok">' + id + '</span>' +
+    '<span class="grow sub">awaiting housekeeping</span>' +
+    (b.since ? badge(minsSince(b.since), RESP_TGT) : '<span class="badge b-due">—</span>') + '</div>')
+  .concat(cleaning.map(([id, b]) =>
+    '<div class="row"><span class="tok">' + id + '</span>' +
+    '<span class="grow"><span class="badge b-st">cleaning</span></span>' +
+    (b.since ? badge(minsSince(b.since), CLEAN_TGT) : '') + '</div>'));
+  $('bedRows').innerHTML = rows.length ? rows.join('') : '<div class="empty">Queue clear — no beds in turnaround.</div>';
+
+  const total = {}, ready = {};
+  for (const [id, b] of Object.entries(db.beds)){
+    const w = id.split('-')[0];
+    total[w] = (total[w] || 0) + 1;
+    if (b.status === 'ready') ready[w] = (ready[w] || 0) + 1;
+  }
+  const wards = Object.keys(total);
+  $('wardCount').textContent = bedsWhere('ready').length + ' ready of ' + Object.keys(db.beds).length;
+  $('wardRows').innerHTML = wards.length ? wards.map(w => {
+    const r = ready[w] || 0, t = total[w];
+    return '<div class="wbar"><span>' + (WARD_NAMES[w] || w) + '</span>' +
+      '<span class="tr"><i style="width:' + Math.round(100*r/t) + '%' + (r === 0 ? '; background:var(--crit)' : '') + '"></i></span>' +
+      '<span class="hv">' + r + ' / ' + t + '</span></div>';
+  }).join('') : '<div class="empty">No bed data.</div>';
+}
+
+function renderTransport(){
+  const q = db.transports.filter(t => t.status === 'requested')
+    .sort((a,b) => PRI_RANK[a.priority] - PRI_RANK[b.priority] || a.requestedAt - b.requestedAt);
+  const act = db.transports.filter(t => t.status === 'accepted' || t.status === 'moving');
+  $('ptCount').textContent = q.length + ' waiting · ' + act.length + ' on the job';
+  const rows = q.map(t =>
+    '<div class="row"><span class="badge ' + (t.priority === 'Emergency' ? 'b-late' : t.priority === 'Urgent' ? 'b-due' : 'b-mut') + '">' + t.priority + '</span>' +
+    '<span class="grow"><b>' + esc(t.from) + ' → ' + esc(t.to) + '</b> <span class="sub">· ' + t.mode.toLowerCase() + '</span></span>' +
+    badge(minsSince(t.requestedAt), PT_ACCEPT_TGT) + '</div>')
+  .concat(act.map(t =>
+    '<div class="row"><span class="badge b-st">' + (t.status === 'moving' ? 'en route' : 'to pickup') + '</span>' +
+    '<span class="grow"><b>' + esc(t.from) + ' → ' + esc(t.to) + '</b> <span class="sub">· ' + esc(t.porterName || '') + '</span></span>' +
+    '<span class="badge b-mut">' + fmtMin(minsSince(t.status === 'moving' ? t.pickupAt : t.acceptAt)) + '</span></div>'));
+  $('ptRows').innerHTML = rows.length ? rows.join('') : '<div class="empty">No transport requests open.</div>';
+}
+
+function renderTickets(){
+  const tk = db.tickets.filter(t => (t.pri === 'P1' || t.pri === 'P2') && (t.status === 'open' || t.status === 'in_progress'))
+    .sort((a,b) => Date.parse(a.dueResolve) - Date.parse(b.dueResolve));
+  $('tkCount').textContent = tk.length + ' open';
+  $('tkRows').innerHTML = tk.length ? tk.slice(0, 8).map(t => {
+    const left = Math.round((Date.parse(t.dueResolve) - Date.now())/M);
+    const slaBadge = left < 0 ? '<span class="badge b-late">over ' + fmtMin(-left) + '</span>'
+      : left < 60 ? '<span class="badge b-due">' + fmtMin(left) + ' left</span>'
+      : '<span class="badge b-ok">' + fmtMin(left) + ' left</span>';
+    return '<div class="row"><span class="badge ' + (t.pri === 'P1' ? 'b-late' : 'b-due') + '">' + t.pri + '</span>' +
+      '<span class="grow"><b>' + esc(t.title) + '</b> <span class="sub">· ' + esc(t.zone) + ' · ' +
+      (MOD_LABEL[t.mod] || t.mod) + (t.assigneeName ? ' · ' + esc(t.assigneeName) : ' · unassigned') + '</span></span>' +
+      slaBadge + '</div>';
+  }).join('') : '<div class="empty">No P1 / P2 tickets open — a good day.</div>';
+}
+
+function renderTicker(){
+  const items = db.audit.slice(0, 18).map(a =>
+    '<b>' + hhmm(a.at) + '</b> ' + esc(a.by) + ' — ' + esc(a.action));
+  $('ticker').innerHTML = items.length
+    ? items.join('<span class="sep">◆</span>') + '<span class="sep">◆</span>'
+    : 'No recent activity.';
+}
+
+function renderClock(){
+  const d = new Date();
+  $('clock').textContent = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') +
+    ':' + String(d.getSeconds()).padStart(2,'0');
+  $('clockDate').textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+}
+function renderAll(){ renderKpis(); renderDischarges(); renderBeds(); renderTransport(); renderTickets(); renderTicker(); }
+
+boot();
+setInterval(renderClock, 1000); renderClock();
+setInterval(renderAll, 30e3);          /* clocks and countdowns tick even between SSE pushes */
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>
+</body>
+</html>
