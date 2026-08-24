@@ -25,10 +25,12 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 /* Google SSO: set GOOGLE_CLIENT_ID to the OAuth web client ID to enable the
-   "Sign in with Google" button. GOOGLE_HOSTED_DOMAIN (optional) auto-provisions
-   staff accounts for that Workspace domain; otherwise an admin must add the
-   user with a matching email first. DEMO_LOGIN=1 enables the one-tap demo
-   nurse sign-in (never enable on a production instance). */
+   "Sign in with Google" button. Emails an admin has linked to an account sign
+   in with that account's role. Unrecognised emails are auto-provisioned:
+   GOOGLE_HOSTED_DOMAIN Workspace accounts as staff, any other verified Google
+   account (e.g. Gmail) as guest — same limits as the Guest button, but with a
+   persistent identity. DEMO_LOGIN=1 enables the one-tap demo nurse sign-in
+   (never enable on a production instance). */
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_HOSTED_DOMAIN = (process.env.GOOGLE_HOSTED_DOMAIN || '').toLowerCase();
 const DEMO_LOGIN = process.env.DEMO_LOGIN === '1';
@@ -501,16 +503,24 @@ const server = http.createServer(async (req, res) => {
       if (!g) return json(res, 401, { error:'Google sign-in could not be verified — try again.' });
       const email = g.email.toLowerCase();
       let u = db.prepare('SELECT * FROM users WHERE email IS NOT NULL AND lower(email)=? AND active=1').get(email);
-      if (!u && GOOGLE_HOSTED_DOMAIN &&
-          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN))){
-        let eid = ('G-' + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+      if (!u){
+        /* a deactivated account with this email stays blocked — never silently re-created */
+        if (db.prepare('SELECT emp_id FROM users WHERE email IS NOT NULL AND lower(email)=?').get(email))
+          return json(res, 403, { error:'This account has been deactivated. Contact IT / admin.' });
+        /* auto-provision: hospital Workspace domain → staff; any other verified
+           Google account → guest access (same limits as the Guest button), with a
+           persistent identity so they get the same account back every sign-in */
+        const hosted = !!(GOOGLE_HOSTED_DOMAIN &&
+          ((g.hd || '').toLowerCase() === GOOGLE_HOSTED_DOMAIN || email.endsWith('@' + GOOGLE_HOSTED_DOMAIN)));
+        if (!hosted && guestThrottled()) return json(res, 429, { error:'Too many sign-ups right now — try again later.' });
+        let eid = ((hosted ? 'G-' : 'GV-') + email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
         if (db.prepare('SELECT emp_id FROM users WHERE emp_id=?').get(eid)) eid = eid.slice(0, 14) + '-' + nextSeq();
         db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at,email) VALUES (?,?,?,?,?,1,?,?)')
-          .run(eid, String(g.name || email).slice(0, 60), 'staff', '', 'locked', new Date().toISOString(), email);
-        audit(eid, 'auto-provisioned via Google SSO (' + email + ')');
+          .run(eid, String(g.name || email).slice(0, 60), hosted ? 'staff' : 'guest', hosted ? '' : 'Visitor',
+               'locked', new Date().toISOString(), email);
+        audit(eid, 'auto-provisioned via Google SSO (' + email + (hosted ? '' : ' · guest access') + ')');
         u = db.prepare('SELECT * FROM users WHERE emp_id=?').get(eid);
       }
-      if (!u) return json(res, 403, { error:'No Lakeshore One account is linked to ' + email + '. Ask an admin to add your email to your account.' });
       audit(u.emp_id, 'signed in with Google (' + email + ')');
       return json(res, 200, { token:sign(u.emp_id), empId:u.emp_id });
     }

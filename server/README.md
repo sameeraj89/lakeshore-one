@@ -21,7 +21,7 @@ Optional environment variables:
 | Variable | Effect |
 |---|---|
 | `GOOGLE_CLIENT_ID` | Enables **Sign in with Google** on the login page. Create an OAuth *Web application* client in Google Cloud Console, add the site's origin (e.g. `https://ops.yourdomain.in`) to *Authorized JavaScript origins*, and set the client ID here. The server verifies the ID token against Google's public keys — no extra packages. |
-| `GOOGLE_HOSTED_DOMAIN` | e.g. `lakeshorehospital.org` — Google sign-ins from this Workspace domain that don't match an existing account are auto-provisioned as `staff`. Without it, only emails an admin has linked to an account (user management → Google email) can sign in with Google. |
+| `GOOGLE_HOSTED_DOMAIN` | e.g. `lakeshorehospital.org` — Google sign-ins from this Workspace domain that don't match an existing account are auto-provisioned as `staff`. Any other verified Google account (e.g. a personal Gmail) that isn't linked to an account gets **guest access** instead — same limits as the Guest button, but with a persistent identity (`GV-…`), so they keep the same account and ticket history across sign-ins. Emails an admin has linked (user management → Google email) always sign in with that account's full role, whatever the domain. |
 | `DEMO_LOGIN=1` | Enables the one-tap **Nurse (demo)** sign-in button. Leave unset in production. |
 
 Guest and Patient one-tap sign-in is always available: it creates an ephemeral
