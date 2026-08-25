@@ -27,7 +27,18 @@ Optional environment variables:
 Guest and Patient one-tap sign-in is always available: it creates an ephemeral
 limited account (`GST-…` / `PAT-…`) that can only raise facility, housekeeping
 and security requests and track its own tickets — no bed board, OT list, queue
-or dashboard data is ever sent to those sessions.
+or dashboard data is ever sent to those sessions. Guest accounts that raised
+no requests are purged automatically after 7 days.
+
+## Tests
+
+```bash
+node --test server/server.test.js
+```
+
+Zero-dependency integration tests (built-in `node:test`) covering the
+security-sensitive surface: guest/patient access limits, role-filtered state,
+demo-nurse and Google SSO gating, email linking and uniqueness, guest cleanup.
 
 On first run it creates `server/data/` containing:
 - `lakeshore-one.db` — the SQLite database (WAL mode). **Back this file up.**
@@ -69,16 +80,15 @@ That installs Node 22 + Caddy, sets up the systemd service, HTTPS, and a
 nightly backup to `/var/backups/lakeshore-one`. Re-run it any time to pull
 updates.
 
-To enable Google sign-in on the deployed service, put the env vars in a
-systemd override (`deploy.sh` rewrites the main unit file on every re-run,
-but overrides survive):
+To enable Google sign-in on the deployed service, put the env vars in
+`/etc/lakeshore-one.env` — `deploy.sh` creates it once and never overwrites
+it, so settings survive re-runs:
 
 ```bash
-sudo systemctl edit lakeshore-one
-# add:
-#   [Service]
-#   Environment=GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
-#   Environment=GOOGLE_HOSTED_DOMAIN=lakeshorehospital.org
+sudo nano /etc/lakeshore-one.env
+# uncomment / set:
+#   GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
+#   GOOGLE_HOSTED_DOMAIN=lakeshorehospital.org
 sudo systemctl restart lakeshore-one
 curl https://opslakeshore.in/api/config   # → should show your client ID
 ```
@@ -100,6 +110,7 @@ After=network.target
 [Service]
 ExecStart=/usr/bin/node /opt/lakeshore-one/server/server.js
 Environment=PORT=8080
+EnvironmentFile=-/etc/lakeshore-one.env
 Restart=always
 User=www-data
 [Install]

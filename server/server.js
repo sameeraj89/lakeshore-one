@@ -233,11 +233,15 @@ function verifyToken(token){
 
 /* ---------- Google SSO (ID-token verification, no dependencies) ---------- */
 let googleCertsCache = { keys: null, until: 0 };
+const CERTS_UNAVAILABLE = 'google_certs_unavailable';
 async function googleCerts(){
   if (googleCertsCache.keys && googleCertsCache.until > Date.now()) return googleCertsCache.keys;
-  const r = await fetch('https://www.googleapis.com/oauth2/v3/certs');
-  if (!r.ok) throw new Error('cert fetch failed');
-  const j = await r.json();
+  let r, j;
+  try{
+    r = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+    if (!r.ok) throw new Error();
+    j = await r.json();
+  }catch(e){ throw new Error(CERTS_UNAVAILABLE); }
   googleCertsCache = { keys: j.keys, until: Date.now() + 3600e3 };
   return j.keys;
 }
@@ -256,8 +260,23 @@ async function verifyGoogleToken(credential){
     if (!(payload.exp * 1000 > Date.now())) return null;
     if (!payload.email || payload.email_verified !== true) return null;
     return payload;
-  }catch(e){ return null; }
+  }catch(e){
+    /* a cert-fetch outage is the server's problem, not a bad token */
+    if (e && e.message === CERTS_UNAVAILABLE) throw e;
+    return null;
+  }
 }
+
+/* ---------- housekeeping: ticketless guest/patient rows expire ---------- */
+function cleanupGuests(){
+  const cutoff = new Date(Date.now() - 7*86400e3).toISOString();
+  /* email IS NULL: Google-provisioned guests are persistent identities — keep them */
+  const gone = db.prepare(`DELETE FROM users WHERE role IN ('guest','patient') AND created_at < ?
+    AND email IS NULL AND emp_id NOT IN (SELECT reporter FROM tickets)`).run(cutoff);
+  if (gone.changes) audit('system', `purged ${gone.changes} expired guest sign-ins`);
+}
+cleanupGuests();
+setInterval(cleanupGuests, 24*3600e3).unref();
 
 /* ---------- guest sign-in throttle (global, coarse) ---------- */
 let guestWindow = { start: 0, n: 0 };
@@ -447,9 +466,24 @@ function applyOp(op, u){
       if (db.prepare('SELECT emp_id FROM users WHERE emp_id=?').get(eid)) return { ok:false, error:'employee ID exists' };
       const email = nu.email ? s(nu.email,80).toLowerCase() : null;
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok:false, error:'invalid email' };
+      /* one email = one account, or Google sign-in picks an arbitrary match */
+      if (email && db.prepare('SELECT emp_id FROM users WHERE email IS NOT NULL AND lower(email)=?').get(email))
+        return { ok:false, error:'that email is already linked to another user' };
       db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at,email) VALUES (?,?,?,?,NULL,1,?,?)')
         .run(eid, s(nu.name,60), nu.role, s(nu.dept,60), at, email);
       audit(empId, `added user ${eid} (${s(nu.name,60)}, ${nu.role})`);
+      return { ok:true };
+    }
+    case 'user_email': {
+      if (role !== 'admin') return { ok:false, error:'admin only' };
+      const target = db.prepare('SELECT * FROM users WHERE emp_id=?').get(String(op.empId));
+      if (!target) return { ok:false, error:'no such user' };
+      const email = op.email ? s(op.email,80).toLowerCase() : null;
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok:false, error:'invalid email' };
+      if (email && db.prepare('SELECT emp_id FROM users WHERE email IS NOT NULL AND lower(email)=? AND emp_id<>?').get(email, target.emp_id))
+        return { ok:false, error:'that email is already linked to another user' };
+      db.prepare('UPDATE users SET email=? WHERE emp_id=?').run(email, target.emp_id);
+      audit(empId, email ? `linked ${email} to ${target.emp_id}` : 'unlinked email from ' + target.emp_id);
       return { ok:true };
     }
     case 'user_toggle': {
@@ -724,14 +758,15 @@ const server = http.createServer(async (req, res) => {
       db.prepare('INSERT INTO users (emp_id,name,role,dept,pin_hash,active,created_at) VALUES (?,?,?,?,?,1,?)')
         .run(eid, name, as, 'Visitor', 'locked', new Date().toISOString());
       audit(eid, as + ' sign-in (no account)');
-      broadcast();
       return json(res, 200, { token:sign(eid), empId:eid });
     }
 
     if (p === '/api/google-login' && req.method === 'POST'){
       if (!GOOGLE_CLIENT_ID) return json(res, 404, { error:'Google sign-in is not configured on this server.' });
       const { credential } = await readBody(req);
-      const g = await verifyGoogleToken(credential);
+      let g;
+      try{ g = await verifyGoogleToken(credential); }
+      catch(e){ return json(res, 503, { error:'Google sign-in is temporarily unavailable — try again in a minute.' }); }
       if (!g) return json(res, 401, { error:'Google sign-in could not be verified — try again.' });
       const email = g.email.toLowerCase();
       let u = db.prepare('SELECT * FROM users WHERE email IS NOT NULL AND lower(email)=? AND active=1').get(email);

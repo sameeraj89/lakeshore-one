@@ -882,6 +882,11 @@ function apply(op){
   } else if (op.kind === 'user_add'){
     if (db.users.some(u => u.empId === op.user.empId)) return false;
     db.users.push(op.user); audit(op.by, 'added user ' + op.user.empId + ' (' + op.user.name + ', ' + op.user.role + ')');
+  } else if (op.kind === 'user_email'){
+    const u = db.users.find(u => u.empId === op.empId); if (!u) return false;
+    if (op.email && db.users.some(x => x.email === op.email && x.empId !== op.empId)) return false;
+    u.email = op.email || null;
+    audit(op.by, op.email ? 'linked ' + op.email + ' to ' + op.empId : 'unlinked email from ' + op.empId);
   } else if (op.kind === 'user_toggle'){
     const u = db.users.find(u => u.empId === op.empId); if (!u) return false;
     u.active = op.active; audit(op.by, (op.active ? 'reactivated ' : 'deactivated ') + op.empId);
@@ -1102,7 +1107,7 @@ async function quickSignIn(as){
     if (!u.active){ err.textContent = 'Demo nurse account is deactivated.'; return; }
     startSession('LH-NURSE', false); return;
   }
-  const empId = (as === 'patient' ? 'PAT-' : 'GST-') + Math.random().toString(36).slice(2,6).toUpperCase();
+  const empId = (as === 'patient' ? 'PAT-' : 'GST-') + Math.random().toString(36).slice(2,10).toUpperCase();
   const user = { empId, name:(as === 'patient' ? 'Patient · ' : 'Guest · ') + empId.slice(4),
     role:as, dept:'Visitor', pinHash:'locked', active:true };
   const ok = await commit({ uid:uid(), kind:'user_add', by:empId, byName:user.name, at:new Date().toISOString(), user });
@@ -1749,7 +1754,7 @@ $('prSubmit').onclick = async () => {
 function renderAdmin(){
   if (me().role !== 'admin') return;
   const el = $('userList');
-  el.innerHTML = db.users.map(u =>
+  const row = u =>
     '<div class="urow' + (u.active ? '' : ' inactive') + '">' +
     '<span class="av">' + esc(initials(u.name)) + '</span>' +
     '<div><div class="un">' + esc(u.name) + '</div><div class="um">' + esc(u.empId) + ' · ' +
@@ -1757,15 +1762,31 @@ function renderAdmin(){
     (u.email ? ' · ' + esc(u.email) : '') +
     (u.pinHash || isLimited(u.role) ? '' : ' · <b style="color:var(--warn)">PIN not set</b>') + '</div></div>' +
     '<div class="ubtns">' +
+    (isLimited(u.role) ? '' : '<button class="ubtn" data-act="em" data-id="' + esc(u.empId) + '">' + (u.email ? 'Edit email' : 'Link email') + '</button>') +
     (u.pinHash ? '<button class="ubtn" data-act="pin" data-id="' + esc(u.empId) + '">Reset PIN</button>' : '') +
     (u.empId !== me().empId ? '<button class="ubtn" data-act="tog" data-id="' + esc(u.empId) + '">' + (u.active ? 'Deactivate' : 'Activate') + '</button>' : '') +
-    '</div></div>').join('');
+    '</div></div>';
+  /* visitors (guest/patient sign-ins) collapse into one group so staff stay findable */
+  const staff = db.users.filter(u => !isLimited(u.role));
+  const visitors = db.users.filter(u => isLimited(u.role));
+  el.innerHTML = staff.map(row).join('') +
+    (visitors.length ? '<details style="margin-top:10px"><summary class="um" style="cursor:pointer">Visitors · ' +
+      visitors.length + ' guest / patient sign-in' + (visitors.length === 1 ? '' : 's') + '</summary>' +
+      visitors.map(row).join('') + '</details>' : '');
   for (const b of el.querySelectorAll('.ubtn')){
     b.onclick = () => {
       const empId = b.dataset.id, u = me();
       if (b.dataset.act === 'pin'){
         if (confirm('Reset PIN for ' + empId + '? They will set a new one at next login.'))
           commit({ uid:uid(), kind:'pin_reset', empId, by:u.empId, byName:u.name, at:new Date().toISOString() });
+      } else if (b.dataset.act === 'em'){
+        const target = db.users.find(x => x.empId === empId);
+        const entered = prompt('Google email for ' + empId + ' (leave blank to unlink):', target.email || '');
+        if (entered === null) return;
+        const email = entered.trim().toLowerCase();
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('That email doesn’t look right.'); return; }
+        if (email && db.users.some(x => x.email === email && x.empId !== empId)){ toast('That email is already linked to another user.'); return; }
+        commit({ uid:uid(), kind:'user_email', empId, email:email || null, by:u.empId, byName:u.name, at:new Date().toISOString() });
       } else {
         const target = db.users.find(x => x.empId === empId);
         commit({ uid:uid(), kind:'user_toggle', empId, active:!target.active, by:u.empId, byName:u.name, at:new Date().toISOString() });
@@ -1789,6 +1810,7 @@ $('uSave').onclick = () => {
   if (db.users.some(x => x.empId === empId)){ toast('That employee ID already exists.'); return; }
   const email = $('uEmail').value.trim().toLowerCase();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('That email doesn’t look right.'); return; }
+  if (email && db.users.some(x => x.email === email)){ toast('That email is already linked to another user.'); return; }
   const u = me();
   commit({ uid:uid(), kind:'user_add', by:u.empId, byName:u.name, at:new Date().toISOString(),
     user:{ empId, name, role:$('uRole').value, dept:$('uDept').value.trim(), email:email || null, pinHash:null, active:true } });
