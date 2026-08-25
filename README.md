@@ -17,6 +17,26 @@ web apps, piloted on Claude artifacts (shared state) and hostable on GitHub Page
 | `safereport/` | SafeReport | Patient-safety incident reporting **mockup** — confidential/anonymous reporting, quality triage, RCA/CAPA worked example, safety trends. Kept separate from the service desk by design (different trust model) |
 | `whatsapp/` | WhatsApp Intake | **Simulator** for the WhatsApp reporting channel — staff text the hospital number in plain language (photo optional), AI triage files a classified ticket into the Lakeshore One queues, updates flow back on WhatsApp. The real channel is built into the backend (`server/whatsapp.js`, setup in `server/WHATSAPP.md`) |
 
+## Interface (Lakeshore One shell)
+
+The main app carries a service-desk shell modelled on the current generation of
+ITSM tools (the ServiceDesk Plus Cloud UI refresh in particular) — the idea
+being that the surface should adapt to the person using it rather than the
+other way round. All of it is per-device, stored in `localStorage`; no new
+server operations were added.
+
+| Element | What it does |
+|---|---|
+| **Navigation modes** | Sidebar, Sidebar Lite (icon rail), Topbar or Bottom bar. Sidebar modes apply from 1024px up; phones and tablets always keep the bottom bar. The sidebar also carries live counts, saved views and recently opened tickets |
+| **Look & feel** | One drawer for navigation mode, theme (auto/light/dark), accent colour (Lakeshore navy, Lakeshore magenta, teal, violet, graphite — the header, sidebar and login screen follow it), typeface (Figtree / system / serif) and density (comfortable / compact fits about a third more rows, for a nursing station) |
+| **Slide-outs** | Notifications, Quick actions, New request, Look & feel and a ticket detail panel all open over the current page, so you never lose your place. A **new request** can be raised from any tab |
+| **Notifications** | A real notification centre with unread counts, not just toasts: SLA breaches, tickets landing in your queue, resolutions waiting on your confirmation, comments and praise. Derived from state, so it works in demo mode too where there is no SSE stream |
+| **Global search** | `Ctrl`/`⌘`+`K` or `/` opens a command palette over tickets, sections, saved views, places (campus zones) and people, scoped to what your role may see. With an empty box it shows recently opened items |
+| **Ticket views** | Cards (two-up on wide screens), **List** — a dense nine-column table using the width properly — and **Board**, a kanban by status with drag-and-drop plus tap-to-move buttons for touch. Permissions are checked on every move |
+| **Custom views** | Set status / desk / priority / assignment / search / sort, see how many tickets the filter matches *before* saving it, then name it. Saved views appear as chips, in the sidebar and in search |
+| **Wall display** | The dashboard goes full screen (button, or `F`) for the ops room — big KPIs, a clock, live counts and a 20-second refresh |
+| **Keyboard** | `Ctrl`/`⌘`+`K` or `/` search · `N` new request · `A` quick actions · `B` notifications · `T` look & feel · `V` cycle view · `F` wall display · `G` then `R`/`M`/`O`/`P`/`Q`/`D`/`I`/`A` to jump to a section · `?` for the list · `Esc` closes |
+
 ## Access control (pilot)
 
 - Admin provisions users (employee ID, name, role, department); each user sets a
