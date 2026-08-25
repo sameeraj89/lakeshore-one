@@ -14,10 +14,10 @@
 <style>
   :root{
     --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
-    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
-    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --magenta:#E8146E; --magenta-tint:rgba(232,20,110,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
     --crit:#B3261E; --crit-bg:#FBE4E2;
@@ -28,10 +28,10 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
       --good:#4FC97E; --good-bg:#173726;
       --warn:#E5B84B; --warn-bg:#3D3319;
       --crit:#F07A6A; --crit-bg:#43201C;
@@ -42,10 +42,10 @@
   }
   :root[data-theme="dark"]{
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
     --good:#4FC97E; --good-bg:#173726;
     --warn:#E5B84B; --warn-bg:#3D3319;
     --crit:#F07A6A; --crit-bg:#43201C;
@@ -59,6 +59,7 @@
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .wordmark img{height:32px; display:block}
   .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
@@ -88,10 +89,10 @@
   label.fl:first-child{margin-top:0}
   label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
   input[type=text], input[type=password], select{width:100%; background:var(--shell); border:1.5px solid var(--line);
-    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:16px; color:var(--ink); outline:none}
   input:focus, select:focus{border-color:var(--brand)}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
-  .seg button{flex:1 1 28%; min-width:80px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+  .seg button{flex:1 1 28%; min-width:80px; min-height:44px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
     font-family:'Figtree',sans-serif; line-height:1.3}
   .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
@@ -105,11 +106,11 @@
   .roomhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px}
   .roomhead h2{font-size:14px; font-weight:800}
   .roomhead .rs{font-size:11px; font-weight:700; letter-spacing:0.5px}
-  .rs.busy{color:var(--maroon)} .rs.idle{color:var(--good)}
+  .rs.busy{color:var(--magenta)} .rs.idle{color:var(--good)}
 
   .qcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;
     margin-bottom:8px; box-shadow:var(--shadow-sm)}
-  .qcard.scanning{border-left:4px solid var(--maroon)}
+  .qcard.scanning{border-left:4px solid var(--magenta)}
   .qrow{display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap}
   .tok{font-weight:800; font-size:13px; color:var(--brand-ink); background:var(--brand-tint);
     border-radius:8px; padding:2px 9px; font-variant-numeric:tabular-nums}
@@ -117,7 +118,7 @@
   .b-op{background:var(--info-bg); color:var(--info)}
   .b-ip{background:var(--neutral-bg); color:var(--neutral)}
   .b-emg{background:var(--crit-bg); color:var(--crit)}
-  .b-scan{background:var(--maroon-tint); color:var(--maroon)}
+  .b-scan{background:var(--magenta-tint); color:var(--magenta)}
   .b-w-ok{background:var(--good-bg); color:var(--good)}
   .b-w-due{background:var(--warn-bg); color:var(--warn)}
   .b-w-late{background:var(--crit-bg); color:var(--crit)}
@@ -125,7 +126,7 @@
   .qmeta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
   .qact{margin-top:9px; display:flex; gap:7px; flex-wrap:wrap}
   .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
-    padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+    min-height:44px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
   .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
   .qact button.ghost{color:var(--ink-3)}
   .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:22px 10px; line-height:1.6}
@@ -146,14 +147,14 @@
   .cols{display:flex; align-items:flex-end; gap:4px; height:110px; padding-top:6px}
   .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end}
   .col .bar{width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
-  .col.hot .bar{background:var(--maroon)}
-  .col .cl{font-size:8.5px; color:var(--ink-3); font-weight:500}
+  .col.hot .bar{background:var(--magenta)}
+  .col .cl{font-size:10px; color:var(--ink-3); font-weight:500}
   .col .cv{font-size:9.5px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
   .hbar{display:grid; grid-template-columns:135px 1fr 34px; gap:8px; align-items:center; margin-bottom:9px; font-size:12px}
   .hbar:last-child{margin-bottom:0}
   .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
   .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
-  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--magenta)}
   .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
   .stack{display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px}
   .stack i{display:block; height:100%}
@@ -168,6 +169,22 @@
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:21px; height:21px}
   nav button[aria-pressed="true"]{color:var(--brand)}
+
+  .toast{position:fixed; left:50%; transform:translateX(-50%) translateY(6px);
+    bottom:calc(78px + env(safe-area-inset-bottom)); width:min(444px, calc(100% - 24px));
+    background:#1A242C; color:#E8EEF3; border:1px solid rgba(232,238,243,0.16); border-radius:14px;
+    padding:12px 15px; font-size:13px; line-height:1.55; box-shadow:var(--shadow); z-index:60;
+    opacity:0; pointer-events:none; transition:opacity .25s, transform .25s}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast.crit{background:#43201C; color:#F5C9C2; border-color:rgba(240,122,106,0.4)}
+  .toast b{color:#8FC1E8}
+
+  details.recall{margin:18px 2px 0}
+  details.recall summary{cursor:pointer; font-size:12.5px; font-weight:700; color:var(--ink-2); padding:8px 2px}
+  details.recall .qcard{margin-top:8px}
+
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px}
 </style>
 </head>
 <body>
@@ -288,7 +305,7 @@ const WAIT_TARGET = 30;                /* minutes — service promise for OP USG
 const KEY = 'lakeshore-usg-wait-v1';
 let db = { daySeq: 0, day: '', items: [] };
 try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.items) db = s; }catch(e){}
-function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast('Could not save — storage may be full.', true); } }
 
 /* ---------- live server mode (Lakeshore One backend) ---------- */
 let mode = 'local', token = null, user = null, sseStarted = false;
@@ -343,11 +360,26 @@ function todayStr(){ const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function isToday(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
 
+/* ---------- toast ---------- */
+let toastTimer = null;
+function toast(html, crit){
+  let t = $('toast');
+  if (!t){ t = document.createElement('div'); t.id = 'toast'; t.className = 'toast';
+    t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); document.body.appendChild(t); }
+  t.innerHTML = html; t.classList.toggle('crit', !!crit);
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
+
 function nextToken(){
   if (db.day !== todayStr()){ db.day = todayStr(); db.daySeq = 0; }
   db.daySeq++;
   return 'U-' + String(db.daySeq).padStart(2,'0');
 }
+
+/* unique internal id — display tokens (U-xx) reset daily while items are kept
+   for a week, so tokens recur across days; handlers locate items by this id */
+function uid(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
 
 /* daily demo seed — a believable morning so the boards aren't empty */
 const NAMES = ['Mariyam K','Thomas V','Anitha R','Suresh P','Fathima N','Georgekutty J','Lakshmi D','Rahim A','Annie C','Vishnu M','Sara P','Biju T','Meera S','Abdul S','Rosamma J','Hari K','Nimmy P','Joseph M','Devika A','Shaji K'];
@@ -358,8 +390,8 @@ function seedToday(){
   const open = d.getTime();
   if (now < open + 30*M) return;                                     /* too early — start clean */
   let n = 0;
-  const mk = (room, regAt, wait, dur, cls) => ({ id:'seed' + (++n), token: nextToken(),
-    name: NAMES[n % NAMES.length], uhid:'', cls: cls || (Math.random() < 0.25 ? 'IP' : 'OP'),
+  const mk = (room, regAt, wait, dur, cls) => ({ id: uid(), token: nextToken(),
+    name: NAMES[++n % NAMES.length], uhid:'', cls: cls || (Math.random() < 0.25 ? 'IP' : 'OP'),
     room, regAt, startAt: regAt + wait*M, endAt: regAt + (wait + dur)*M, status:'done', demo:true });
   /* completed scans through the day so far */
   for (const r of ROOMS){
@@ -373,13 +405,13 @@ function seedToday(){
     }
   }
   /* someone on the couch in rooms 1 & 4, and a live queue */
-  const scan = (room, minsIn, name, cls) => db.items.push({ id:'seed' + (++n), token: nextToken(), name, uhid:'',
+  const scan = (room, minsIn, name, cls) => db.items.push({ id: uid(), token: nextToken(), name, uhid:'',
     cls: cls || 'OP', room, regAt: now - (minsIn + 18)*M, startAt: now - minsIn*M, endAt: null, status:'scanning', demo:true });
   scan('USG-1', 7, 'Rosamma J'); scan('USG-4', 12, 'Devika A', 'OP');
   const waitq = [ ['USG-1', 24, 'Hari K', 'OP'], ['USG-1', 9, 'Nimmy P', 'OP'],
     ['USG-2', 16, 'Joseph M', 'IP'], ['USG-3', 31, 'Meera S', 'OP'], ['USG-3', 5, 'Shaji K', 'OP'] ];
   for (const [room, agoMin, name, cls] of waitq)
-    db.items.push({ id:'seed' + (++n), token: nextToken(), name, uhid:'', cls, room,
+    db.items.push({ id: uid(), token: nextToken(), name, uhid:'', cls, room,
       regAt: now - agoMin*M, startAt: null, endAt: null, status:'waiting', demo:true });
   save();
 }
@@ -437,17 +469,17 @@ $('rSubmit').onclick = async () => {
   let tokenNo;
   if (mode === 'server'){
     const r = await api('op', { op:{ kind:'usg_add', name, uhid, cls: clsSel, room } });
-    if (!r.ok){ alert(r.error || 'Could not register — check the connection and try again.'); return; }
+    if (!r.ok){ toast(r.error || 'Could not register — check the connection and try again.', true); return; }
     tokenNo = r.tokenNo; await fetchServer();
   } else {
     tokenNo = nextToken();
-    db.items.push({ id:'p' + Date.now(), token: tokenNo, name, uhid,
+    db.items.push({ id: uid(), token: tokenNo, name, uhid,
       cls: clsSel, room, regAt: Date.now(), startAt: null, endAt: null, status:'waiting' });
     save();
   }
   $('rName').value = ''; $('rUhid').value = ''; clsSel = 'OP';
   renderAll();
-  alert('Token ' + tokenNo + ' — ' + ROOMS.find(r => r.id === room).name + '\nExpected wait ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
+  toast('Token <b>' + tokenNo + '</b> issued — ' + ROOMS.find(r => r.id === room).name + ' · expected start ~' + estStart(room, waitingSorted(room).length - 1) + ' min');
 };
 
 async function moveEntry(id, to){
@@ -461,6 +493,8 @@ async function moveEntry(id, to){
     i.status = to;
     if (to === 'scanning') i.startAt = Date.now();
     if (to === 'done') i.endAt = Date.now();
+    if (to === 'noshow') i.noShowAt = Date.now();
+    if (to === 'waiting') delete i.noShowAt;
     save();
   }
   renderAll();
@@ -471,6 +505,7 @@ function esc(s){ const d = document.createElement('div'); d.textContent = s || '
 function hhmm(ts){ const d = new Date(ts);
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 
+let confirmNoShow = null;
 function renderQueue(){
   let html = '';
   for (const r of ROOMS){
@@ -494,8 +529,25 @@ function renderQueue(){
         '<div class="qname">' + (esc(i.name) || 'Unnamed patient') + '</div>' +
         '<div class="qmeta">Registered ' + hhmm(i.regAt) + (i.uhid ? ' · ' + esc(i.uhid) : '') + ' · position ' + (k+1) + ' in queue</div>' +
         '<div class="qact">' + (k === 0 && !cur ? '<button class="primary" data-start="' + i.id + '">Start scan</button>' : '') +
-        '<button class="ghost" data-noshow="' + i.id + '">No-show</button></div></div>';
+        (confirmNoShow === i.id
+          ? '<button data-noshow-yes="' + i.id + '" style="border-color:var(--crit); background:var(--crit-bg); color:var(--crit)">Confirm no-show</button>' +
+            '<button class="ghost" data-noshow-no="' + i.id + '">Keep in queue</button>'
+          : '<button class="ghost" data-noshow="' + i.id + '">No-show</button>') + '</div></div>';
     });
+  }
+  const ns = today().filter(i => i.status === 'noshow').sort((a,b) => (b.noShowAt || b.regAt) - (a.noShowAt || a.regAt));
+  if (ns.length){
+    const prev = $('nsRecall');
+    html += '<details class="recall" id="nsRecall"' + (prev && prev.open ? ' open' : '') + '>' +
+      '<summary>No-shows today (' + ns.length + ')</summary>' +
+      ns.map(i => '<div class="qcard"><div class="qrow"><span class="tok">' + i.token + '</span>' +
+        '<span class="badge ' + CLS_BADGE[i.cls] + '">' + i.cls + '</span>' +
+        '<span class="badge b-w-due">no-show ' + hhmm(i.noShowAt || i.regAt) + '</span></div>' +
+        '<div class="qname">' + (esc(i.name) || 'Unnamed patient') + '</div>' +
+        '<div class="qmeta">Registered ' + hhmm(i.regAt) + (i.uhid ? ' · ' + esc(i.uhid) : '') + ' · ' +
+          (ROOMS.find(r => r.id === i.room) || { name:i.room }).name + '</div>' +
+        '<div class="qact"><button class="primary" data-requeue="' + i.id + '">Re-queue</button></div></div>').join('') +
+      '</details>';
   }
   $('queueList').innerHTML = html;
   for (const b of $('queueList').querySelectorAll('[data-start]'))
@@ -503,7 +555,15 @@ function renderQueue(){
   for (const b of $('queueList').querySelectorAll('[data-done]'))
     b.onclick = () => moveEntry(b.dataset.done, 'done');
   for (const b of $('queueList').querySelectorAll('[data-noshow]'))
-    b.onclick = () => moveEntry(b.dataset.noshow, 'noshow');
+    b.onclick = () => { confirmNoShow = b.dataset.noshow; renderQueue(); };
+  for (const b of $('queueList').querySelectorAll('[data-noshow-no]'))
+    b.onclick = () => { confirmNoShow = null; renderQueue(); };
+  for (const b of $('queueList').querySelectorAll('[data-noshow-yes]'))
+    b.onclick = async () => { confirmNoShow = null; await moveEntry(b.dataset.noshowYes, 'noshow'); };
+  for (const b of $('queueList').querySelectorAll('[data-requeue]'))
+    b.onclick = async () => { const i = db.items.find(x => x.id === b.dataset.requeue);
+      await moveEntry(b.dataset.requeue, 'waiting');
+      if (i) toast('Token <b>' + i.token + '</b> back in queue — ' + (ROOMS.find(r => r.id === i.room) || { name:i.room }).name); };
 }
 
 /* ---------- rooms ---------- */
@@ -578,7 +638,8 @@ function setTab(t){
 }
 for (const k of ['queue','rooms','trends']) $('nav-' + k).onclick = () => setTab(k);
 
-function renderAll(){ renderRegister(); renderQueue(); renderRooms(); renderTrends(); }
+function renderLive(){ renderQueue(); renderRooms(); renderTrends(); }
+function renderAll(){ renderRegister(); renderLive(); }
 (async () => {
   try{
     const r = await fetch('/api/health', { cache:'no-store' });
@@ -602,7 +663,7 @@ function renderAll(){ renderRegister(); renderQueue(); renderRooms(); renderTren
   }
   renderAll();
 })();
-setInterval(renderAll, 30e3);          /* live waits tick over */
+setInterval(renderLive, 30e3);         /* live waits tick over — registration form left untouched */
 </script>
 
 <script>if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(()=>{});</script>

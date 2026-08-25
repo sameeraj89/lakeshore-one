@@ -19,11 +19,10 @@
     --card:#FFFFFF;
     --ink:#16232E;
     --ink-2:#5B6B78;
-    --ink-3:#8A99A5;
+    --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F;          /* VPS Lakeshore navy — 2026 design system */
     --brand-ink:#001542;
-    --maroon:#E8146E;         /* brand accent pink, restrained */
     --dark-card:rgba(30,39,46,0.94);
     --dark-card-ink:#F2F6F9;
     --dark-card-sub:#9FB0BC;
@@ -34,11 +33,11 @@
     --pill-ok-ink:#1B5A8E;
     --pill-warn-bg:#FCF1CE;
     --pill-warn-ink:#7A5200;
-    --pill-down-bg:#D03B3B;
+    --pill-down-bg:#B3261E;
     --pill-down-ink:#FFFFFF;
     --good:#0B7C3E;
-    --warn:#B47B00;
-    --crit:#D03B3B;
+    --warn:#8A5A00;
+    --crit:#B3261E;
     --map-land:#F2EFE4;
     --map-water:#A9D2E8;
     --map-green:#DCE9D0;
@@ -55,10 +54,9 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8;
-      --maroon:#D66A97;
       --dark-card:rgba(16,22,27,0.94); --dark-card-ink:#F2F6F9; --dark-card-sub:#93A5B1;
       --chip-bg:rgba(16,22,27,0.78); --chip-ink:#E4ECF2; --chip-active-bg:#345268;
       --pill-ok-bg:#22303B; --pill-ok-ink:#A9CFEC;
@@ -75,10 +73,9 @@
   }
   :root[data-theme="dark"]{
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8;
-    --maroon:#D66A97;
     --dark-card:rgba(16,22,27,0.94); --dark-card-ink:#F2F6F9; --dark-card-sub:#93A5B1;
     --chip-bg:rgba(16,22,27,0.78); --chip-ink:#E4ECF2; --chip-active-bg:#345268;
     --pill-ok-bg:#22303B; --pill-ok-ink:#A9CFEC;
@@ -110,6 +107,7 @@
 
   /* ---------- Header ---------- */
   header{
+    /* header stays brand navy in both themes — intentional */
     background:#001E5F;
     padding:14px 16px 12px;
     display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -119,6 +117,7 @@
     display:block; font-family:'Figtree',sans-serif; font-weight:600; font-size:10px;
     letter-spacing:2.2px; color:#8FA9DC; text-transform:uppercase; margin-top:6px;
   }
+  .live-wrap{display:flex; flex-direction:column; align-items:flex-end; gap:4px}
   .live{
     display:flex; align-items:center; gap:6px;
     font-size:11px; font-weight:500; color:#fff;
@@ -126,13 +125,41 @@
     padding:5px 10px; border-radius:999px;
   }
   .live .dot{width:7px; height:7px; border-radius:50%; background:#4FC97E; animation:pulse 2s infinite}
+  /* feed freshness — dot colors picked for the fixed navy header, not the theme tokens */
+  .live[data-state="stale"] .dot{background:#E5B84B; animation:none}
+  .live[data-state="offline"] .dot{background:#F07A6A; animation:none}
+  #liveLabel{font-weight:700; letter-spacing:0.6px; font-variant-numeric:tabular-nums}
+  .updated{font-size:9.5px; color:#8FA9DC; font-variant-numeric:tabular-nums}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   @media (prefers-reduced-motion: reduce){ .live .dot{animation:none} }
   .demo-tag{
     margin:0 16px 8px; font-size:10.5px; color:var(--ink-3);
     display:flex; align-items:center; gap:6px;
   }
-  .demo-tag b{color:var(--warn); font-weight:700; letter-spacing:1px}
+  .demo-tag b{color:var(--pill-warn-ink); font-weight:700; font-size:11.5px; letter-spacing:1px}
+
+  /* ---------- Campus rollup (worst status wins) ---------- */
+  .rollup{
+    margin:0 16px 10px; padding:10px 14px;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    display:flex; align-items:center; gap:9px;
+    font-family:'Figtree',sans-serif; font-weight:800; font-size:16px;
+    letter-spacing:-0.2px; text-wrap:balance;
+  }
+  .rollup::before{content:""; width:10px; height:10px; border-radius:50%; flex:none}
+  .rollup.good{color:var(--good)} .rollup.good::before{background:var(--good)}
+  .rollup.warn{color:var(--warn)} .rollup.warn::before{background:var(--warn)}
+  .rollup.crit{color:var(--crit)} .rollup.crit::before{background:var(--crit)}
+
+  /* right column at the wall breakpoint — empty & hidden on mobile */
+  .side{display:none}
+  .cycle-toggle{
+    align-self:flex-start;
+    background:var(--card); color:var(--ink-2); border:1px solid var(--line);
+    border-radius:999px; padding:7px 14px; min-height:36px;
+    font-family:'Figtree',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .cycle-toggle[aria-pressed="true"]{color:var(--brand); border-color:var(--brand)}
 
   /* ---------- Map & overlays ---------- */
   .map-wrap{
@@ -178,7 +205,7 @@
   .chip{
     flex:none; display:flex; align-items:center; gap:7px;
     background:var(--chip-bg); color:var(--chip-ink);
-    border:none; border-radius:999px; padding:9px 15px;
+    border:none; border-radius:999px; padding:9px 15px; min-height:44px;
     font-family:'Figtree',sans-serif; font-size:13px; font-weight:500;
     cursor:pointer; backdrop-filter:blur(4px);
   }
@@ -195,6 +222,7 @@
     box-shadow:var(--shadow-sm); border:1px solid rgba(22,35,46,0.06);
     cursor:pointer; user-select:none; -webkit-user-select:none;
   }
+  .pin::after{content:""; position:absolute; inset:-8px; border-radius:999px} /* 44px touch target without growing the visual pin */
   .pin svg{width:15px; height:15px; flex:none}
   .pin.ok{background:var(--pill-ok-bg); color:var(--pill-ok-ink)}
   .pin.warn{background:var(--pill-warn-bg); color:var(--pill-warn-ink)}
@@ -234,7 +262,7 @@
   .locate svg{width:20px; height:20px}
   .map-credit{
     position:absolute; left:10px; bottom:8px; z-index:15;
-    font-size:9.5px; color:var(--map-label); pointer-events:none;
+    font-size:9.5px; color:var(--ink-3); pointer-events:none;
   }
 
   /* ---------- Trends card ---------- */
@@ -299,6 +327,39 @@
     text-align:center;
   }
   footer b{color:var(--ink-2)}
+
+  /* ---------- Wall / desktop layout ---------- */
+  @media (min-width:1280px){
+    .app{
+      max-width:1680px; display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(380px,1fr);
+      grid-template-rows:auto auto 1fr auto;
+      grid-template-areas:"header header" "demo demo" "map side" "footer footer";
+    }
+    header{grid-area:header}
+    .demo-tag{grid-area:demo}
+    .map-wrap{grid-area:map; height:auto; min-height:560px; max-height:none; border-right:1px solid var(--line)}
+    .sheet{display:none}   /* its sections move into .side via JS */
+    footer{grid-area:footer}
+    .side{
+      grid-area:side; display:flex; flex-direction:column; gap:14px;
+      padding:0 16px 16px; min-width:0; overflow-y:auto;
+      border-bottom:1px solid var(--line);
+    }
+    .side .chips{flex-wrap:wrap; overflow:visible}
+    .rollup{margin:0; padding:14px 18px; font-size:30px; letter-spacing:-0.4px}
+    .rollup::before{width:15px; height:15px}
+    /* at-distance legibility */
+    .pin{font-size:15px; padding:8px 15px 8px 11px}
+    .pin svg{width:18px; height:18px}
+    .chip{font-size:15px; padding:11px 18px}
+    .chip svg{width:17px; height:17px}
+  }
+
+  /* global keyboard focus — .chip/.pin rules above are more specific and keep their own outlines */
+  button:focus-visible, a:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px;
+  }
 </style>
 
 
@@ -310,9 +371,13 @@
       <img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
       <small>IT Pulse &middot; Campus Monitor</small>
     </div>
-    <div class="live"><span class="dot"></span><span id="clock">--:--</span></div>
+    <div class="live-wrap">
+      <div class="live" id="live" data-state="live"><span class="dot"></span><span id="liveLabel" hidden></span><span id="clock">--:--</span></div>
+      <div class="updated" id="updated">Updated --:--:--</div>
+    </div>
   </header>
   <p class="demo-tag"><b>DEMO</b> Simulated telemetry &mdash; prototype for the IT team</p>
+  <div class="rollup good" id="rollup" role="status">All systems normal</div>
 
   <div class="map-wrap" id="mapWrap" aria-label="Campus map with live IT status">
     <svg id="map" viewBox="0 0 1000 1240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -373,7 +438,7 @@
           <div class="k-bar"><i id="kpi2Bar"></i></div>
         </div>
       </div>
-      <div class="chips" id="chips" role="tablist" aria-label="Monitoring layers"></div>
+      <div class="chips" id="chips" aria-label="Monitoring layers"></div>
     </div>
 
     <div id="pins"></div>
@@ -390,6 +455,10 @@
     </div>
     <div class="map-credit">Schematic campus map &middot; not to scale</div>
   </div>
+
+  <aside class="side" id="side" aria-label="Campus status panel">
+    <button class="cycle-toggle" id="cycleToggle" aria-pressed="true">Auto-cycle layers: on</button>
+  </aside>
 
   <div class="sheet">
     <section class="trends" aria-live="polite">
@@ -426,6 +495,14 @@
    DATA LAYER — everything below `DEMO` is simulated.
    To wire real telemetry: have your collector emit the same shape
    { zones, layers } and replace DEMO (or fetch it on an interval).
+
+   ADAPTER POINT: call window.itpulseFeed(data) on your collector's interval
+   with a partial patch, e.g. { layers:{ net:{ zones:{ cafe:'ok' } } }, incidents:[...] }.
+   Every call updates the zones and refreshes lastDataAt, which drives the
+   header indicator: keep calling and it stays LIVE; stop calling and it
+   degrades to STALE after 2 min, then OFFLINE after 10. Call
+   itpulseFeed(null) (or { error:true }) to report a collector failure and
+   go OFFLINE immediately. In simulated mode an internal 60 s tick keeps it LIVE.
    ========================================================================= */
 
 const ICONS = {
@@ -616,14 +693,15 @@ const DEMO = {
 const $ = id => document.getElementById(id);
 const mapWrap = $('mapWrap'), mapSvg = $('map'), pinsEl = $('pins'), calloutEl = $('callout');
 
-/* --- deterministic pseudo-random series (stable across renders) --- */
+/* --- deterministic pseudo-random series (stable within a data tick) --- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 
+let simSeed = 0; // bumped by the simulated 60 s tick to re-jitter the metrics
 const N_POINTS = 49; // 12 h at 15-min samples
 function genSeries(layerKey, zoneId){
   const L = DEMO.layers[layerKey], st = L.zones[zoneId], m = L.metric;
-  const rnd = mulberry32(hashStr(layerKey + ':' + zoneId));
+  const rnd = mulberry32(hashStr(layerKey + ':' + zoneId + ':' + simSeed));
   const base = st === 'warn' ? m.warnBase : m.base;
   const out = []; let v = base;
   for (let i = 0; i < N_POINTS; i++){
@@ -718,7 +796,7 @@ function renderChips(){
   wrap.innerHTML = '';
   for (const [key, L] of Object.entries(DEMO.layers)){
     const b = document.createElement('button');
-    b.className = 'chip'; b.setAttribute('role','tab');
+    b.className = 'chip';
     b.setAttribute('aria-pressed', key === state.layer);
     b.innerHTML = ICONS[L.icon] + '<span>' + L.label + '</span>';
     b.addEventListener('click', () => {
@@ -849,6 +927,32 @@ function renderIncidents(){
   }).join('');
 }
 
+/* campus rollup — worst status wins, across ALL layers */
+function renderRollup(){
+  const rank = { ok:0, warn:1, down:2 };
+  const worst = {}; // zoneId -> { st, layer }
+  for (const [lk, L] of Object.entries(DEMO.layers))
+    for (const [zid, st] of Object.entries(L.zones))
+      if (!worst[zid] || rank[st] > rank[worst[zid].st]) worst[zid] = { st, layer: lk };
+  const down = Object.entries(worst).filter(([, w]) => w.st === 'down');
+  const warn = Object.entries(worst).filter(([, w]) => w.st === 'warn');
+  const el = $('rollup');
+  let cls = 'good', txt = 'All systems normal';
+  if (down.length){
+    cls = 'crit';
+    if (down.length === 1){
+      const [zid, w] = down[0];
+      const z = ZONES.find(z => z.id === zid);
+      txt = '1 zone down — ' + z.name.replace(/\s*\(.*\)/, '') + ' ' + DEMO.layers[w.layer].label.toLowerCase();
+    } else txt = down.length + ' zones down';
+  } else if (warn.length){
+    cls = 'warn';
+    txt = warn.length + ' zone' + (warn.length > 1 ? 's' : '') + ' degraded';
+  }
+  el.className = 'rollup ' + cls;
+  el.textContent = txt;
+}
+
 function selectZone(id){
   state.zone = id;
   for (const el of pinsEl.children) el.classList.toggle('selected', el.dataset.zone === id);
@@ -857,7 +961,7 @@ function selectZone(id){
 }
 
 function renderAll(){
-  renderChips(); renderKpis(); renderPins(); renderTrends(); renderIncidents();
+  renderChips(); renderKpis(); renderPins(); renderTrends(); renderIncidents(); renderRollup();
 }
 
 /* --- pan / zoom --- */
@@ -888,15 +992,90 @@ $('recenter').addEventListener('click', () => { Object.assign(view, HOME); apply
 
 window.addEventListener('resize', () => { applyView(); drawChart(); });
 
+/* --- feed freshness: LIVE (<2 min) -> STALE (2–10 min) -> OFFLINE (>10 min / failure) --- */
+let lastDataAt = Date.now(), feedFailed = false;
+function fmtHM(t){ const d = new Date(t); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function renderLive(){
+  const age = Date.now() - lastDataAt;
+  const st = feedFailed || age > 600e3 ? 'offline' : age > 120e3 ? 'stale' : 'live';
+  $('live').dataset.state = st;
+  const lbl = $('liveLabel');
+  lbl.hidden = st === 'live';
+  $('clock').hidden = st !== 'live';
+  if (st === 'stale') lbl.textContent = 'STALE · ' + fmtHM(lastDataAt);
+  else if (st === 'offline') lbl.textContent = 'OFFLINE · since ' + fmtHM(lastDataAt);
+  $('updated').textContent = 'Updated ' + fmtHM(lastDataAt) + ':' + String(new Date(lastDataAt).getSeconds()).padStart(2,'0');
+}
+
+/* ADAPTER HOOK — real collectors call this; see the DATA LAYER note above. */
+window.itpulseFeed = function(data){
+  if (!data || data.error){ feedFailed = true; renderLive(); return; }
+  if (data.layers){
+    for (const [k, patch] of Object.entries(data.layers)){
+      const L = DEMO.layers[k];
+      if (!L) continue;
+      if (patch.zones) Object.assign(L.zones, patch.zones);
+      if (patch.kpi1) Object.assign(L.kpi1, patch.kpi1);
+      if (patch.kpi2) Object.assign(L.kpi2, patch.kpi2);
+    }
+  }
+  if (data.incidents) DEMO.incidents = data.incidents;
+  feedFailed = false;
+  lastDataAt = Date.now();
+  renderAll(); renderLive();
+};
+
+/* simulated data tick — re-jitters the metrics and keeps the feed LIVE */
+setInterval(() => { simSeed++; window.itpulseFeed({}); }, 60e3);
+
 /* clock */
 function tickClock(){
   const d = new Date();
   $('clock').textContent = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  renderLive();
 }
-tickClock(); setInterval(tickClock, 15e3);
+
+/* --- wall layout: move the status stack into the right column at >=1280px --- */
+const wallMQ = window.matchMedia('(min-width:1280px)');
+const appEl = document.querySelector('.app'), overlayTop = document.querySelector('.overlay-top'),
+      sheetEl = document.querySelector('.sheet'),
+      trendsSec = document.querySelector('.trends'), incSec = document.querySelector('.incidents');
+function layoutForWall(){
+  if (wallMQ.matches){
+    $('side').append($('rollup'), $('chips'), $('cycleToggle'), $('kpiCard'), incSec, trendsSec);
+  } else {
+    appEl.insertBefore($('rollup'), mapWrap);
+    overlayTop.append($('kpiCard'), $('chips'));
+    sheetEl.append(trendsSec, incSec);
+  }
+  applyView();
+  requestAnimationFrame(drawChart);
+}
+wallMQ.addEventListener('change', layoutForWall);
+
+/* auto-cycle layers on the wall; any interaction pauses it for 2 min */
+let cycleOn = true, cyclePausedUntil = 0;
+setInterval(() => {
+  if (!wallMQ.matches || !cycleOn || Date.now() < cyclePausedUntil) return;
+  const keys = Object.keys(DEMO.layers);
+  state.layer = keys[(keys.indexOf(state.layer) + 1) % keys.length];
+  if (!(state.zone in DEMO.layers[state.layer].zones)) state.zone = Object.keys(DEMO.layers[state.layer].zones)[0];
+  renderAll();
+}, 20e3);
+for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart'])
+  document.addEventListener(ev, () => { cyclePausedUntil = Date.now() + 120e3; }, { passive:true, capture:true });
+$('cycleToggle').addEventListener('click', () => {
+  cycleOn = !cycleOn;
+  if (cycleOn) cyclePausedUntil = 0; // turning it back on resumes immediately
+  const b = $('cycleToggle');
+  b.setAttribute('aria-pressed', String(cycleOn));
+  b.textContent = 'Auto-cycle layers: ' + (cycleOn ? 'on' : 'off');
+});
 
 /* boot */
+tickClock(); setInterval(tickClock, 15e3);
 renderAll();
+layoutForWall();
 applyView();
 requestAnimationFrame(() => { applyView(); drawChart(); });
 </script>

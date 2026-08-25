@@ -14,10 +14,10 @@
 <style>
   :root{
     --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
-    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#5F707C;
     --line:rgba(22,35,46,0.10);
     --brand:#001E5F; --brand-ink:#001542; --brand-tint:rgba(0,30,95,0.07); --chart-bar:rgba(0,30,95,0.32);
-    --maroon:#E8146E; --maroon-tint:rgba(232,20,110,0.08);
+    --magenta:#E8146E; --magenta-tint:rgba(232,20,110,0.08);
     --good:#0B7C3E; --good-bg:#E3F3E9;
     --warn:#8A5A00; --warn-bg:#FCF1CE;
     --crit:#B3261E; --crit-bg:#FBE4E2;
@@ -28,10 +28,10 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+      --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
       --line:rgba(232,238,243,0.12);
       --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-      --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+      --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
       --good:#4FC97E; --good-bg:#173726;
       --warn:#E5B84B; --warn-bg:#3D3319;
       --crit:#F07A6A; --crit-bg:#43201C;
@@ -42,10 +42,10 @@
   }
   :root[data-theme="dark"]{
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
-    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
+    --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#8C9CA8;
     --line:rgba(232,238,243,0.12);
     --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-tint:rgba(95,164,218,0.12); --chart-bar:rgba(95,164,218,0.42);
-    --maroon:#D66A97; --maroon-tint:rgba(214,106,151,0.12);
+    --magenta:#D66A97; --magenta-tint:rgba(214,106,151,0.12);
     --good:#4FC97E; --good-bg:#173726;
     --warn:#E5B84B; --warn-bg:#3D3319;
     --crit:#F07A6A; --crit-bg:#43201C;
@@ -59,6 +59,7 @@
   .app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--shell);
        box-shadow:0 0 40px rgba(22,35,46,0.08); display:flex; flex-direction:column}
 
+  /* header stays brand navy in both themes — intentional */
   header{background:#001E5F; padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px}
   .wordmark img{height:32px; display:block}
   .wordmark small{display:block; font-weight:600; font-size:10px; letter-spacing:2.2px; color:#8FA9DC;
@@ -76,7 +77,7 @@
     border-radius:999px; padding:4px 11px; margin:0 0 10px}
 
   .daynav{display:flex; align-items:center; gap:8px; margin-bottom:12px}
-  .daynav button{width:38px; height:38px; border-radius:10px; border:1.5px solid var(--line); background:var(--card);
+  .daynav button{width:44px; height:44px; border-radius:10px; border:1.5px solid var(--line); background:var(--card);
     color:var(--brand-ink); font-size:17px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
   .daynav .dlabel{flex:1; text-align:center; background:var(--card); border:1.5px solid var(--line);
     border-radius:10px; padding:9px 8px; font-weight:700; font-size:13.5px}
@@ -86,7 +87,7 @@
   .kpi{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 10px}
   .kpi .n{font-weight:700; font-size:20px; letter-spacing:-0.3px; font-variant-numeric:tabular-nums}
   .kpi .n small{font-size:11px; color:var(--ink-2); font-weight:600}
-  .kpi .l{font-size:9px; letter-spacing:0.8px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.35}
+  .kpi .l{font-size:10px; letter-spacing:0.8px; text-transform:uppercase; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.35}
 
   /* ---------- timeline ---------- */
   .tl-wrap{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow-sm);
@@ -99,22 +100,23 @@
   .tl-body{position:relative; border-right:1px solid var(--line)}
   .tl-body:last-child{border-right:0}
   .tl-time{position:relative}
-  .tl-hour{position:absolute; left:0; right:0; font-size:9px; color:var(--ink-3); text-align:center;
+  .tl-hour{position:absolute; left:0; right:0; font-size:10px; color:var(--ink-3); text-align:center;
     transform:translateY(-50%); font-variant-numeric:tabular-nums}
   .tl-grid{position:absolute; left:0; right:0; border-top:1px dashed var(--line)}
   .tl-case{position:absolute; left:3px; right:3px; border-radius:8px; padding:4px 6px; overflow:hidden;
-    font-size:9px; line-height:1.3; border:1.5px solid; cursor:default}
-  .tl-case .tc-t{font-weight:800; font-size:9px; font-variant-numeric:tabular-nums}
+    font-size:10px; line-height:1.3; border:1.5px solid; cursor:default}
+  .tl-case .tc-t{font-weight:800; font-size:10px; font-variant-numeric:tabular-nums}
   .tl-case .tc-p{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .tl-case .tc-s{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:.85}
+  .tl-case .tc-d{display:none}   /* surgeon line — shown on desktop where columns are wide */
   .st-booked{background:var(--brand-tint); border-color:var(--brand); color:var(--brand-ink)}
   .st-confirmed{background:var(--info-bg); border-color:var(--info); color:var(--info)}
-  .st-in_ot{background:var(--maroon-tint); border-color:var(--maroon); color:var(--maroon)}
+  .st-in_ot{background:var(--magenta-tint); border-color:var(--magenta); color:var(--magenta)}
   .st-done{background:var(--good-bg); border-color:var(--good); color:var(--good)}
   .st-delayed{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
   .st-cancelled{background:var(--crit-bg); border-color:var(--crit); color:var(--crit); opacity:.55; text-decoration:line-through}
-  .nowline{position:absolute; left:0; right:0; height:0; border-top:2px solid var(--maroon); z-index:2}
-  .nowline::before{content:""; position:absolute; left:2px; top:-4px; width:6px; height:6px; border-radius:50%; background:var(--maroon)}
+  .nowline{position:absolute; left:0; right:0; height:0; border-top:2px solid var(--magenta); z-index:2}
+  .nowline::before{content:""; position:absolute; left:2px; top:-4px; width:6px; height:6px; border-radius:50%; background:var(--magenta)}
   .tl-legend{display:flex; flex-wrap:wrap; gap:10px; font-size:11px; color:var(--ink-2); padding:10px 4px 2px}
   .tl-legend b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px}
 
@@ -126,11 +128,11 @@
   label.fl:first-child{margin-top:0}
   label.fl span{font-weight:500; text-transform:none; letter-spacing:0}
   input, select{width:100%; background:var(--shell); border:1.5px solid var(--line);
-    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:14px; color:var(--ink); outline:none}
+    border-radius:10px; padding:11px 12px; font-family:'Figtree',sans-serif; font-size:16px; color:var(--ink); outline:none}
   input:focus, select:focus{border-color:var(--brand)}
   .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
-  .seg button{flex:1 1 20%; min-width:64px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
+  .seg button{flex:1 1 20%; min-width:64px; min-height:44px; padding:9px 6px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--shell); color:var(--ink-2); font-size:12px; font-weight:700; cursor:pointer;
     font-family:'Figtree',sans-serif; line-height:1.3}
   .seg button[aria-pressed="true"]{border-color:var(--brand); background:var(--brand-tint); color:var(--brand-ink)}
@@ -163,7 +165,7 @@
   .badge{display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700}
   .b-booked{background:var(--brand-tint); color:var(--brand-ink)}
   .b-confirmed{background:var(--info-bg); color:var(--info)}
-  .b-in_ot{background:var(--maroon-tint); color:var(--maroon)}
+  .b-in_ot{background:var(--magenta-tint); color:var(--magenta)}
   .b-done{background:var(--good-bg); color:var(--good)}
   .b-delayed{background:var(--warn-bg); color:var(--warn)}
   .b-cancelled{background:var(--crit-bg); color:var(--crit)}
@@ -172,7 +174,7 @@
   .qmeta{font-size:12px; color:var(--ink-2); margin-top:4px; line-height:1.5}
   .qact{margin-top:9px; display:flex; gap:7px; flex-wrap:wrap}
   .qact button{border:1.5px solid var(--line); background:var(--shell); color:var(--brand-ink); border-radius:10px;
-    padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
+    min-height:44px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Figtree',sans-serif}
   .qact button.primary{border-color:var(--brand); background:var(--brand-tint)}
   .qact button.ghost{color:var(--ink-3)}
   .empty{text-align:center; color:var(--ink-3); font-size:13px; padding:24px 10px; line-height:1.6}
@@ -185,13 +187,13 @@
   .hbar:last-child{margin-bottom:0}
   .hbar .hl{color:var(--ink); font-weight:500; line-height:1.3}
   .hbar .tr{height:14px; border-radius:4px; background:var(--brand-tint); overflow:hidden}
-  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--maroon)}
+  .hbar .tr i{display:block; height:100%; border-radius:4px; background:var(--magenta)}
   .hbar .hv{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
   .cols{display:flex; align-items:flex-end; gap:5px; height:110px; padding-top:6px}
   .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end}
   .col .bar{width:100%; max-width:26px; border-radius:4px 4px 0 0; background:var(--chart-bar)}
   .col.hot .bar{background:var(--brand)}
-  .col .cl{font-size:9px; color:var(--ink-3); font-weight:500}
+  .col .cl{font-size:10px; color:var(--ink-3); font-weight:500}
   .col .cv{font-size:10px; color:var(--ink-2); font-weight:700; font-variant-numeric:tabular-nums}
 
   footer{padding:0 20px 100px; font-size:11px; line-height:1.6; color:var(--ink-3); text-align:center}
@@ -202,6 +204,50 @@
     display:flex; flex-direction:column; align-items:center; gap:4px}
   nav button svg{width:21px; height:21px}
   nav button[aria-pressed="true"]{color:var(--brand)}
+
+  .ferr{display:none; margin-top:12px; font-size:12.5px; font-weight:600; color:var(--crit); line-height:1.5}
+  .ferr.show{display:block}
+  .toast{display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:60;
+    max-width:440px; width:calc(100% - 32px); background:var(--crit-bg); color:var(--crit); border:1.5px solid var(--crit);
+    border-radius:12px; padding:11px 14px; font-size:12.5px; font-weight:700; box-shadow:var(--shadow); text-align:center}
+  .toast.show{display:block}
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+  .tl-case:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px}
+
+  /* ---------- responsive board: per-theatre list on phones, full-width timeline on desktop ---------- */
+  .board-views{margin-bottom:10px}
+  .board-views button{flex:1 1 0}
+  .tl-outer{position:relative}
+  .tl-outer::after{content:""; position:absolute; top:1px; right:1px; bottom:1px; width:26px;
+    border-radius:0 16px 16px 0; pointer-events:none; opacity:0; transition:opacity .2s;
+    background:linear-gradient(to left, var(--card) 15%, transparent)}
+  #tab-day.view-list .tl-outer, #tab-day.view-list .tl-legend{display:none}
+  #tab-day.view-tl .otlist{display:none}
+  .ot-sec{margin-bottom:16px}
+  .ot-sec-h{display:flex; align-items:baseline; gap:7px; margin:0 2px 7px}
+  .ot-sec-h b{font-size:13px; font-weight:800}
+  .ot-sec-h span{font-size:10.5px; letter-spacing:0.6px; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+  .otl-case{padding:10px 12px; margin-bottom:8px}
+  .otl-empty{font-size:12px; color:var(--ink-3); padding:2px 2px 6px}
+  .tl-outer:not(.at-end)::after{opacity:1}   /* right-edge fade — cue that the timeline scrolls sideways */
+  @media (min-width:740px){
+    #tab-day .board-views{display:none}
+    #tab-day .otlist{display:none}
+    #tab-day.view-list .tl-outer{display:block}
+    #tab-day.view-list .tl-legend{display:flex}
+  }
+  @media (min-width:1024px){
+    .app{max-width:1200px}
+    nav{max-width:1200px}
+    #tab-book, #tab-list, #tab-insights{max-width:672px; margin-left:auto; margin-right:auto}
+    .tl-hour{font-size:11px}
+    .tl-head .otn{font-size:12.5px}
+    .tl-head .ots{font-size:10px}
+    .tl-case{font-size:12.5px; padding:5px 8px}
+    .tl-case .tc-t{font-size:12px}
+    .tl-case .tc-d{display:block}
+  }
 </style>
 </head>
 <body>
@@ -238,11 +284,18 @@
         <button id="dNext" aria-label="Next day">&rsaquo;</button>
       </div>
       <div class="kpis" id="dayKpis"></div>
-      <div class="tl-wrap" id="tlWrap"></div>
+      <div class="seg board-views" role="group" aria-label="Board layout">
+        <button type="button" id="bvList" aria-pressed="true">List</button>
+        <button type="button" id="bvTl" aria-pressed="false">Timeline</button>
+      </div>
+      <div class="otlist" id="otList"></div>
+      <div class="tl-outer" id="tlOuter">
+        <div class="tl-wrap" id="tlWrap"></div>
+      </div>
       <div class="tl-legend">
         <span><b style="background:var(--brand-tint); border:1.5px solid var(--brand)"></b>Booked</span>
         <span><b style="background:var(--info-bg); border:1.5px solid var(--info)"></b>Confirmed</span>
-        <span><b style="background:var(--maroon-tint); border:1.5px solid var(--maroon)"></b>In OT</span>
+        <span><b style="background:var(--magenta-tint); border:1.5px solid var(--magenta)"></b>In OT</span>
         <span><b style="background:var(--good-bg); border:1.5px solid var(--good)"></b>Done</span>
         <span><b style="background:var(--warn-bg); border:1.5px solid var(--warn)"></b>Delayed</span>
       </div>
@@ -274,7 +327,8 @@
           <div class="seg" id="bAnaes"></div>
           <label class="fl">Priority</label>
           <div class="seg" id="bPrio"></div>
-          <div class="conflict" id="conflictBox"></div>
+          <div class="conflict" id="conflictBox" aria-live="polite"></div>
+          <div class="ferr" id="bErr" aria-live="polite"></div>
           <button class="submit" id="bSubmit">Book this slot</button>
         </div>
       </div>
@@ -346,6 +400,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
       Insights</button>
   </nav>
+  <div class="toast" id="saveToast" role="alert">Could not save &mdash; storage may be full.</div>
 </div>
 
 <script>
@@ -377,13 +432,16 @@ function dayLabel(ds){
   return '<b>' + d.toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'short'}) + '</b><small>' +
     (rel ? rel + ' · ' : '') + 'OT day 07:00–21:00</small>';
 }
-function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML.replace(/"/g,'&quot;'); }
 
 /* ---------- store ---------- */
 const KEY = 'lakeshore-ot-schedule-v1';
 let db = { seq: 200, cases: [] };
 try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.cases) db = s; }catch(e){}
-function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function save(){ if (mode === 'server') return; try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){
+  const t = $('saveToast'); t.classList.add('show');
+  clearTimeout(save._t); save._t = setTimeout(() => t.classList.remove('show'), 6000);
+} }
 
 /* ---------- live server mode (Lakeshore One backend) ---------- */
 let mode = 'local', token = null, user = null, sseStarted = false;
@@ -485,6 +543,9 @@ function nextFree(ds, ot, fromMin, dur){
     if (!overlaps(ds, ot, s, dur).length) return s;
   return null;
 }
+function hasClash(c){
+  return c.status !== 'cancelled' && overlaps(c.date, c.ot, toMin(c.start), c.dur, c.id).length > 0;
+}
 
 /* ---------- day board ---------- */
 let boardDay = TODAY(), listDay = TODAY();
@@ -519,10 +580,14 @@ function renderBoard(){
     for (const c of onDay(boardDay).filter(c => c.ot === o.id)){
       const top = Math.round((toMin(c.start) - DAY_START) * PX);
       const h = Math.max(26, Math.round(c.dur * PX) - 3);
-      colHtml += '<div class="tl-case st-' + c.status + '" style="top:' + top + 'px; height:' + h + 'px" title="' +
-        esc(c.patient + ' — ' + c.proc + ' (' + c.surgeon + ')') + '">' +
-        '<div class="tc-t">' + c.start + ' · ' + Math.round(c.dur/60*10)/10 + 'h</div>' +
-        '<div class="tc-p">' + esc(c.patient) + '</div><div class="tc-s">' + esc(c.proc) + '</div></div>';
+      colHtml += '<div class="tl-case st-' + c.status + '" tabindex="0" style="top:' + top + 'px; height:' + h + 'px" title="' +
+        esc(c.patient + ' — ' + c.proc + ' (' + c.surgeon + ')') + '" aria-label="' +
+        esc(c.start + ' to ' + toHM(toMin(c.start) + c.dur) + ', ' + c.proc + ', ' + c.surgeon + ', ' +
+          ST_LABEL[c.status] + (hasClash(c) ? ', table clash' : '')) + '">' +
+        '<div class="tc-t">' + c.start + ' · ' + Math.round(c.dur/60*10)/10 + 'h' +
+        (hasClash(c) ? ' <span style="color:var(--crit)">· clash</span>' : '') + '</div>' +
+        '<div class="tc-p">' + esc(c.patient) + '</div><div class="tc-s">' + esc(c.proc) + '</div>' +
+        '<div class="tc-s tc-d">' + esc(c.surgeon) + '</div></div>';
     }
     if (boardDay === TODAY() && nowMin >= DAY_START && nowMin <= DAY_END)
       colHtml += '<div class="nowline" style="top:' + Math.round((nowMin - DAY_START)*PX) + 'px"></div>';
@@ -531,12 +596,45 @@ function renderBoard(){
   }
   grid += '</div>';
   $('tlWrap').innerHTML = grid;
+
+  /* per-theatre list — the phone-default view of the same day */
+  $('otList').innerHTML = OTS.map(o => {
+    const ocs = onDay(boardDay).filter(c => c.ot === o.id).sort((a,b) => toMin(a.start) - toMin(b.start));
+    return '<section class="ot-sec"><div class="ot-sec-h"><b>' + o.id + '</b><span>' + o.spec + '</span></div>' +
+      (ocs.length ? ocs.map(c =>
+        '<div class="qcard otl-case"><div class="qrow">' +
+        '<span class="refid">' + c.start + '&ndash;' + toHM(toMin(c.start) + c.dur) + '</span>' +
+        '<span class="badge b-' + c.status + '">' + ST_LABEL[c.status] + '</span>' +
+        (c.prio === 'Emergency' ? '<span class="badge b-emg">Emergency</span>' : '') +
+        (hasClash(c) ? '<span class="badge b-emg">Clash</span>' : '') + '</div>' +
+        '<div class="qtitle">' + esc(c.proc) + '</div>' +
+        '<div class="qmeta">' + esc(c.patient) + (c.uhid ? ' (' + esc(c.uhid) + ')' : '') +
+        ' &middot; ' + esc(c.surgeon) + ' &middot; ' + c.anaes + '</div></div>').join('')
+      : '<div class="otl-empty">No cases on this table.</div>') + '</section>';
+  }).join('');
+  tlFade();
 }
+/* board layout toggle — list is the phone default; the timeline stays reachable */
+let boardView = window.matchMedia('(min-width:740px)').matches ? 'tl' : 'list';
+function setBoardView(v){
+  boardView = v;
+  $('tab-day').classList.toggle('view-list', v === 'list');
+  $('tab-day').classList.toggle('view-tl', v === 'tl');
+  $('bvList').setAttribute('aria-pressed', v === 'list');
+  $('bvTl').setAttribute('aria-pressed', v === 'tl');
+  tlFade();
+}
+$('bvList').onclick = () => setBoardView('list');
+$('bvTl').onclick = () => setBoardView('tl');
+setBoardView(boardView);
+function tlFade(){ const w = $('tlWrap');
+  $('tlOuter').classList.toggle('at-end', w.scrollLeft + w.clientWidth >= w.scrollWidth - 4); }
+$('tlWrap').addEventListener('scroll', tlFade, { passive:true });
 $('dPrev').onclick = () => { boardDay = dstr(new Date(new Date(boardDay + 'T12:00') - 864e5)); renderBoard(); };
 $('dNext').onclick = () => { boardDay = dstr(new Date(+new Date(boardDay + 'T12:00') + 864e5)); renderBoard(); };
 
 /* ---------- booking ---------- */
-let durSel = 90, anaesSel = 'GA', prioSel = 'Elective';
+let durSel = 90, anaesSel = 'GA', prioSel = 'Elective', clashCase = null;
 function seg(el, items, sel, onPick, clsFn){
   el.innerHTML = '';
   for (const it of items){
@@ -556,23 +654,32 @@ function renderBook(){
     $('bOt').innerHTML = OTS.map(o => '<option value="' + o.id + '">' + o.id + ' · ' + o.spec + '</option>').join('');
   checkConflict();
 }
+function setSubmit(){
+  const bad = $('conflictBox').classList.contains('bad');
+  const emgClash = bad && clashCase && prioSel === 'Emergency';
+  $('bSubmit').disabled = bad && !emgClash;
+  $('bSubmit').textContent = emgClash ? 'Book with clash' : 'Book this slot';
+}
 function checkConflict(){
   const box = $('conflictBox'), ds = $('bDate').value, start = $('bStart').value;
   box.className = 'conflict';
-  if (!ds || !start) return;
+  clashCase = null;
+  if (!ds || !start){ setSubmit(); return; }
   const s = toMin(start);
   if (s < DAY_START || s + durSel > DAY_END){
     box.className = 'conflict bad';
     box.innerHTML = 'Outside the OT day (07:00&ndash;21:00). A ' + durSel + '-min case must start by ' + toHM(DAY_END - durSel) + '.';
-    return;
+    setSubmit(); return;
   }
   const clash = overlaps(ds, $('bOt').value, s, durSel);
   if (clash.length){
     const c = clash[0];
+    clashCase = c;
     const nf = nextFree(ds, $('bOt').value, s, durSel);
     box.className = 'conflict bad';
     box.innerHTML = '<b>Table clash</b> with ' + c.id + ' &mdash; ' + esc(c.patient) + ', ' + esc(c.proc) +
       ' (' + c.start + '&ndash;' + toHM(toMin(c.start) + c.dur) + ' + turnover).' +
+      (prioSel === 'Emergency' ? '<br>Emergency priority — you can still book; the board will show the clash honestly.' : '') +
       (nf !== null ? '<button type="button" id="useSlot">Use next free slot — ' + toHM(nf) + '</button>'
                    : '<br>No free slot left on this table today — pick another theatre or day.');
     const u = $('useSlot'); if (u) u.onclick = () => { $('bStart').value = toHM(nf); checkConflict(); };
@@ -580,14 +687,25 @@ function checkConflict(){
     box.className = 'conflict ok';
     box.innerHTML = 'Slot free on ' + $('bOt').value + ': ' + start + '&ndash;' + toHM(s + durSel) + ', with turnover protected.';
   }
-  $('bSubmit').disabled = box.classList.contains('bad');
+  setSubmit();
 }
 for (const id of ['bDate','bStart','bOt']) $(id).addEventListener('change', checkConflict);
+function bookErr(msg, field){
+  const e = $('bErr'); e.textContent = msg; e.classList.add('show'); field.focus();
+}
+for (const id of ['bPatient','bProc','bSurgeon'])
+  $(id).addEventListener('input', () => { $('bErr').classList.remove('show'); });
 $('bSubmit').onclick = async () => {
   const patient = $('bPatient').value.trim(), proc = $('bProc').value.trim(), surgeon = $('bSurgeon').value.trim();
-  if (!patient){ $('bPatient').focus(); return; }
-  if (!proc){ $('bProc').focus(); return; }
-  if (!surgeon){ $('bSurgeon').focus(); return; }
+  if (!patient){ bookErr('Patient name is missing — enter it to book.', $('bPatient')); return; }
+  if (!proc){ bookErr('Procedure is missing — enter it to book.', $('bProc')); return; }
+  if (!surgeon){ bookErr('Operating surgeon is missing — enter it to book.', $('bSurgeon')); return; }
+  $('bErr').classList.remove('show');
+  if (clashCase && prioSel === 'Emergency'){
+    if (!confirm('This overlaps ' + clashCase.id + ' — ' + clashCase.patient + ', ' + clashCase.proc +
+      ' (' + clashCase.start + '–' + toHM(toMin(clashCase.start) + clashCase.dur) + ').' +
+      ' The board will show the clash honestly.')) return;
+  }
   const c = { id: null, date: $('bDate').value, ot: $('bOt').value, start: $('bStart').value, dur: durSel,
     patient, uhid: $('bUhid').value.trim(), proc, surgeon, anaes: anaesSel, prio: prioSel, status:'booked' };
   if (mode === 'server'){
@@ -617,6 +735,7 @@ $('bSubmit').onclick = async () => {
 $('bAgain').onclick = () => {
   $('bConfirm').classList.remove('show'); $('bookForm').style.display = 'block';
   $('bPatient').value = ''; $('bUhid').value = ''; $('bProc').value = ''; $('bSurgeon').value = '';
+  $('bErr').classList.remove('show');
   checkConflict();
 };
 
@@ -629,6 +748,7 @@ function renderList(){
     '<span class="badge b-booked" style="background:var(--neutral-bg); color:var(--neutral)">' + c.ot + '</span>' +
     '<span class="badge b-' + c.status + '">' + ST_LABEL[c.status] + '</span>' +
     (c.prio === 'Emergency' ? '<span class="badge b-emg">Emergency</span>' : '') +
+    (hasClash(c) ? '<span class="badge b-emg">Clash</span>' : '') +
     (c.caseId ? '<span class="badge b-confirmed">Live board &middot; ' + c.caseId + '</span>' : '') + '</div>' +
     '<div class="qtitle">' + c.start + '&ndash;' + toHM(toMin(c.start) + c.dur) + ' &middot; ' + esc(c.patient) +
       (c.uhid ? ' <span style="font-weight:500; color:var(--ink-3)">(' + esc(c.uhid) + ')</span>' : '') + '</div>' +
@@ -647,7 +767,15 @@ function renderList(){
       if (c) moveCase(c, NEXT[c.status][1]); };
   for (const b of $('caseList').querySelectorAll('[data-delay]'))
     b.onclick = () => { const c = db.cases.find(x => x.id === b.dataset.delay);
-      if (c) moveCase(c, 'delayed'); };
+      if (!c) return;
+      const ns = Math.min(DAY_END - c.dur, toMin(c.start) + 30);
+      const clash = overlaps(c.date, c.ot, ns, c.dur, c.id);
+      if (clash.length){
+        const o = clash[0];
+        if (!confirm('Delaying creates a clash with ' + o.start + '–' + toHM(toMin(o.start) + o.dur) +
+          ' ' + o.proc + '. Delay anyway? The board will show the clash.')) return;
+      }
+      moveCase(c, 'delayed'); };
   for (const b of $('caseList').querySelectorAll('[data-cancel]'))
     b.onclick = () => { const c = db.cases.find(x => x.id === b.dataset.cancel);
       if (c && confirm('Cancel ' + c.id + ' — ' + c.patient + ', ' + c.proc + '?')) moveCase(c, 'cancelled'); };
