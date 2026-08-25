@@ -93,6 +93,19 @@ CREATE TABLE catalog (
   UNIQUE (module, type, category)
 );
 
+-- ---------- Staff suggestion box ----------
+-- Ideas to make Lakeshore a better place to work, submitted from the hub
+-- landing page. No auth by design: anonymity encourages honest input.
+CREATE TABLE ideas (
+  id          bigserial PRIMARY KEY,
+  idea        varchar(1000) NOT NULL,
+  theme       varchar(40),                      -- e.g. 'Workplace & wellbeing'
+  name        varchar(60),                      -- optional; blank = anonymous
+  department  varchar(60),                      -- optional
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_ideas_time ON ideas (created_at DESC);
+
 -- ---------- Bed tracking ----------
 CREATE TYPE bed_status AS ENUM ('occupied','dirty','cleaning','ready','blocked');
 CREATE TABLE beds (
@@ -133,3 +146,75 @@ CREATE TABLE ot_milestones (
   at       timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_ot_day ON ot_cases (case_date, suite, planned);
+
+-- ---------- module apps: patient inputs / USG wait / OT bookings ----------
+CREATE TYPE pi_type AS ENUM ('Complaint','Suggestion','Appreciation','Query');
+CREATE TYPE pi_stage AS ENUM ('New','Acknowledged','In progress','Resolved','Closed');
+CREATE TABLE patient_inputs (
+  id           varchar(16) PRIMARY KEY,          -- 'PI-241'
+  who          varchar(40) NOT NULL,             -- patient / bystander / staff on behalf
+  type         pi_type     NOT NULL,
+  sev          varchar(10),                      -- complaints only: High / Medium / Low
+  place        varchar(60) NOT NULL,             -- touchpoint
+  about        varchar(60) NOT NULL,             -- theme
+  patient_name varchar(60),                      -- PII: Patient Experience team only
+  uhid         varchar(20),
+  descr        text        NOT NULL,
+  stage        pi_stage    NOT NULL DEFAULT 'New',
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  resolved_at  timestamptz,
+  created_by   varchar(20) REFERENCES users(emp_id)
+);
+CREATE INDEX idx_pi_stage ON patient_inputs (stage, created_at);
+
+CREATE TYPE usg_status AS ENUM ('waiting','scanning','done','noshow');
+CREATE TABLE usg_entries (
+  id         varchar(16) PRIMARY KEY,            -- 'USG-242'
+  token_no   varchar(8)  NOT NULL,               -- per-day token 'U-07'
+  name       varchar(60),
+  uhid       varchar(20),
+  cls        varchar(12) NOT NULL,               -- OP / IP / Emergency
+  room       varchar(10) NOT NULL,               -- USG-1..USG-4
+  reg_at     timestamptz NOT NULL DEFAULT now(),
+  start_at   timestamptz,                        -- wait = start_at - reg_at
+  end_at     timestamptz,
+  status     usg_status  NOT NULL DEFAULT 'waiting',
+  created_by varchar(20) REFERENCES users(emp_id)
+);
+CREATE INDEX idx_usg_day ON usg_entries (reg_at);
+
+CREATE TYPE otb_status AS ENUM ('booked','confirmed','in_ot','done','delayed','cancelled');
+CREATE TABLE ot_bookings (                       -- planning board; live stages stay on ot_cases
+  id         varchar(16) PRIMARY KEY,            -- 'OTB-243'
+  case_date  date        NOT NULL,
+  ot         varchar(10) NOT NULL,               -- OT-1..OT-6
+  start      time        NOT NULL,               -- 07:00-21:00, 20-min turnover enforced
+  dur_min    int         NOT NULL,
+  patient    varchar(60) NOT NULL,
+  uhid       varchar(20),
+  procedure  varchar(120) NOT NULL,
+  surgeon    varchar(60)  NOT NULL,
+  anaes      varchar(20),
+  prio       varchar(12),                        -- Elective / Emergency
+  status     otb_status   NOT NULL DEFAULT 'booked',
+  case_id    varchar(16) REFERENCES ot_cases(id),-- set on confirm: the case pushed to the live stage board
+  created_by varchar(20) REFERENCES users(emp_id)
+);
+CREATE INDEX idx_otb_day ON ot_bookings (case_date, ot, start);
+
+-- WhatsApp intake channel (server/whatsapp.js) ------------------------
+CREATE TABLE wa_links (
+  phone     varchar(20) PRIMARY KEY,               -- E.164 digits only
+  emp_id    varchar(20) NOT NULL REFERENCES users(emp_id),
+  linked_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE wa_messages (
+  id        bigserial PRIMARY KEY,
+  wamid     varchar(128) UNIQUE,                   -- Meta message id (webhook dedup)
+  phone     varchar(20)  NOT NULL,
+  direction varchar(3)   NOT NULL CHECK (direction IN ('in','out')),
+  body      varchar(1000),
+  ticket_id varchar(16) REFERENCES tickets(id),
+  at        timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_wa_msg_phone ON wa_messages (phone, at DESC);

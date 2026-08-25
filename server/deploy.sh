@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Lakeshore One — one-shot VPS deploy (Ubuntu 24.04, run as root).
 #
-#   sudo bash deploy.sh ops.yourdomain.in
+#   sudo bash deploy.sh opslakeshore.in
 #
 # Prerequisite: a DNS A record for that domain already pointing at this
 # machine's public IP (Caddy needs it to obtain the HTTPS certificate).
+#
+# Server settings (GOOGLE_CLIENT_ID, GOOGLE_HOSTED_DOMAIN, DEMO_LOGIN, …)
+# live in /etc/lakeshore-one.env — created once below, never overwritten,
+# so they survive re-runs. Edit it, then: systemctl restart lakeshore-one.
 #
 # What it does: installs Node 22 + Caddy, clones/updates this repo into
 # /opt/lakeshore-one, runs the server as a systemd service under www-data,
@@ -39,6 +43,20 @@ fi
 mkdir -p "$DIR/server/data"
 chown -R www-data:www-data "$DIR/server/data"
 
+echo "==> Server settings file (survives re-runs of this script)"
+if [ ! -f /etc/lakeshore-one.env ]; then
+  cat > /etc/lakeshore-one.env <<'ENV'
+# Lakeshore One server settings — edit, then: systemctl restart lakeshore-one
+# Google SSO: OAuth web client ID (leave empty to hide the Google button)
+#GOOGLE_CLIENT_ID=
+# Auto-provision staff for this Workspace domain (optional)
+#GOOGLE_HOSTED_DOMAIN=
+# One-tap demo nurse sign-in — never enable on a production instance
+#DEMO_LOGIN=1
+ENV
+  chmod 600 /etc/lakeshore-one.env
+fi
+
 echo "==> Installing systemd service"
 cat > /etc/systemd/system/lakeshore-one.service <<UNIT
 [Unit]
@@ -48,6 +66,7 @@ After=network.target
 [Service]
 ExecStart=/usr/bin/node $DIR/server/server.js
 Environment=PORT=8080
+EnvironmentFile=-/etc/lakeshore-one.env
 Restart=always
 User=www-data
 
@@ -83,4 +102,5 @@ curl -fsS http://127.0.0.1:8080/api/health && echo
 echo
 echo "Done. Once DNS has propagated, open:  https://$DOMAIN"
 echo "First sign-in: LH-ADMIN (you set the PIN on first login, then add real users)."
+echo "Google SSO / demo settings: edit /etc/lakeshore-one.env, then: systemctl restart lakeshore-one"
 echo "Certificate errors in the first minute are normal while Caddy provisions HTTPS."

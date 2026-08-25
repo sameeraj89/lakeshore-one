@@ -20,14 +20,25 @@ Optional environment variables:
 
 | Variable | Effect |
 |---|---|
-| `GOOGLE_CLIENT_ID` | Enables **Sign in with Google** on the login page. Create an OAuth *Web application* client in Google Cloud Console, add the site's origin (e.g. `https://ops.yourdomain.in`) to *Authorized JavaScript origins*, and set the client ID here. The server verifies the ID token against Google's public keys — no extra packages. |
-| `GOOGLE_HOSTED_DOMAIN` | e.g. `lakeshorehospital.org` — Google sign-ins from this Workspace domain that don't match an existing account are auto-provisioned as `staff`. Without it, only emails an admin has linked to an account (user management → Google email) can sign in with Google. |
+| `GOOGLE_CLIENT_ID` | Enables **Sign in with Google** on the login page. Create an OAuth *Web application* client in Google Cloud Console, add the site's origin (`https://opslakeshore.in`) to *Authorized JavaScript origins*, and set the client ID here. The server verifies the ID token against Google's public keys — no extra packages. |
+| `GOOGLE_HOSTED_DOMAIN` | e.g. `lakeshorehospital.org` — Google sign-ins from this Workspace domain that don't match an existing account are auto-provisioned as `staff`. Any other verified Google account (e.g. a personal Gmail) that isn't linked to an account gets **guest access** instead — same limits as the Guest button, but with a persistent identity (`GV-…`), so they keep the same account and ticket history across sign-ins. Emails an admin has linked (user management → Google email) always sign in with that account's full role, whatever the domain. |
 | `DEMO_LOGIN=1` | Enables the one-tap **Nurse (demo)** sign-in button. Leave unset in production. |
 
 Guest and Patient one-tap sign-in is always available: it creates an ephemeral
 limited account (`GST-…` / `PAT-…`) that can only raise facility, housekeeping
 and security requests and track its own tickets — no bed board, OT list, queue
-or dashboard data is ever sent to those sessions.
+or dashboard data is ever sent to those sessions. Guest accounts that raised
+no requests are purged automatically after 7 days.
+
+## Tests
+
+```bash
+node --test server/server.test.js
+```
+
+Zero-dependency integration tests (built-in `node:test`) covering the
+security-sensitive surface: guest/patient access limits, role-filtered state,
+demo-nurse and Google SSO gating, email linking and uniqueness, guest cleanup.
 
 On first run it creates `server/data/` containing:
 - `lakeshore-one.db` — the SQLite database (WAL mode). **Back this file up.**
@@ -57,17 +68,32 @@ served by this process. Updates stream to all open sessions over SSE.
 Any small VPS works (1 vCPU / 1 GB is plenty — e.g. DigitalOcean Bangalore
 or AWS Lightsail Mumbai to keep data in India).
 
-**Quick way** — point a DNS A record (e.g. `ops.yourdomain.in`) at the
+**Quick way** — point a DNS A record (`opslakeshore.in`) at the
 server's IP, then on a fresh Ubuntu 24.04 box:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sameeraj89/lakeshore-one/main/server/deploy.sh -o deploy.sh
-sudo bash deploy.sh ops.yourdomain.in
+sudo bash deploy.sh opslakeshore.in
 ```
 
 That installs Node 22 + Caddy, sets up the systemd service, HTTPS, and a
 nightly backup to `/var/backups/lakeshore-one`. Re-run it any time to pull
-updates. The equivalent manual steps:
+updates.
+
+To enable Google sign-in on the deployed service, put the env vars in
+`/etc/lakeshore-one.env` — `deploy.sh` creates it once and never overwrites
+it, so settings survive re-runs:
+
+```bash
+sudo nano /etc/lakeshore-one.env
+# uncomment / set:
+#   GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
+#   GOOGLE_HOSTED_DOMAIN=lakeshorehospital.org
+sudo systemctl restart lakeshore-one
+curl https://opslakeshore.in/api/config   # → should show your client ID
+```
+
+The equivalent manual steps:
 
 ```bash
 # 1. Node 22+ (Ubuntu 24.04)
@@ -84,6 +110,7 @@ After=network.target
 [Service]
 ExecStart=/usr/bin/node /opt/lakeshore-one/server/server.js
 Environment=PORT=8080
+EnvironmentFile=-/etc/lakeshore-one.env
 Restart=always
 User=www-data
 [Install]
@@ -93,7 +120,7 @@ sudo systemctl enable --now lakeshore-one
 
 # 4. HTTPS with Caddy (automatic certificates)
 sudo apt install -y caddy
-echo 'ops.yourdomain.in {
+echo 'opslakeshore.in {
   reverse_proxy 127.0.0.1:8080
 }' | sudo tee /etc/caddy/Caddyfile && sudo systemctl reload caddy
 
@@ -118,8 +145,10 @@ enough for the pilot:
   wants a managed database; the API surface stays the same.
 - Replace `/api/login` with AD / SSO (OIDC) when IT is ready — tokens, roles
   and every other route are unchanged.
-- Notifications (WhatsApp / web push) hook naturally into `applyOp()` where
-  `broadcast()` is called.
+- **WhatsApp intake with AI triage is built in** — staff report incidents by
+  texting the hospital's WhatsApp number, and get ticket updates back there.
+  Setup guide: `server/WHATSAPP.md`. Web push remains a natural follow-on at
+  the same `applyOp()` hook.
 
 ## Alternative: run it on a PC inside the hospital (₹0)
 
