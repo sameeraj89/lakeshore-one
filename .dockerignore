@@ -1,0 +1,9 @@
+# Never bake runtime state or VCS into the image (Dockerfile uses `COPY . .`)
+.git
+.gitignore
+server/data
+**/data/db.json
+node_modules
+*.log
+.DS_Store
+.claude

@@ -467,11 +467,21 @@ async function fetchServer(){
 function startSSE(){
   if (sseStarted || !token) return;
   sseStarted = true;
-  try{
-    new EventSource('/api/events?token=' + encodeURIComponent(token)).onmessage = async () => {
-      if (await fetchServer()){ renderAll(); checkConflict(); }
-    };
-  }catch(e){}
+  connectSSE();
+}
+/* Each connection uses a fresh single-use ticket (fetched with the bearer token
+   in the header), so the token stays out of the URL and its access logs. The
+   ticket is spent on connect, so a drop needs a new one before reconnecting. */
+async function connectSSE(){
+  if (!token) return;
+  let r;
+  try{ r = await api('sse-ticket'); }catch(e){ r = null; }
+  if (!r || !r.ok || !r.ticket){ setTimeout(connectSSE, 5000); return; }
+  let es;
+  try{ es = new EventSource('/api/events?ticket=' + encodeURIComponent(r.ticket)); }
+  catch(e){ setTimeout(connectSSE, 5000); return; }
+  es.onmessage = async () => { if (await fetchServer()){ renderAll(); checkConflict(); } };
+  es.onerror = () => { es.close(); setTimeout(connectSSE, 3000); };
 }
 function showGate(on){
   $('gate').style.display = on ? 'block' : 'none';

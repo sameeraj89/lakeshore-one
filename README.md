@@ -55,7 +55,7 @@ least P2 — the healthcare-specific rule ITIL guides call out.
 
 ## Backend server (live multi-user system)
 
-`server/server.js` is a zero-dependency Node.js (>= 22.5) backend: sign-in,
+`server/server.js` is a zero-dependency Node.js (>= 22.13) backend: sign-in,
 server-enforced roles, SQLite storage, live updates via SSE, and it serves
 this same frontend. The Patient Inputs, USG Wait and OT Schedule modules
 detect the server automatically and switch from single-device demo mode to
@@ -63,7 +63,7 @@ the shared system: employee ID + PIN sign-in, role-checked operations
 (`pi_*`, `usg_*`, `otb_*` on `/api/op`), server-side OT clash checks, and
 real-time updates over the same SSE stream. Patient-input details are
 restricted server-side to the Patient Experience team (quality /
-management); other staff see only their own captures. `node server/server.js` and the apps switch from demo
+management); other staff see only their own captures. `npm start` and the apps switch from demo
 mode to the real system automatically. See `server/README.md` for the VPS
 deployment guide (systemd + Caddy HTTPS, ~5 minutes) and `Dockerfile`.
 

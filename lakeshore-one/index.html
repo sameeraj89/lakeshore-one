@@ -818,19 +818,41 @@ async function fetchState(){
   return r.ok;
 }
 let sseStarted = false, lastOwnAction = 0;
-function startSSE(){
-  if (sseStarted || !token) return;
-  sseStarted = true;
+let refetchInFlight = false, refetchQueued = false;
+/* Coalesce a burst of SSE messages into a single state refetch: if one is
+   already running, remember to run once more when it finishes. */
+async function refreshFromServer(){
+  if (refetchInFlight){ refetchQueued = true; return; }
+  refetchInFlight = true;
   try{
-    const es = new EventSource('/api/events?token=' + encodeURIComponent(token));
-    es.onmessage = async () => {
+    do{
+      refetchQueued = false;
       const prev = db;
       if (await fetchState()){
         if (Date.now() - lastOwnAction > 2500) notifyDiff(prev, db);
         renderAll();
       }
-    };
-  }catch(e){}
+    } while (refetchQueued);
+  } finally { refetchInFlight = false; }
+}
+function startSSE(){
+  if (sseStarted || !token) return;
+  sseStarted = true;
+  connectSSE();
+}
+/* Each connection uses a fresh single-use ticket (fetched with the bearer
+   token in the header), so the token stays out of the URL. On drop we fetch a
+   new ticket and reconnect, since the old one is already spent. */
+async function connectSSE(){
+  if (!token) return;
+  let r;
+  try{ r = await api('sse-ticket'); }catch(e){ r = null; }
+  if (!r || !r.ok || !r.ticket){ setTimeout(connectSSE, 5000); return; }
+  let es;
+  try{ es = new EventSource('/api/events?ticket=' + encodeURIComponent(r.ticket)); }
+  catch(e){ setTimeout(connectSSE, 5000); return; }
+  es.onmessage = () => refreshFromServer();
+  es.onerror = () => { es.close(); setTimeout(connectSSE, 3000); };
 }
 /* role-aware toasts computed from state diffs delivered over SSE */
 function notifyDiff(prev, next){

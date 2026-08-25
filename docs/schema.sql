@@ -1,8 +1,15 @@
 -- =====================================================================
 -- Lakeshore One — production database schema (PostgreSQL 14+)
--- Target state for the pilot's data model when it moves off the
--- artifact JSON store onto a hospital-hosted server.
--- The pilot's data/db.json maps 1:1 onto these tables.
+-- Target state when the pilot moves off SQLite onto a managed database.
+-- Table and column names track the live server (server/server.js). Two
+-- differences are intentional:
+--   1. This schema is normalized: it stores actor/author/reporter emp_ids with
+--      FKs to users, and joins for display names. The pilot's flat store
+--      denormalizes those names (reporter_name, assignee_name, author_name,
+--      actor_name) alongside the ids.
+--   2. `sla_matrix` and `catalog` are the production target; the single-file
+--      pilot still hardcodes them (the PRI object and the frontend MODS
+--      categories). Both are flagged inline below.
 -- =====================================================================
 
 CREATE TYPE user_role AS ENUM (
@@ -24,6 +31,7 @@ CREATE TABLE users (
   -- Pilot uses SHA-256(app|emp_id|pin). Production: replace with
   -- AD / SSO (OIDC or SAML against hospital identity) and drop this column.
   pin_hash      char(64),
+  tok_epoch     int          NOT NULL DEFAULT 0,  -- bumped on PIN reset to invalidate live sessions
   active        boolean      NOT NULL DEFAULT true,
   created_at    timestamptz  NOT NULL DEFAULT now(),
   created_by    varchar(20)  REFERENCES users(emp_id)
@@ -42,10 +50,11 @@ CREATE TABLE tickets (
   status        ticket_status   NOT NULL DEFAULT 'open',
   reporter      varchar(20)     NOT NULL REFERENCES users(emp_id),
   assignee      varchar(20)     REFERENCES users(emp_id),
+  photo         text,                             -- pilot: inline data: URI; production: object-store key
   created_at    timestamptz     NOT NULL DEFAULT now(),
   responded_at  timestamptz,                      -- first agent action (SLA response)
   resolved_at   timestamptz,
-  closed_at     timestamptz,
+  closed_at     timestamptz,                      -- production target; pilot derives closure from status
   due_respond   timestamptz     NOT NULL,         -- from the priority matrix
   due_resolve   timestamptz     NOT NULL
 );
@@ -61,20 +70,21 @@ CREATE TABLE ticket_updates (
   to_status   ticket_status,
   body        text,
   author      varchar(20) NOT NULL REFERENCES users(emp_id),
-  created_at  timestamptz NOT NULL DEFAULT now()
+  at          timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_updates_ticket ON ticket_updates (ticket_id, created_at);
+CREATE INDEX idx_updates_ticket ON ticket_updates (ticket_id, at);
 
-CREATE TABLE audit_log (
+CREATE TABLE audit (
   id          bigserial PRIMARY KEY,
   actor       varchar(20) NOT NULL,
   action      text        NOT NULL,
-  ref         varchar(32),                        -- ticket id / emp id
-  created_at  timestamptz NOT NULL DEFAULT now()
+  ref         varchar(32),                        -- production target: split ticket/emp id out (pilot inlines it in `action`)
+  at          timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_audit_time ON audit_log (created_at DESC);
+CREATE INDEX idx_audit_time ON audit (at DESC);
 
--- Priority / SLA matrix (minutes) — kept as data so Quality can tune it
+-- TARGET-ONLY (pilot hardcodes the PRI object in server.js):
+-- Priority / SLA matrix (minutes) — as data so Quality can tune it
 CREATE TABLE sla_matrix (
   priority       ticket_priority PRIMARY KEY,
   respond_mins   int NOT NULL,
@@ -83,6 +93,7 @@ CREATE TABLE sla_matrix (
 INSERT INTO sla_matrix VALUES
   ('P1', 15, 240), ('P2', 60, 480), ('P3', 240, 1440), ('P4', 1440, 4320);
 
+-- TARGET-ONLY (pilot hardcodes categories in the frontend MODS object):
 -- Service catalog — two-level, per ITIL practice
 CREATE TABLE catalog (
   id        serial PRIMARY KEY,
@@ -133,7 +144,7 @@ CREATE TABLE ot_cases (
   case_date date        NOT NULL,
   planned   time        NOT NULL,
   dur_min   int         NOT NULL,
-  procedure varchar(120) NOT NULL,              -- procedure only; no patient names
+  procedure_name varchar(120) NOT NULL,         -- procedure only; no patient names
   surgeon   varchar(60)  NOT NULL,
   status    ot_stage     NOT NULL DEFAULT 'scheduled',
   created_by varchar(20) REFERENCES users(emp_id)
