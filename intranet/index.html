@@ -14,228 +14,384 @@
 <style>
   /* ---------- Theme tokens ---------- */
   :root{
-    --bg:#EDF1F5;
-    --shell:#F7F9FB;
-    --card:#FFFFFF;
-    --ink:#16232E;
-    --ink-2:#5B6B78;
-    --ink-3:#8A99A5;
+    --bg:#EDF1F5; --shell:#F7F9FB; --card:#FFFFFF;
+    --ink:#16232E; --ink-2:#5B6B78; --ink-3:#8A99A5;
     --line:rgba(22,35,46,0.10);
-    --brand:#001E5F;          /* VPS Lakeshore navy — 2026 design system */
-    --brand-ink:#0B2B6B;
-    --accent:#E8146E;         /* brand accent pink, restrained */
+    --brand:#001E5F; --brand-ink:#0B2B6B; --brand-2:#2B7CBE;
+    --accent:#E8146E;
     --accent-soft:rgba(232,20,110,0.09);
     --brand-soft:rgba(11,43,107,0.06);
-    --good:#0B7C3E;
-    --warn:#B47B00;
+    --good:#0B7C3E; --good-soft:rgba(11,124,62,0.10);
+    --warn:#B47B00; --warn-soft:rgba(180,123,0,0.12);
+    --crit:#C62828; --crit-soft:rgba(198,40,40,0.10);
     --shadow-sm:0 2px 8px rgba(22,35,46,0.14);
+    --shadow-lg:0 18px 50px rgba(0,10,40,0.28);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0E1418; --shell:#121A20; --card:#1A242C;
       --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
       --line:rgba(232,238,243,0.12);
-      --brand:#5FA4DA; --brand-ink:#8FC1E8;
+      --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-2:#7FB6E4;
       --accent:#F0699F; --accent-soft:rgba(240,105,159,0.14);
       --brand-soft:rgba(95,164,218,0.10);
-      --good:#4FC97E; --warn:#E5B84B;
+      --good:#4FC97E; --good-soft:rgba(79,201,126,0.14);
+      --warn:#E5B84B; --warn-soft:rgba(229,184,75,0.14);
+      --crit:#F07A6A; --crit-soft:rgba(240,122,106,0.14);
       --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+      --shadow-lg:0 18px 50px rgba(0,0,0,0.55);
     }
   }
   :root[data-theme="dark"]{
     --bg:#0E1418; --shell:#121A20; --card:#1A242C;
     --ink:#E8EEF3; --ink-2:#9DACB8; --ink-3:#71818D;
     --line:rgba(232,238,243,0.12);
-    --brand:#5FA4DA; --brand-ink:#8FC1E8;
+    --brand:#5FA4DA; --brand-ink:#8FC1E8; --brand-2:#7FB6E4;
     --accent:#F0699F; --accent-soft:rgba(240,105,159,0.14);
     --brand-soft:rgba(95,164,218,0.10);
-    --good:#4FC97E; --warn:#E5B84B;
+    --good:#4FC97E; --good-soft:rgba(79,201,126,0.14);
+    --warn:#E5B84B; --warn-soft:rgba(229,184,75,0.14);
+    --crit:#F07A6A; --crit-soft:rgba(240,122,106,0.14);
     --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+    --shadow-lg:0 18px 50px rgba(0,0,0,0.55);
   }
 
   *{box-sizing:border-box; margin:0; padding:0}
   html,body{height:100%}
-  body{
-    background:var(--bg); color:var(--ink);
-    font-family:'Figtree', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .app{
-    max-width:480px; margin:0 auto; min-height:100vh;
-    background:var(--shell);
-    box-shadow:0 0 40px rgba(22,35,46,0.08);
-    display:flex; flex-direction:column; padding-bottom:76px;
-  }
+  body{background:var(--bg); color:var(--ink);
+    font-family:'Figtree', system-ui, -apple-system, sans-serif; -webkit-font-smoothing:antialiased}
 
   /* ---------- Header ---------- */
-  header{
-    background:#001E5F; padding:14px 16px 12px;
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-  }
-  .wordmark img{height:32px; display:block}
-  .wordmark small{
-    display:block; font-weight:600; font-size:10px; letter-spacing:2.2px;
-    color:#8FA9DC; text-transform:uppercase; margin-top:6px;
-  }
-  .mock-tag{
-    font-size:10px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
-    color:#fff; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.28);
-    padding:5px 10px; border-radius:999px; white-space:nowrap;
-  }
-  .demo-tag{margin:10px 16px 0; font-size:10.5px; color:var(--ink-3); display:flex; align-items:center; gap:6px}
-  .demo-tag b{color:var(--warn); font-weight:700; letter-spacing:1px}
+  header{background:#001E5F; color:#fff; position:sticky; top:0; z-index:60}
+  .hd{max-width:1240px; margin:0 auto; padding:11px 16px 12px;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+  .wordmark{display:flex; align-items:center; gap:12px; flex:none}
+  .wordmark img{height:30px; display:block}
+  .wordmark small{display:block; font-weight:600; font-size:9.5px; letter-spacing:2px;
+    color:#8FA9DC; text-transform:uppercase; margin-top:5px}
+  .hd-spacer{flex:1}
 
-  /* ---------- Shared bits ---------- */
+  .searchbox{position:relative; flex:1 1 260px; min-width:180px; max-width:460px}
+  .searchbox input{width:100%; border:1px solid rgba(255,255,255,0.26); border-radius:10px;
+    background:rgba(255,255,255,0.12); color:#fff; font-family:inherit; font-size:13.5px;
+    padding:9px 32px 9px 34px}
+  .searchbox input::placeholder{color:#A8BEE2}
+  .searchbox input:focus{outline:2px solid #8FA9DC; outline-offset:1px; background:rgba(255,255,255,0.18)}
+  .searchbox svg{position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:15px; height:15px; color:#A8BEE2; pointer-events:none}
+  .searchbox .clr{position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    border:0; background:none; color:#A8BEE2; cursor:pointer; font-size:17px; padding:2px 6px; display:none}
+  .searchbox.has .clr{display:block}
+
+  .roleswitch{display:flex; align-items:center; gap:7px; flex:none}
+  .roleswitch label{font-size:9.5px; font-weight:700; letter-spacing:1.3px;
+    text-transform:uppercase; color:#8FA9DC; white-space:nowrap}
+  .roleswitch select{border:1px solid rgba(255,255,255,0.26); border-radius:999px;
+    background:rgba(255,255,255,0.12); color:#fff; font-family:inherit; font-size:12.5px;
+    font-weight:600; padding:6px 10px; cursor:pointer}
+  .roleswitch select option{color:#16232E}
+
+  .demo-strip{background:var(--warn-soft); color:var(--ink-2); font-size:11px;
+    padding:7px 16px; text-align:center; border-bottom:1px solid var(--line)}
+  .demo-strip b{color:var(--warn); font-weight:700; letter-spacing:1px}
+
+  /* ---------- Shell / layout ---------- */
+  .shell{max-width:1240px; margin:0 auto; display:block; padding-bottom:80px}
+  aside.side{display:none}
+  main{min-width:0}
+
+  @media (min-width:960px){
+    .shell{display:grid; grid-template-columns:224px minmax(0,1fr); gap:26px;
+      padding:24px 20px 40px; align-items:start}
+    aside.side{display:block; position:sticky; top:76px}
+    .sidenav{background:var(--card); border:1px solid var(--line); border-radius:16px;
+      padding:8px; box-shadow:var(--shadow-sm)}
+    .sidenav button{width:100%; display:flex; align-items:center; gap:11px; border:0;
+      background:none; color:var(--ink-2); font-family:inherit; font-size:14px; font-weight:600;
+      padding:10px 12px; border-radius:11px; cursor:pointer; text-align:left}
+    .sidenav button svg{width:18px; height:18px; flex:none}
+    .sidenav button:hover{background:var(--brand-soft); color:var(--ink)}
+    .sidenav button[aria-pressed="true"]{background:var(--brand); color:#fff}
+    .side-note{margin-top:14px; font-size:11px; color:var(--ink-3); line-height:1.6; padding:0 6px}
+  }
+
+  /* ---------- Sections ---------- */
   .tab{display:none; padding:14px 16px 26px; flex-direction:column; gap:14px}
   .tab.active{display:flex}
-  .panel{
-    background:var(--card); border:1px solid var(--line); border-radius:18px;
-    padding:16px; box-shadow:var(--shadow-sm);
-  }
-  .panel h2{font-weight:800; font-size:18px; letter-spacing:-0.2px}
-  .panel .sub{font-size:12.5px; color:var(--ink-2); margin-top:3px; line-height:1.5}
+  @media (min-width:960px){ .tab{padding:0} }
+
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px; box-shadow:var(--shadow-sm)}
+  .panel h2{font-weight:800; font-size:19px; letter-spacing:-0.2px}
+  .panel .sub{font-size:12.5px; color:var(--ink-2); margin-top:4px; line-height:1.55; max-width:70ch}
   .kicker{font-size:10.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-3)}
-  .pill{
-    display:inline-flex; align-items:center; font-size:10px; font-weight:700;
-    letter-spacing:0.8px; text-transform:uppercase; padding:3px 9px; border-radius:999px;
-  }
-  .pill.hr{background:var(--accent-soft); color:var(--accent)}
-  .pill.it{background:var(--brand-soft); color:var(--brand-ink)}
-  .pill.clinical{background:rgba(11,124,62,0.10); color:var(--good)}
-  .pill.quality{background:rgba(180,123,0,0.12); color:var(--warn)}
-  .pill.admin{background:rgba(138,153,165,0.16); color:var(--ink-2)}
-  .empty{font-size:13px; color:var(--ink-3); text-align:center; padding:18px 8px}
+  .panel .kicker + *{margin-top:10px}
+  .empty{font-size:13px; color:var(--ink-3); text-align:center; padding:22px 8px}
+  .grid2{display:grid; gap:14px}
+  @media (min-width:760px){ .grid2{grid-template-columns:1fr 1fr; align-items:start} }
 
-  input[type=search], select{
-    width:100%; border:1px solid var(--line); border-radius:12px; background:var(--card);
-    color:var(--ink); font-family:'Figtree',sans-serif; font-size:14px; padding:11px 13px;
-  }
-  input[type=search]:focus-visible, select:focus-visible{outline:2px solid var(--brand); outline-offset:1px}
+  .pill{display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700;
+    letter-spacing:0.8px; text-transform:uppercase; padding:3px 8px; border-radius:999px; white-space:nowrap}
+  .pill.ok{background:var(--good-soft); color:var(--good)}
+  .pill.due{background:var(--warn-soft); color:var(--warn)}
+  .pill.over{background:var(--crit-soft); color:var(--crit)}
+  .pill.info{background:var(--brand-soft); color:var(--brand-ink)}
+  .pill.hot{background:var(--accent-soft); color:var(--accent)}
 
-  .chips{display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px}
+  .chips{display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px}
   .chips::-webkit-scrollbar{display:none}
-  .chip{
-    flex:none; border:1px solid var(--line); border-radius:999px; background:var(--card);
-    color:var(--ink-2); font-family:'Figtree',sans-serif; font-size:12.5px; font-weight:600;
-    padding:8px 14px; cursor:pointer;
-  }
+  .chip{flex:none; border:1px solid var(--line); border-radius:999px; background:var(--card);
+    color:var(--ink-2); font-family:inherit; font-size:12.5px; font-weight:600;
+    padding:7px 13px; cursor:pointer; white-space:nowrap}
   .chip[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff}
   .chip:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  input.field, select.field{width:100%; border:1px solid var(--line); border-radius:11px;
+    background:var(--card); color:var(--ink); font-family:inherit; font-size:14px; padding:10px 12px}
+  input.field:focus-visible, select.field:focus-visible{outline:2px solid var(--brand); outline-offset:1px}
+
+  .rowlist > *{border-bottom:1px solid var(--line)}
+  .rowlist > *:last-child{border-bottom:0}
 
   /* ---------- Home ---------- */
   .hello h1{font-weight:800; font-size:23px; letter-spacing:-0.3px}
   .hello .date{font-size:12.5px; color:var(--ink-2); margin-top:3px}
+  @media (min-width:960px){ .hello h1{font-size:27px} }
 
-  .pinned{border-left:4px solid var(--accent)}
-  .pinned .p-head{display:flex; align-items:center; gap:8px; margin-bottom:8px}
-  .pinned h3{font-weight:700; font-size:15px; line-height:1.35}
-  .pinned p{font-size:13px; color:var(--ink-2); line-height:1.55; margin-top:5px}
+  .mustread{border-left:4px solid var(--accent)}
+  .mustread .m-head{display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap}
+  .mustread h3{font-weight:700; font-size:15.5px; line-height:1.35}
+  .mustread p{font-size:13px; color:var(--ink-2); line-height:1.6; margin-top:6px}
+  .btn{font-family:inherit; font-size:13px; font-weight:700; border:0; border-radius:999px;
+    padding:9px 18px; cursor:pointer; background:var(--accent); color:#fff}
+  .btn:hover{filter:brightness(1.07)}
+  .btn.ghost{background:transparent; color:var(--brand-ink); border:1.5px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--brand)}
+  .btn:disabled{opacity:.5; cursor:default; filter:none}
+  .btnrow{display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-top:12px}
 
-  .links{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:12px}
-  a.qlink{
-    display:flex; flex-direction:column; align-items:center; gap:7px; text-decoration:none;
-    background:var(--brand-soft); border:1px solid var(--line); border-radius:14px;
-    padding:13px 6px 11px; color:var(--brand-ink); font-size:11px; font-weight:700; text-align:center;
-  }
-  a.qlink svg{width:21px; height:21px}
+  .links{display:grid; grid-template-columns:repeat(3,1fr); gap:9px}
+  @media (min-width:640px){ .links{grid-template-columns:repeat(4,1fr)} }
+  @media (min-width:960px){ .links{grid-template-columns:repeat(6,1fr)} }
+  a.qlink{display:flex; flex-direction:column; align-items:center; gap:7px; text-decoration:none;
+    background:var(--brand-soft); border:1px solid var(--line); border-radius:13px;
+    padding:13px 6px 11px; color:var(--brand-ink); font-size:11px; font-weight:700; text-align:center}
+  a.qlink svg{width:20px; height:20px}
   a.qlink:hover{border-color:var(--brand)}
-  a.qlink small{font-weight:500; font-size:9.5px; color:var(--ink-3); letter-spacing:0.4px}
+  a.qlink small{font-weight:500; font-size:9.5px; color:var(--ink-3); letter-spacing:0.3px}
 
-  .today-row{display:flex; gap:10px; padding:11px 2px; border-bottom:1px solid var(--line); align-items:baseline}
-  .today-row:last-child{border-bottom:0}
-  .today-row .t-when{flex:none; width:64px; font-size:12px; font-weight:700; color:var(--brand-ink); font-variant-numeric:tabular-nums}
+  .statrow{display:grid; grid-template-columns:repeat(2,1fr); gap:9px}
+  @media (min-width:640px){ .statrow{grid-template-columns:repeat(4,1fr)} }
+  .stat{background:var(--brand-soft); border:1px solid var(--line); border-radius:12px; padding:11px 12px}
+  .stat .s-label{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:700}
+  .stat .s-value{font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; margin-top:3px}
+  .stat .s-foot{font-size:11px; color:var(--ink-2); margin-top:2px}
+
+  .today-row{display:flex; gap:10px; padding:10px 2px; align-items:baseline}
+  .today-row .t-when{flex:none; width:60px; font-size:12px; font-weight:700;
+    color:var(--brand-ink); font-variant-numeric:tabular-nums}
   .today-row .t-what{font-size:13px; line-height:1.45}
   .today-row .t-what small{display:block; color:var(--ink-3); font-size:11.5px; margin-top:1px}
 
-  .menu-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px}
-  .menu-cell{background:var(--brand-soft); border-radius:12px; padding:10px 11px}
-  .menu-cell .m-label{font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3)}
-  .menu-cell .m-item{font-size:13px; font-weight:600; margin-top:3px; line-height:1.4}
+  .menu-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  @media (min-width:640px){ .menu-grid{grid-template-columns:repeat(4,1fr)} }
+  .menu-cell{background:var(--brand-soft); border-radius:11px; padding:10px 11px}
+  .menu-cell .m-label{font-size:9.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3)}
+  .menu-cell .m-item{font-size:12.5px; font-weight:600; margin-top:3px; line-height:1.4}
 
-  /* ---------- Announcements ---------- */
-  .news{padding:13px 2px; border-bottom:1px solid var(--line); cursor:pointer}
-  .news:last-child{border-bottom:0}
+  /* ---------- News ---------- */
+  .news{padding:13px 2px; cursor:pointer}
   .news .n-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
   .news .n-date{font-size:11px; color:var(--ink-3); font-weight:600}
-  .news h3{font-weight:700; font-size:14.5px; line-height:1.4; margin-top:5px; display:flex; gap:7px; align-items:baseline}
+  .news h3{font-weight:700; font-size:14.5px; line-height:1.4; margin-top:5px;
+    display:flex; gap:7px; align-items:baseline}
   .news h3 .dot{flex:none; width:7px; height:7px; border-radius:50%; background:var(--accent); position:relative; top:-1px}
-  .news.read h3 .dot{display:none}
-  .news p{font-size:13px; color:var(--ink-2); line-height:1.55; margin-top:4px; display:none}
-  .news.open p{display:block}
-  .news .n-by{font-size:11.5px; color:var(--ink-3); margin-top:6px; display:none}
-  .news.open .n-by{display:block}
+  .news.read h3 .dot{visibility:hidden}
+  .news .n-body{display:none; font-size:13px; color:var(--ink-2); line-height:1.6; margin-top:6px}
+  .news.open .n-body{display:block}
+  .news .n-by{font-size:11.5px; color:var(--ink-3); margin-top:7px}
+
+  /* ---------- Policy library ---------- */
+  .doc{display:flex; gap:12px; padding:12px 2px; align-items:center; cursor:pointer}
+  .doc .d-ic{flex:none; width:34px; height:34px; border-radius:9px; background:var(--brand-soft);
+    color:var(--brand-ink); display:flex; align-items:center; justify-content:center}
+  .doc .d-ic svg{width:17px; height:17px}
+  .doc .d-body{flex:1; min-width:0}
+  .doc .d-name{font-weight:700; font-size:13.5px; line-height:1.4}
+  .doc .d-meta{font-size:11px; color:var(--ink-3); margin-top:3px; line-height:1.5}
+  .doc .d-right{flex:none; display:flex; flex-direction:column; align-items:flex-end; gap:5px}
+  .doc .d-rev{font-size:10.5px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+
+  /* ---------- Drawer ---------- */
+  .scrim{position:fixed; inset:0; background:rgba(6,14,22,0.55); z-index:80; opacity:0;
+    pointer-events:none; transition:opacity .2s}
+  .scrim.show{opacity:1; pointer-events:auto}
+  .drawer{position:fixed; z-index:90; background:var(--card); color:var(--ink);
+    left:0; right:0; bottom:0; max-height:88vh; border-radius:20px 20px 0 0;
+    box-shadow:var(--shadow-lg); transform:translateY(101%); transition:transform .26s ease;
+    display:flex; flex-direction:column}
+  .drawer.show{transform:none}
+  @media (min-width:760px){
+    .drawer{left:auto; top:0; bottom:0; width:460px; max-height:none; border-radius:20px 0 0 20px;
+      transform:translateX(101%)}
+  }
+  .dr-head{padding:16px 18px 12px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:flex-start}
+  .dr-head h3{font-weight:800; font-size:17px; line-height:1.3; flex:1}
+  .dr-close{flex:none; border:0; background:var(--brand-soft); color:var(--ink-2); cursor:pointer;
+    width:30px; height:30px; border-radius:50%; font-size:17px; line-height:1}
+  .dr-body{padding:14px 18px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px}
+  .dr-meta{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+  .dr-meta div{background:var(--brand-soft); border-radius:10px; padding:9px 11px}
+  .dr-meta .k{font-size:9.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3)}
+  .dr-meta .v{font-size:13px; font-weight:600; margin-top:2px}
+  .dr-body h4{font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink-3)}
+  .dr-body p{font-size:13.5px; line-height:1.65; color:var(--ink-2)}
+  .dr-body ul{list-style:none; display:flex; flex-direction:column; gap:7px}
+  .dr-body ul li{font-size:13px; line-height:1.55; color:var(--ink-2); padding-left:18px; position:relative}
+  .dr-body ul li::before{content:""; position:absolute; left:3px; top:7px; width:6px; height:6px;
+    border-radius:50%; background:var(--brand-2)}
+
+  /* ---------- Clinical ---------- */
+  .code-grid{display:grid; grid-template-columns:1fr; gap:8px}
+  @media (min-width:560px){ .code-grid{grid-template-columns:1fr 1fr} }
+  @media (min-width:1100px){ .code-grid{grid-template-columns:repeat(3,1fr)} }
+  .code{display:flex; gap:11px; align-items:center; border:1px solid var(--line);
+    border-radius:12px; padding:10px 12px; background:var(--card)}
+  .code .swatch{flex:none; width:11px; height:34px; border-radius:4px}
+  .code .c-body{flex:1; min-width:0}
+  .code .c-name{font-weight:800; font-size:13.5px}
+  .code .c-what{font-size:11.5px; color:var(--ink-2); margin-top:2px; line-height:1.4}
+  .code .c-ext{flex:none; font-weight:800; font-size:15px; color:var(--crit); font-variant-numeric:tabular-nums}
+
+  .oncall{display:flex; gap:11px; padding:11px 2px; align-items:center}
+  .oncall .o-spec{flex:1; min-width:0}
+  .oncall .o-spec b{font-size:13.5px; font-weight:700; display:block}
+  .oncall .o-spec small{font-size:11.5px; color:var(--ink-3)}
+  .oncall .o-who{flex:1.2; min-width:0; font-size:13px; font-weight:600}
+  .oncall .o-who small{display:block; font-size:11px; color:var(--ink-3); font-weight:500; margin-top:1px}
+  .oncall .o-ext{flex:none; text-align:right}
+  .oncall .o-ext b{font-size:14.5px; font-weight:800; color:var(--brand-ink); font-variant-numeric:tabular-nums}
+  .oncall .o-ext small{display:block; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:700}
+
+  table.tbl{width:100%; border-collapse:collapse; font-size:12.5px}
+  table.tbl th{text-align:left; font-size:9.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--ink-3); font-weight:700; padding:0 8px 8px 0; border-bottom:1px solid var(--line)}
+  table.tbl td{padding:9px 8px 9px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.45}
+  table.tbl tr:last-child td{border-bottom:0}
+  table.tbl td b{font-weight:700}
+  table.tbl .num{font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600}
+  .tblwrap{overflow-x:auto}
 
   /* ---------- Directory ---------- */
-  .person{display:flex; gap:11px; padding:11px 2px; border-bottom:1px solid var(--line); align-items:center}
-  .person:last-child{border-bottom:0}
-  .avatar{
-    flex:none; width:38px; height:38px; border-radius:50%;
-    background:var(--brand-soft); color:var(--brand-ink);
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;
-  }
+  .person{display:flex; gap:11px; padding:11px 2px; align-items:center}
+  .avatar{flex:none; width:38px; height:38px; border-radius:50%; background:var(--brand-soft);
+    color:var(--brand-ink); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px}
   .p-body{flex:1; min-width:0}
   .p-name{font-weight:700; font-size:14px}
   .p-meta{font-size:11.5px; color:var(--ink-2); margin-top:2px; line-height:1.4}
   .p-ext{flex:none; text-align:right}
   .p-ext b{display:block; font-size:15px; font-weight:800; color:var(--brand-ink); font-variant-numeric:tabular-nums}
-  .p-ext small{font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:700}
+  .p-ext small{font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); font-weight:700}
 
-  .ext-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px}
-  .ext-cell{border:1px solid var(--line); border-radius:12px; padding:10px 11px; background:var(--brand-soft)}
-  .ext-cell.crit{background:var(--accent-soft)}
+  .ext-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  @media (min-width:640px){ .ext-grid{grid-template-columns:repeat(4,1fr)} }
+  .ext-cell{border:1px solid var(--line); border-radius:11px; padding:10px 11px; background:var(--brand-soft)}
+  .ext-cell.crit{background:var(--crit-soft); border-color:transparent}
   .ext-cell .e-num{font-weight:800; font-size:17px; font-variant-numeric:tabular-nums; color:var(--brand-ink)}
-  .ext-cell.crit .e-num{color:var(--accent)}
+  .ext-cell.crit .e-num{color:var(--crit)}
   .ext-cell .e-label{font-size:11px; color:var(--ink-2); font-weight:600; margin-top:1px; line-height:1.35}
 
-  /* ---------- Documents ---------- */
-  .doc{display:flex; gap:11px; padding:12px 2px; border-bottom:1px solid var(--line); align-items:center; cursor:pointer}
-  .doc:last-child{border-bottom:0}
-  .doc svg{flex:none; width:19px; height:19px; color:var(--brand-ink)}
-  .doc .d-body{flex:1; min-width:0}
-  .doc .d-name{font-weight:700; font-size:13.5px; line-height:1.4}
-  .doc .d-meta{font-size:11px; color:var(--ink-3); margin-top:2px}
-  .doc .d-tag{flex:none; font-size:9.5px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase;
-    color:var(--ink-3); border:1px solid var(--line); border-radius:6px; padding:3px 7px}
+  /* ---------- Staff zone ---------- */
+  .train{display:flex; gap:11px; padding:11px 2px; align-items:center}
+  .train .t-body{flex:1; min-width:0}
+  .train .t-name{font-weight:700; font-size:13.5px; line-height:1.4}
+  .train .t-meta{font-size:11px; color:var(--ink-3); margin-top:2px}
+  .bar{height:5px; border-radius:3px; background:var(--brand-soft); overflow:hidden; margin-top:6px}
+  .bar i{display:block; height:100%; border-radius:3px; background:var(--brand-2)}
+  .benefit{padding:11px 2px}
+  .benefit .b-name{font-weight:700; font-size:13.5px}
+  .benefit .b-what{font-size:12.5px; color:var(--ink-2); margin-top:3px; line-height:1.55}
 
-  /* ---------- Events ---------- */
-  .event{display:flex; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line)}
-  .event:last-child{border-bottom:0}
-  .cal{
-    flex:none; width:46px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
-    text-align:center; background:var(--card);
-  }
-  .cal .c-mon{background:var(--brand); color:#fff; font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:3px 0}
-  .cal .c-day{font-weight:800; font-size:17px; padding:4px 0 5px; font-variant-numeric:tabular-nums}
+  .svc{display:flex; gap:11px; padding:12px 2px; align-items:center; text-decoration:none; color:inherit; cursor:pointer}
+  .svc .s-ic{flex:none; width:32px; height:32px; border-radius:9px; background:var(--accent-soft);
+    color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px}
+  .svc .s-body{flex:1; min-width:0}
+  .svc .s-name{font-weight:700; font-size:13.5px; line-height:1.4}
+  .svc .s-meta{font-size:11.5px; color:var(--ink-3); margin-top:2px}
+  .svc .chev{flex:none; color:var(--ink-3); font-size:18px}
+
+  .event{display:flex; gap:12px; padding:12px 2px}
+  .cal{flex:none; width:44px; border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    text-align:center; background:var(--card)}
+  .cal .c-mon{background:var(--brand); color:#fff; font-size:8.5px; font-weight:700;
+    letter-spacing:1.1px; text-transform:uppercase; padding:3px 0}
+  .cal .c-day{font-weight:800; font-size:16px; padding:4px 0 5px; font-variant-numeric:tabular-nums}
   .event .e-body{flex:1; min-width:0}
-  .event h3{font-weight:700; font-size:14px; line-height:1.4}
-  .event .e-meta{font-size:12px; color:var(--ink-2); margin-top:3px; line-height:1.5}
+  .event h3{font-weight:700; font-size:13.5px; line-height:1.4}
+  .event .e-meta{font-size:11.5px; color:var(--ink-2); margin-top:3px; line-height:1.5}
 
-  .toast{
-    position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
-    background:#1E272E; color:#fff; font-size:12.5px; font-weight:600;
-    padding:10px 16px; border-radius:999px; box-shadow:var(--shadow-sm);
-    opacity:0; pointer-events:none; transition:opacity .25s; z-index:60; white-space:nowrap;
-  }
+  /* ---------- Search results ---------- */
+  .sr-group + .sr-group{margin-top:14px}
+  .sr-hit{display:flex; gap:10px; padding:10px 2px; align-items:center; cursor:pointer}
+  .sr-hit .h-body{flex:1; min-width:0}
+  .sr-hit .h-name{font-weight:700; font-size:13.5px; line-height:1.4}
+  .sr-hit .h-meta{font-size:11.5px; color:var(--ink-3); margin-top:2px}
+  mark{background:var(--accent-soft); color:inherit; border-radius:3px; padding:0 2px}
+
+  .toast{position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:#1E272E;
+    color:#fff; font-size:12.5px; font-weight:600; padding:10px 16px; border-radius:999px;
+    box-shadow:var(--shadow-sm); opacity:0; pointer-events:none; transition:opacity .25s;
+    z-index:100; white-space:nowrap; max-width:90vw}
   .toast.show{opacity:1}
+  @media (min-width:960px){ .toast{bottom:26px} }
 
-  /* ---------- Bottom nav ---------- */
-  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
-    background:var(--card); border-top:1px solid var(--line); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom)}
-  nav button{flex:1; border:none; background:none; padding:10px 0 12px; cursor:pointer; color:var(--ink-3);
-    font-family:'Figtree',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.3px;
-    display:flex; flex-direction:column; align-items:center; gap:4px}
-  nav button svg{width:21px; height:21px}
-  nav button[aria-pressed="true"]{color:var(--accent)}
+  /* ---------- Bottom nav (mobile) ---------- */
+  nav.bottom{position:fixed; bottom:0; left:0; right:0; background:var(--card);
+    border-top:1px solid var(--line); display:flex; z-index:70; padding-bottom:env(safe-area-inset-bottom)}
+  nav.bottom button{flex:1; border:none; background:none; padding:9px 0 11px; cursor:pointer;
+    color:var(--ink-3); font-family:inherit; font-size:9px; font-weight:700; letter-spacing:0.2px;
+    display:flex; flex-direction:column; align-items:center; gap:3px}
+  nav.bottom button svg{width:20px; height:20px}
+  nav.bottom button[aria-pressed="true"]{color:var(--accent)}
+  @media (min-width:960px){ nav.bottom{display:none} }
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
+
+<header>
+  <div class="hd">
     <div class="wordmark"><img src="../icons/logo-global-lifecare.png" alt="VPS Lakeshore &mdash; Global Lifecare">
-      <small>Intranet &middot; Staff Portal</small></div>
-    <span class="mock-tag">Pilot</span>
-  </header>
-  <p class="demo-tag"><b>DEMO</b> Seeded content &mdash; prototype for HR &amp; Communications</p>
+      <small>Intranet</small></div>
+    <div class="searchbox" id="searchBox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+      <input id="globalSearch" type="search" autocomplete="off"
+        placeholder="Search policies, people, guidelines, forms&hellip;" aria-label="Search the intranet">
+      <button class="clr" id="searchClear" aria-label="Clear search">&times;</button>
+    </div>
+    <div class="roleswitch">
+      <label for="roleSel">Viewing as</label>
+      <select id="roleSel" class="rolesel"></select>
+    </div>
+  </div>
+</header>
+<div class="demo-strip"><b>PILOT</b> &nbsp;Seeded content for demonstration &mdash; at go-live the policy library,
+  rosters and training records come from the hospital's document control and HR systems.</div>
+
+<div class="shell">
+  <aside class="side">
+    <div class="sidenav" id="sideNav"></div>
+    <div class="side-note">Press <b>/</b> to search.<br>Emergency: Code Blue <b>5555</b> &middot; Fire <b>5566</b>.</div>
+  </aside>
+
+  <main>
+  <!-- ================= SEARCH RESULTS ================= -->
+  <section class="tab" id="tab-search">
+    <div class="panel" style="padding-bottom:12px">
+      <h2 id="srTitle">Search</h2>
+      <div class="sub" id="srSub">Searching across policies, clinical guidelines, people, services and announcements.</div>
+    </div>
+    <div class="panel" id="srResults"></div>
+  </section>
 
   <!-- ================= HOME ================= -->
   <section class="tab active" id="tab-home">
@@ -244,53 +400,41 @@
       <div class="date" id="todayLine"></div>
     </div>
 
-    <div class="panel pinned" id="pinnedCard"></div>
+    <div class="panel mustread" id="mustReadCard"></div>
 
     <div class="panel">
-      <span class="kicker">Hospital apps</span>
-      <div class="links">
-        <a class="qlink" href="../lakeshore-one/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-8 8"/><path d="M20 14v5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>
-          Service Desk<small>Raise a ticket</small></a>
-        <a class="qlink" href="../it-pulse/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2.5-6 4 12 2.5-6h7"/></svg>
-          IT Pulse<small>Campus status</small></a>
-        <a class="qlink" href="../safereport/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7v5.5c0 4.6 3.4 7.6 8.5 8.5 5.1-.9 8.5-3.9 8.5-8.5V7L12 3Z"/><path d="M12 8.5v5M9.5 11h5"/></svg>
-          SafeReport<small>Patient safety</small></a>
-        <a class="qlink" href="../patient-inputs/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15.5A1.5 1.5 0 0 1 18.5 17H8l-4 4V5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5Z"/><path d="M8.5 10.5h7M8.5 13.5h4"/></svg>
-          Patient Inputs<small>Voice of patient</small></a>
-        <a class="qlink" href="../usg-wait/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/></svg>
-          USG Wait<small>Scan queue</small></a>
-        <a class="qlink" href="../ot-schedule/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4M8.5 14h7"/></svg>
-          OT Schedule<small>Theatre list</small></a>
-        <a class="qlink" href="../whatsapp/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.3 7.5L3.5 20.5l1.4-4.6A8.5 8.5 0 1 1 20.5 11.6Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5"/></svg>
-          WhatsApp<small>Report by text</small></a>
-      </div>
+      <span class="kicker">At a glance</span>
+      <div class="statrow" id="glanceRow"></div>
     </div>
 
     <div class="panel">
-      <span class="kicker">Staff systems</span>
-      <div class="links">
-        <a class="qlink" href="#" data-stub="HIS opens on hospital workstations">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>
-          HIS<small>Clinical system</small></a>
-        <a class="qlink" href="#" data-stub="Webmail link is set by IT at go-live">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-          Webmail<small>Staff email</small></a>
-        <a class="qlink" href="#" data-stub="ESS payslips &amp; leave open at go-live">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>
-          ESS / HR<small>Payslips &amp; leave</small></a>
+      <span class="kicker" id="quickKicker">Your quick links</span>
+      <div class="links" id="quickLinks"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <span class="kicker">On call right now</span>
+        <div class="rowlist" id="onCallBrief"></div>
+        <div class="btnrow"><button class="btn ghost" data-goto="clinical">Full on-call roster &rsaquo;</button></div>
+      </div>
+      <div class="panel">
+        <span class="kicker">Today at Lakeshore</span>
+        <div class="rowlist" id="todayList"></div>
       </div>
     </div>
 
-    <div class="panel">
-      <span class="kicker">Today at Lakeshore</span>
-      <div id="todayList"></div>
+    <div class="grid2">
+      <div class="panel">
+        <span class="kicker">Your mandatory training</span>
+        <div class="rowlist" id="trainingBrief"></div>
+        <div class="btnrow"><button class="btn ghost" data-goto="staff">Staff zone &rsaquo;</button></div>
+      </div>
+      <div class="panel">
+        <span class="kicker">Recently updated policies</span>
+        <div class="rowlist" id="recentPolicies"></div>
+        <div class="btnrow"><button class="btn ghost" data-goto="policies">Policy library &rsaquo;</button></div>
+      </div>
     </div>
 
     <div class="panel">
@@ -299,111 +443,552 @@
     </div>
   </section>
 
-  <!-- ================= ANNOUNCEMENTS ================= -->
+  <!-- ================= NEWS ================= -->
   <section class="tab" id="tab-news">
     <div class="panel" style="padding-bottom:12px">
-      <h2>Announcements</h2>
-      <div class="sub">Circulars and notices from HR, IT, Quality and Administration. Tap one to read it.</div>
+      <h2>What's new</h2>
+      <div class="sub">Circulars and notices from HR, IT, Clinical, Quality and Administration.
+        Items marked <b>Must read</b> need your acknowledgement &mdash; open one and confirm you have read it.</div>
     </div>
     <div class="chips" id="newsChips" role="group" aria-label="Filter announcements"></div>
-    <div class="panel" id="newsList"></div>
+    <div class="panel rowlist" id="newsList"></div>
+  </section>
+
+  <!-- ================= POLICIES ================= -->
+  <section class="tab" id="tab-policies">
+    <div class="panel" style="padding-bottom:12px">
+      <h2>Policies &amp; documents</h2>
+      <div class="sub">The controlled document library. Every entry shows its version, effective date,
+        review due date and owning department, mapped to the NABH chapter it serves. The copy here is
+        always the current one &mdash; printed copies are uncontrolled.</div>
+    </div>
+    <div class="panel">
+      <div class="statrow" id="policyStats"></div>
+    </div>
+    <input class="field" type="search" id="policySearch" placeholder="Search the policy library&hellip;" aria-label="Search policies">
+    <div class="chips" id="policyChips" role="group" aria-label="Filter by category"></div>
+    <div class="chips" id="nabhChips" role="group" aria-label="Filter by NABH chapter"></div>
+    <div class="panel rowlist" id="policyList"></div>
+  </section>
+
+  <!-- ================= CLINICAL ================= -->
+  <section class="tab" id="tab-clinical">
+    <div class="panel" style="padding-bottom:12px">
+      <h2>Clinical reference</h2>
+      <div class="sub">The things clinical staff need at the bedside &mdash; emergency codes, who is on call,
+        critical value callbacks, the antimicrobial policy and the rapid-response bundles.</div>
+    </div>
+
+    <div class="panel">
+      <span class="kicker">Emergency codes</span>
+      <div class="code-grid" id="codeGrid"></div>
+    </div>
+
+    <div class="panel">
+      <span class="kicker">On-call roster &mdash; <span id="onCallDate"></span></span>
+      <div class="rowlist" id="onCallList"></div>
+    </div>
+
+    <div class="panel">
+      <span class="kicker">Critical (panic) values &mdash; call the treating unit within 30 minutes</span>
+      <div class="tblwrap"><table class="tbl" id="criticalTbl"></table></div>
+    </div>
+
+    <div class="panel">
+      <span class="kicker">Antimicrobial stewardship &mdash; restricted agents</span>
+      <div class="sub" style="margin-bottom:8px">Release needs Infectious Diseases or the Antimicrobial
+        Stewardship pharmacist. Surgical prophylaxis follows the procedure-specific table in the antibiotic policy.</div>
+      <div class="tblwrap"><table class="tbl" id="amsTbl"></table></div>
+    </div>
+
+    <div class="panel">
+      <span class="kicker">Rapid reference bundles</span>
+      <div class="rowlist" id="bundleList"></div>
+    </div>
   </section>
 
   <!-- ================= DIRECTORY ================= -->
   <section class="tab" id="tab-directory">
     <div class="panel" style="padding-bottom:12px">
       <h2>Directory</h2>
-      <div class="sub">Departments and key people with internal extensions. Dial the extension from any hospital phone.</div>
+      <div class="sub">Departments and key people with internal extensions. Dial the extension from any
+        hospital phone; from outside, prefix the board number.</div>
     </div>
     <div class="panel">
-      <span class="kicker">Key extensions</span>
+      <span class="kicker">Emergency &amp; key extensions</span>
       <div class="ext-grid" id="extGrid"></div>
     </div>
-    <input type="search" id="dirSearch" placeholder="Search name, department or designation&hellip;" aria-label="Search directory">
-    <div class="panel" id="dirList"></div>
+    <input class="field" type="search" id="dirSearch" placeholder="Search name, department or designation&hellip;" aria-label="Search directory">
+    <div class="panel rowlist" id="dirList"></div>
   </section>
 
-  <!-- ================= DOCUMENTS ================= -->
-  <section class="tab" id="tab-docs">
+  <!-- ================= STAFF ZONE ================= -->
+  <section class="tab" id="tab-staff">
     <div class="panel" style="padding-bottom:12px">
-      <h2>Policies &amp; documents</h2>
-      <div class="sub">Controlled copies of hospital policies, forms and manuals. In the pilot these are placeholders &mdash; the document library is wired up at go-live.</div>
+      <h2>Staff zone</h2>
+      <div class="sub">Everything on the employee side &mdash; how to get things done, mandatory training,
+        benefits and wellbeing, and what's coming up.</div>
     </div>
-    <div id="docGroups"></div>
-  </section>
 
-  <!-- ================= EVENTS ================= -->
-  <section class="tab" id="tab-events">
-    <div class="panel" style="padding-bottom:12px">
-      <h2>Events &amp; training</h2>
-      <div class="sub">CMEs, mandatory trainings, drills and staff events for the next few weeks.</div>
+    <div class="panel">
+      <span class="kicker">I need to&hellip;</span>
+      <div class="rowlist" id="serviceList"></div>
     </div>
-    <div class="panel" id="eventList"></div>
+
+    <div class="panel">
+      <span class="kicker">Mandatory training &amp; compliance</span>
+      <div class="rowlist" id="trainingList"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <span class="kicker">Benefits &amp; wellbeing</span>
+        <div class="rowlist" id="benefitList"></div>
+      </div>
+      <div class="panel">
+        <span class="kicker">Events &amp; training calendar</span>
+        <div class="rowlist" id="eventList"></div>
+      </div>
+    </div>
   </section>
-
-  <div class="toast" id="toast"></div>
-
-  <nav>
-    <button id="nav-home" aria-pressed="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7v8.5A1.5 1.5 0 0 1 19.5 21h-15A1.5 1.5 0 0 1 3 19.5Z"/><path d="M9.5 21v-6h5v6"/></svg>
-      Home</button>
-    <button id="nav-news" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14H5.5A1.5 1.5 0 0 1 4 17.5Z"/><path d="M17 9h3v8.5a1.5 1.5 0 0 1-3 0Z"/><path d="M7.5 9H13M7.5 12.5H13M7.5 16H11"/></svg>
-      News</button>
-    <button id="nav-directory" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-2.8 2.8-4.5 5.5-4.5s4.9 1.7 5.5 4.5"/><path d="M16 6.5a3 3 0 0 1 0 5.4M17.8 15c1.4.7 2.4 2 2.7 4"/></svg>
-      Directory</button>
-    <button id="nav-docs" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 15.5h6"/></svg>
-      Docs</button>
-    <button id="nav-events" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>
-      Events</button>
-  </nav>
+  </main>
 </div>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drTitle">
+  <div class="dr-head"><h3 id="drTitle">&nbsp;</h3><button class="dr-close" id="drClose" aria-label="Close">&times;</button></div>
+  <div class="dr-body" id="drBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav class="bottom" id="bottomNav"></nav>
 
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
 
-/* ---------- seeded demo data (dates are offsets from today so the demo never looks stale) ---------- */
+/* ============================================================
+   Seeded content. Dates are generated as offsets from today so
+   the pilot never looks stale. At go-live these arrays are the
+   integration point: policies from document control, roster from
+   the duty system, training from the LMS, people from HR.
+   ============================================================ */
 const NOW = new Date();
-const day = off => { const d = new Date(NOW); d.setDate(d.getDate() + off); return d; };
-const fmt = d => d.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
+const dayOff = n => { const d = new Date(NOW); d.setDate(d.getDate() + n); return d; };
+const monOff = n => { const d = new Date(NOW); d.setMonth(d.getMonth() + n); return d; };
+const fmtD  = d => d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+const fmtDS = d => d.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
+const fmtMY = d => d.toLocaleDateString('en-IN', {month:'short', year:'numeric'});
 const fmtLong = d => d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
-const CATS = {hr:'HR', it:'IT', clinical:'Clinical', quality:'Quality', admin:'Admin'};
+/* ---------- roles (personalisation) ---------- */
+const ROLES = [
+  {id:'nurse',   label:'Nurse'},
+  {id:'doctor',  label:'Doctor / Consultant'},
+  {id:'allied',  label:'Allied health / Technician'},
+  {id:'admin',   label:'Administrative staff'},
+  {id:'mgmt',    label:'Management'}
+];
 
+/* ---------- NABH chapters ---------- */
+const NABH = {
+  AAC:'Access, Assessment & Continuity of Care',
+  COP:'Care of Patients',
+  MOM:'Management of Medication',
+  PRE:'Patient Rights & Education',
+  HIC:'Hospital Infection Control',
+  PSQ:'Patient Safety & Quality Improvement',
+  ROM:'Responsibilities of Management',
+  FMS:'Facility Management & Safety',
+  HRM:'Human Resource Management',
+  IMS:'Information Management System'
+};
+
+const CATS = {
+  clinical:'Clinical care', infection:'Infection control', medication:'Medication',
+  rights:'Patient rights', emergency:'Emergency & safety', hr:'Human resources',
+  quality:'Quality & risk', facility:'Facility', info:'Information'
+};
+
+/* ---------- policy library ---------- */
+const POLICIES = [
+  {id:'P-AAC-01', name:'Patient registration, admission & bed allotment', cat:'clinical', nabh:'AAC', ver:'4.2', eff:-7, rev:5, owner:'Medical Administration', roles:['nurse','admin'],
+   purpose:'Defines how patients are registered, assessed for admission suitability, allotted beds by category, and how waiting is managed when the requested category is full.',
+   points:['Every admission needs a written admission order by a registered consultant.','Bed category downgrade or upgrade requires documented patient consent and a billing note.','Emergency admissions are never delayed for financial clearance.']},
+  {id:'P-AAC-02', name:'Initial assessment & reassessment of patients', cat:'clinical', nabh:'AAC', ver:'3.1', eff:-11, rev:1, owner:'Medical Administration', roles:['nurse','doctor'],
+   purpose:'Time frames and minimum content for initial medical and nursing assessment, and the frequency of reassessment by care area.',
+   points:['Initial medical assessment within 24 h of admission; within 4 h for ICU and 15 min for Emergency triage category I.','Nursing assessment within 2 h of the patient reaching the ward.','ICU reassessment at least once per shift and on any change in status.']},
+  {id:'P-AAC-03', name:'Triage in the Emergency Department', cat:'clinical', nabh:'AAC', ver:'2.4', eff:-5, rev:7, owner:'Emergency & Trauma', roles:['nurse','doctor'], must:true,
+   purpose:'Five-level triage, who may triage, target time-to-physician for each level, and the escalation path when the department is at capacity.',
+   points:['Triage is performed by a nurse trained and signed off in the triage tool.','Level I (resuscitation) sees a physician immediately; Level II within 10 minutes.','Re-triage is mandatory if the wait exceeds the target for that level.']},
+  {id:'P-AAC-04', name:'Transfer of patients (intra- and inter-hospital)', cat:'clinical', nabh:'AAC', ver:'3.0', eff:-9, rev:3, owner:'Medical Administration', roles:['nurse','doctor'],
+   purpose:'Handover requirements for moving a patient between units or to another facility, including who escorts and what travels with the patient.',
+   points:['A structured handover (SBAR) is documented at every transfer.','Escort level is set by the transferring physician against the patient’s stability.','Inter-hospital transfer needs the receiving facility’s acceptance recorded before the ambulance leaves.']},
+  {id:'P-AAC-05', name:'Discharge, discharge summary & follow-up', cat:'clinical', nabh:'AAC', ver:'3.3', eff:-4, rev:8, owner:'Medical Administration', roles:['nurse','doctor','admin'],
+   purpose:'Content and timing of the discharge summary, discharge against medical advice, and how follow-up is arranged.',
+   points:['Discharge summary is handed to the patient at discharge, never posted later.','It carries diagnosis, procedures, medication with doses, and red-flag symptoms in the patient’s language where possible.','LAMA/DAMA requires a signed form and a documented explanation of risk.']},
+
+  {id:'P-COP-01', name:'Care of vulnerable patients (elderly, paediatric, disabled)', cat:'clinical', nabh:'COP', ver:'2.2', eff:-13, rev:-1, owner:'Nursing Administration', roles:['nurse','doctor'],
+   purpose:'Additional safeguards for patients who cannot fully protect their own interests.',
+   points:['Vulnerable patients are flagged at admission and the flag is visible on the care plan.','Never leave a flagged paediatric patient unattended by staff or an authorised attender.','Restraint use follows the restraint policy and needs review every 4 hours.']},
+  {id:'P-COP-02', name:'Cardiopulmonary resuscitation & Code Blue response', cat:'clinical', nabh:'COP', ver:'5.0', eff:-2, rev:10, owner:'Critical Care', roles:['nurse','doctor','allied'], must:true,
+   purpose:'Who responds to a Code Blue, in what time, with what equipment, and how the event is documented and audited.',
+   points:['Dial 5555 and state the exact location twice; do not leave the patient.','Code Blue team target is at the bedside within 3 minutes anywhere on campus.','Every code is debriefed and the audit form goes to the Resuscitation Committee within 48 hours.']},
+  {id:'P-COP-03', name:'Nutritional assessment & therapeutic diets', cat:'clinical', nabh:'COP', ver:'2.0', eff:-16, rev:-4, owner:'Dietetics', roles:['nurse','allied'],
+   purpose:'Screening for nutritional risk and the ordering and delivery of therapeutic diets.',
+   points:['Nutritional screening within 24 h of admission for every inpatient.','Diet orders are entered in the HIS, never conveyed verbally to the pantry.','Re-screen weekly, or sooner if intake falls below half of what was served.']},
+  {id:'P-COP-04', name:'Pain assessment & management', cat:'clinical', nabh:'COP', ver:'2.6', eff:-6, rev:6, owner:'Anaesthesiology', roles:['nurse','doctor'],
+   purpose:'Uniform pain scoring across the hospital and the escalation ladder for uncontrolled pain.',
+   points:['Pain is scored as the fifth vital sign at every vitals round.','Use a scale matched to the patient: numeric, faces, or behavioural for the non-verbal.','A score of 7 or above needs intervention and a reassessment within 30 minutes.']},
+  {id:'P-COP-05', name:'Blood & blood component transfusion', cat:'clinical', nabh:'COP', ver:'4.1', eff:-3, rev:9, owner:'Transfusion Medicine', roles:['nurse','doctor'], must:true,
+   purpose:'Consent, sampling, two-person bedside check, monitoring and reaction reporting for transfusion.',
+   points:['Two qualified staff independently verify patient identity against the unit label at the bedside.','Start slowly and keep the patient under direct observation for the first 15 minutes.','Any suspected reaction: stop, keep the line open with saline, and inform the blood bank on 4230 immediately.']},
+  {id:'P-COP-06', name:'Surgical safety checklist & site marking', cat:'clinical', nabh:'COP', ver:'3.4', eff:-8, rev:4, owner:'OT Services', roles:['nurse','doctor'], must:true,
+   purpose:'The three-phase surgical checklist and the rules for marking the operative site.',
+   points:['Sign-in, time-out and sign-out are read aloud; silent ticking does not count.','The surgeon marks the site with the patient awake and participating, before sedation.','The count of instruments and sponges is reconciled before closure and recorded.']},
+  {id:'P-COP-07', name:'End-of-life care & do-not-resuscitate orders', cat:'clinical', nabh:'COP', ver:'1.8', eff:-14, rev:-2, owner:'Medical Administration', roles:['nurse','doctor'],
+   purpose:'How limitation-of-treatment decisions are made, recorded and reviewed, and the dignity standards for dying patients.',
+   points:['A DNR order is written by the treating consultant after documented discussion with the family.','It is reviewed at every shift handover and is reversible at any time.','Comfort care, family presence and spiritual support continue regardless of the order.']},
+
+  {id:'P-MOM-01', name:'Medication ordering, transcription & verbal orders', cat:'medication', nabh:'MOM', ver:'4.0', eff:-5, rev:7, owner:'Pharmacy', roles:['nurse','doctor'], must:true,
+   purpose:'Who may prescribe, what a complete order contains, and the narrow circumstances in which a verbal order is allowed.',
+   points:['No trailing zero (write 5 mg, not 5.0 mg); always a leading zero (0.5 mg).','Verbal orders only in an emergency, read back and confirmed, countersigned within 24 hours.','Banned abbreviations list is posted at every nursing station — U, IU, QD, MS are never used.']},
+  {id:'P-MOM-02', name:'High-alert & look-alike sound-alike medications', cat:'medication', nabh:'MOM', ver:'3.2', eff:-4, rev:8, owner:'Pharmacy', roles:['nurse','doctor','allied'], must:true,
+   purpose:'Storage, labelling and independent double-check requirements for medicines that cause disproportionate harm when misused.',
+   points:['Concentrated electrolytes are not stored in ward stock — potassium chloride is dispensed patient-specific.','Independent double-check by a second nurse before administering insulin, heparin, opioids and chemotherapy.','LASA pairs are separated physically and labelled with tall-man lettering.']},
+  {id:'P-MOM-03', name:'Narcotic & psychotropic substance handling', cat:'medication', nabh:'MOM', ver:'2.9', eff:-10, rev:2, owner:'Pharmacy', roles:['nurse','doctor'],
+   purpose:'Custody, register maintenance, wastage witnessing and reconciliation for NDPS-scheduled drugs.',
+   points:['Double-lock custody with the shift-in-charge holding one key.','Every dose is entered in the register with balance carried forward; two signatures for wastage.','Shift-change count is done jointly by outgoing and incoming nurses.']},
+  {id:'P-MOM-04', name:'Medication reconciliation at transitions of care', cat:'medication', nabh:'MOM', ver:'2.1', eff:-12, rev:0, owner:'Pharmacy', roles:['nurse','doctor'],
+   purpose:'Building an accurate home-medication list and reconciling it at admission, transfer and discharge.',
+   points:['Best-possible medication history is taken within 24 h of admission using at least two sources.','Discrepancies are resolved with the prescriber and documented, not silently corrected.','The discharge summary lists what to continue, what to stop, and what has changed.']},
+  {id:'P-MOM-05', name:'Adverse drug reaction reporting (pharmacovigilance)', cat:'medication', nabh:'MOM', ver:'2.3', eff:-7, rev:5, owner:'Pharmacy', roles:['nurse','doctor','allied'],
+   purpose:'Recognising, treating and reporting adverse drug reactions, including onward reporting to the national programme.',
+   points:['Report all suspected reactions — certainty is not required to report.','Serious reactions are reported to the pharmacy within 24 hours.','The pharmacy forwards to the PvPI centre; feedback is shared at the Pharmacotherapeutics Committee.']},
+
+  {id:'P-HIC-01', name:'Hand hygiene', cat:'infection', nabh:'HIC', ver:'5.1', eff:-1, rev:11, owner:'Infection Control', roles:['nurse','doctor','allied','admin'], must:true,
+   purpose:'The five moments, technique, and the audit programme that measures compliance.',
+   points:['Five moments: before patient contact, before aseptic task, after body-fluid exposure, after patient contact, after contact with patient surroundings.','Alcohol rub for 20–30 seconds; soap and water when hands are visibly soiled or after C. difficile contact.','Bare below the elbows in all clinical areas — no wrist watches, no stoned rings.']},
+  {id:'P-HIC-02', name:'Standard & transmission-based precautions', cat:'infection', nabh:'HIC', ver:'4.0', eff:-6, rev:6, owner:'Infection Control', roles:['nurse','doctor','allied'],
+   purpose:'When to apply contact, droplet and airborne precautions, and the PPE set for each.',
+   points:['Standard precautions apply to every patient regardless of diagnosis.','Isolation signage goes on the door the moment precautions are ordered, not after confirmation.','Negative-pressure rooms are prioritised for confirmed or suspected airborne infection.']},
+  {id:'P-HIC-03', name:'Biomedical waste segregation & handling', cat:'infection', nabh:'HIC', ver:'3.5', eff:-3, rev:9, owner:'Infection Control', roles:['nurse','allied','admin'], must:true,
+   purpose:'Colour-coded segregation at the point of generation under the Bio-Medical Waste Management Rules, and the chain of custody to disposal.',
+   points:['Yellow: human/animal anatomical, soiled and expired medicine waste. Red: contaminated recyclable plastic. White (translucent): sharps. Blue: glassware and metallic implants.','Segregate at the point of generation — never re-sort at the collection point.','Bags are sealed at three-quarters full and never carried against the body.']},
+  {id:'P-HIC-04', name:'Surveillance of healthcare-associated infections', cat:'infection', nabh:'HIC', ver:'2.8', eff:-9, rev:3, owner:'Infection Control', roles:['nurse','doctor'],
+   purpose:'Definitions, denominators and reporting cadence for CLABSI, CAUTI, VAP and surgical site infection.',
+   points:['Device-days are counted daily at a fixed hour in every critical care area.','Rates are reported monthly to the Infection Control Committee and shared with the unit.','A rate exceeding the internal threshold triggers a root-cause review, not just a note.']},
+  {id:'P-HIC-05', name:'Central line & urinary catheter care bundles', cat:'infection', nabh:'HIC', ver:'3.0', eff:-5, rev:7, owner:'Infection Control', roles:['nurse','doctor'], must:true,
+   purpose:'Insertion and maintenance bundles proven to reduce device-associated infection.',
+   points:['Maximal sterile barrier at insertion; chlorhexidine skin prep allowed to dry fully.','Daily review of line and catheter necessity, documented — the best bundle element is removal.','Scrub the hub for 15 seconds before every access.']},
+  {id:'P-HIC-06', name:'Sterilisation, disinfection & CSSD practices', cat:'infection', nabh:'HIC', ver:'3.7', eff:-8, rev:4, owner:'CSSD', roles:['nurse','allied'],
+   purpose:'Reprocessing standards, load monitoring and the release criteria for sterile stock.',
+   points:['Every load carries a chemical indicator; biological indicators are run daily and for every implant load.','A load is not released until indicator results are read and recorded.','Sterile stock is stored 20 cm above floor level and rotated first-in-first-out.']},
+  {id:'P-HIC-07', name:'Needle-stick & blood-borne exposure management', cat:'infection', nabh:'HIC', ver:'4.2', eff:-2, rev:10, owner:'Infection Control', roles:['nurse','doctor','allied'], must:true,
+   purpose:'Immediate first aid, source testing, post-exposure prophylaxis timelines and follow-up serology.',
+   points:['Wash with soap and running water; do not squeeze, do not use bleach or alcohol on the wound.','Report to the Infection Control nurse on 4310 immediately — HIV PEP is most effective within 2 hours and must start within 72.','Exposure is recorded even if the source tests negative; follow-up serology at 6 weeks, 3 and 6 months.']},
+
+  {id:'P-PRE-01', name:'Patient rights, responsibilities & informed consent', cat:'rights', nabh:'PRE', ver:'3.6', eff:-4, rev:8, owner:'Patient Relations', roles:['nurse','doctor','admin'],
+   purpose:'The rights charter, how it is displayed and explained, and what makes consent valid.',
+   points:['Consent is taken by a person capable of performing the procedure, in a language the patient understands.','The rights charter is displayed in English, Malayalam and Hindi at every registration point.','Refusal of treatment is a right; it is documented with the risks explained.']},
+  {id:'P-PRE-02', name:'Patient & attender grievance redressal', cat:'rights', nabh:'PRE', ver:'2.5', eff:-6, rev:6, owner:'Patient Relations', roles:['nurse','admin','mgmt'],
+   purpose:'How complaints are received, acknowledged, investigated and closed, with escalation timelines.',
+   points:['Every complaint is acknowledged the same day it is received.','High-severity complaints are responded to within 24 hours, medium within 48, low within 72.','Closure requires the complainant to be informed of the outcome, not just an internal resolution note.']},
+  {id:'P-PRE-03', name:'Confidentiality & privacy of patient information', cat:'rights', nabh:'PRE', ver:'3.1', eff:-10, rev:2, owner:'Medical Records', roles:['nurse','doctor','allied','admin'], must:true,
+   purpose:'Who may access patient information, when it may be disclosed, and the standards for discussing cases.',
+   points:['Access is on a need-to-know basis tied to your role — curiosity is a breach.','No patient identifiers on WhatsApp, personal phones or social media, including in teaching material.','Disclosure to police or media goes only through the Medical Superintendent.']},
+  {id:'P-PRE-04', name:'Care of the patient with special needs & interpreter access', cat:'rights', nabh:'PRE', ver:'1.9', eff:-15, rev:-3, owner:'Patient Relations', roles:['nurse','admin'],
+   purpose:'Reasonable adjustments for language, hearing, vision and mobility needs.',
+   points:['Interpreter support is arranged through Patient Relations on 4010, including sign language.','Consent must not be taken through a family member acting as interpreter for major procedures.','Wheelchair and stretcher assistance is available at every entrance on request.']},
+
+  {id:'P-FMS-01', name:'Fire prevention, response & evacuation', cat:'emergency', nabh:'FMS', ver:'4.3', eff:-3, rev:9, owner:'Safety Officer', roles:['nurse','doctor','allied','admin','mgmt'], must:true,
+   purpose:'RACE and PASS, the evacuation sequence for a hospital that cannot simply empty, and assembly points.',
+   points:['RACE: Rescue, Alarm (5566), Confine, Extinguish or Evacuate. PASS: Pull, Aim, Squeeze, Sweep.','Evacuation is horizontal first — move beyond the fire door on the same floor before considering vertical.','Never use lifts. Assembly point A is the front porch lawn; point B is the rear ambulance bay.']},
+  {id:'P-FMS-02', name:'Hospital emergency codes & disaster plan', cat:'emergency', nabh:'FMS', ver:'3.8', eff:-5, rev:7, owner:'Safety Officer', roles:['nurse','doctor','allied','admin','mgmt'], must:true,
+   purpose:'The colour code set, who activates each, and the mass-casualty escalation tiers.',
+   points:['Any staff member may activate a code — activation is never questioned in the moment.','Code Orange tiers by expected casualties: Tier 1 up to 10, Tier 2 up to 30, Tier 3 above 30.','The Emergency Operations Centre opens in the boardroom on any Tier 2 activation.']},
+  {id:'P-FMS-03', name:'Medical gas pipeline system & cylinder safety', cat:'emergency', nabh:'FMS', ver:'2.7', eff:-11, rev:1, owner:'Facility & Maintenance', roles:['nurse','allied'],
+   purpose:'Zone valve operation, cylinder handling and the response to a gas supply failure.',
+   points:['Zone valves are closed only on the instruction of the person managing the incident, after confirming no patient distal to the valve is oxygen-dependent.','Cylinders are always chained upright; never transported loose on a trolley.','Oxygen failure alarm: switch dependent patients to cylinder supply first, then call 4030.']},
+  {id:'P-FMS-04', name:'Electrical safety, UPS & DG changeover', cat:'facility', nabh:'FMS', ver:'2.4', eff:-13, rev:-1, owner:'Facility & Maintenance', roles:['allied','admin'],
+   purpose:'Power redundancy design, changeover expectations and what staff do during a failure.',
+   points:['Critical areas are on UPS with no-break changeover; DG picks up within 10 seconds.','Red sockets are UPS-backed — life-support equipment goes only on red.','Report any socket sparking or burning smell to 4030 and stop using the circuit.']},
+  {id:'P-FMS-05', name:'Radiation safety & AERB compliance', cat:'facility', nabh:'FMS', ver:'3.2', eff:-8, rev:4, owner:'Radiology & Imaging', roles:['doctor','allied'],
+   purpose:'Dose limits, personnel monitoring and the pregnancy declaration process.',
+   points:['TLD badges are worn at collar level outside the lead apron and exchanged monthly.','Ask every woman of child-bearing age about pregnancy before imaging; document the answer.','Lead aprons are inspected annually and any with cracks are withdrawn.']},
+
+  {id:'P-PSQ-01', name:'Incident reporting & patient safety (non-punitive)', cat:'quality', nabh:'PSQ', ver:'3.9', eff:-2, rev:10, owner:'Quality & Patient Safety', roles:['nurse','doctor','allied','admin','mgmt'], must:true,
+   purpose:'What to report, how confidentiality works, and the commitment that reporting is not used punitively.',
+   points:['Report incidents, near-misses and unsafe conditions — near-misses are the cheapest lessons available.','Anonymous reporting is always available through SafeReport.','No staff member has ever been disciplined for reporting in good faith; reckless or wilful acts are handled separately.']},
+  {id:'P-PSQ-02', name:'Root cause analysis & CAPA', cat:'quality', nabh:'PSQ', ver:'2.6', eff:-7, rev:5, owner:'Quality & Patient Safety', roles:['nurse','doctor','mgmt'],
+   purpose:'When an RCA is triggered, who sits on the panel, and how corrective actions are tracked to closure.',
+   points:['Sentinel events trigger an RCA within 48 hours of recognition.','Actions are ranked by strength — forcing functions above training, training above reminders.','Every CAPA has a named owner and a due date; open items are reviewed monthly.']},
+  {id:'P-PSQ-03', name:'International Patient Safety Goals', cat:'quality', nabh:'PSQ', ver:'4.0', eff:-4, rev:8, owner:'Quality & Patient Safety', roles:['nurse','doctor','allied'], must:true,
+   purpose:'The six safety goals as they apply at Lakeshore, with the local rule for each.',
+   points:['Identify patients with two identifiers — name and UHID. Never the bed or room number.','Improve effective communication: read-back for all verbal and telephonic orders and critical results.','Reduce fall risk: assess on admission, on transfer, and after any change in condition or medication.']},
+  {id:'P-PSQ-04', name:'Patient fall prevention & post-fall management', cat:'quality', nabh:'PSQ', ver:'3.3', eff:-6, rev:6, owner:'Nursing Administration', roles:['nurse','allied'],
+   purpose:'Risk scoring, universal precautions, and what happens after a fall.',
+   points:['Score every inpatient on admission and reassess after any sedative, antihypertensive or diuretic change.','High-risk patients get the wristband, bed-exit alarm where available, and hourly rounding.','After any fall: assess before moving, inform the physician, and report it — including falls with no injury.']},
+  {id:'P-PSQ-05', name:'Clinical audit programme', cat:'quality', nabh:'PSQ', ver:'2.0', eff:-14, rev:-2, owner:'Quality & Patient Safety', roles:['doctor','mgmt'],
+   purpose:'The annual audit calendar, methodology and how findings feed back into practice.',
+   points:['Each clinical department completes at least two audits a year.','Re-audit is mandatory to close the loop — an audit without a re-audit is not complete.','Findings are tabled at the Quality Council and shared with the department.']},
+
+  {id:'P-HRM-01', name:'Recruitment, credentialing & privileging', cat:'hr', nabh:'HRM', ver:'3.4', eff:-9, rev:3, owner:'Human Resources', roles:['mgmt','admin'],
+   purpose:'Verification of qualifications and the granting of clinical privileges matched to demonstrated competence.',
+   points:['Primary source verification of registration for every clinical appointee before the first shift.','Privileges are specific, written, and re-granted at least every two years.','No clinician practises beyond the privileges on file.']},
+  {id:'P-HRM-02', name:'Leave, attendance & shift roster', cat:'hr', nabh:'HRM', ver:'4.1', eff:-3, rev:9, owner:'Human Resources', roles:['nurse','doctor','allied','admin','mgmt'],
+   purpose:'Leave entitlement and application routes, roster publication timelines and minimum staffing norms.',
+   points:['Rosters are published at least 7 days before the period begins.','Planned leave is applied through ESS with the HOD’s approval at least 15 days ahead.','Minimum nurse-to-patient ratios by care area are non-negotiable — see annexure B.']},
+  {id:'P-HRM-03', name:'Prevention of Sexual Harassment at the Workplace (POSH)', cat:'hr', nabh:'HRM', ver:'2.2', eff:-12, rev:0, owner:'Human Resources', roles:['nurse','doctor','allied','admin','mgmt'], must:true,
+   purpose:'The Internal Committee, how a complaint is made and handled, and the guarantee against retaliation.',
+   points:['Complaints go to the Internal Committee — members and contacts are on the HR notice board and in this policy.','A complaint may be filed within three months of the incident, extendable at the Committee’s discretion.','Retaliation against a complainant or witness is itself a disciplinary offence.']},
+  {id:'P-HRM-04', name:'Employee health, immunisation & fitness to work', cat:'hr', nabh:'HRM', ver:'2.8', eff:-10, rev:2, owner:'Human Resources', roles:['nurse','doctor','allied','admin'],
+   purpose:'Pre-employment and periodic health checks, hepatitis B immunisation and return-to-work clearance.',
+   points:['Hepatitis B vaccination is offered free to all clinical staff, with anti-HBs titre checked after the series.','Staff with fever, vomiting or an infectious rash do not report to clinical areas — inform your in-charge.','Return to work after a notifiable illness requires clearance from the employee health desk.']},
+  {id:'P-HRM-05', name:'Staff training, orientation & competency assessment', cat:'hr', nabh:'HRM', ver:'3.0', eff:-8, rev:4, owner:'Human Resources', roles:['nurse','allied','mgmt'],
+   purpose:'Induction, mandatory annual training and how competence is assessed rather than assumed.',
+   points:['Induction within the first week; no independent clinical duty before it is complete.','Mandatory annual training: BLS, fire safety, infection control, biomedical waste, patient safety goals and POSH.','Competency is assessed by observation against a checklist, not by attendance alone.']},
+  {id:'P-HRM-06', name:'Code of conduct, dress code & professional behaviour', cat:'hr', nabh:'HRM', ver:'2.5', eff:-11, rev:1, owner:'Human Resources', roles:['nurse','doctor','allied','admin','mgmt'],
+   purpose:'Expected conduct towards patients and colleagues, identification standards and the disciplinary ladder.',
+   points:['ID badge worn visibly above the waist at all times on campus.','Introduce yourself by name and role to every patient — the "hello, my name is" standard.','Disrespectful behaviour towards colleagues is treated as a patient-safety issue, because it is one.']},
+
+  {id:'P-IMS-01', name:'Medical records: content, retention & release', cat:'info', nabh:'IMS', ver:'3.7', eff:-7, rev:5, owner:'Medical Records', roles:['doctor','admin'],
+   purpose:'What the record must contain, how long it is kept, and who may obtain a copy.',
+   points:['Every entry is dated, timed, and signed with a legible name and registration number.','Inpatient records are retained for 10 years; medico-legal records indefinitely.','Copies are released to the patient or their authorised representative on written request within 72 hours.']},
+  {id:'P-IMS-02', name:'HIS downtime & business continuity', cat:'info', nabh:'IMS', ver:'2.9', eff:-5, rev:7, owner:'Information Technology', roles:['nurse','doctor','allied','admin'], must:true,
+   purpose:'Planned and unplanned downtime procedure, paper forms and back-capture.',
+   points:['Downtime forms are kept in the red folder at every nursing station — check the stock weekly.','Record the downtime start and end times on every form for back-capture.','Back-capture into the HIS is completed within 24 hours of restoration.']},
+  {id:'P-IMS-03', name:'Information security & acceptable use', cat:'info', nabh:'IMS', ver:'3.5', eff:-4, rev:8, owner:'Information Technology', roles:['nurse','doctor','allied','admin','mgmt'], must:true,
+   purpose:'Password standards, device use, email safety and reporting a suspected compromise.',
+   points:['Never share your HIS login — every action is attributed to the account that performed it.','Lock your workstation when you step away; clinical workstations auto-lock after 5 minutes.','Report a suspected phishing mail or compromise to the service desk on 4200 immediately, before doing anything else.']},
+  {id:'P-IMS-04', name:'Data backup, retention & disaster recovery', cat:'info', nabh:'IMS', ver:'2.3', eff:-13, rev:-1, owner:'Information Technology', roles:['admin','mgmt'],
+   purpose:'Backup schedule, off-site copies and the tested recovery objectives.',
+   points:['Daily incremental and weekly full backups, with an off-site copy retained for 30 days.','Recovery is tested twice a year with a documented restore, not just a report.','Recovery point objective 15 minutes; recovery time objective 4 hours for the HIS.']}
+];
+
+/* ---------- announcements ---------- */
 const NEWS = [
-  {id:'n1', cat:'admin', off:0, pinned:true, by:'Medical Administration',
-   title:'NABH reassessment window confirmed — mock rounds start next week',
-   body:'The NABH reassessment team visit is confirmed for next month. Department-level mock rounds begin Monday, led by the Quality team. HODs: please ensure your department manuals, crash-cart checklists and fire-exit signage are current before your slot. The rounds schedule is in Policies & Documents.'},
-  {id:'n2', cat:'it', off:-1, by:'IT Department',
+  {id:'n1', cat:'admin', off:0, pinned:true, must:true, by:'Medical Administration',
+   title:'NABH reassessment confirmed — department mock rounds start Monday',
+   body:'The NABH reassessment team visit is confirmed for next month. Department-level mock rounds begin Monday, led by the Quality team. HODs: please ensure department manuals, crash-cart checklists, emergency signage and staff training records are current before your slot. The round schedule is published in Policies & Documents, and every clinical staff member should re-read the Patient Safety Goals policy this week.'},
+  {id:'n2', cat:'it', off:-1, must:true, by:'Information Technology',
    title:'Planned HIS maintenance this Sunday, 02:00–04:00',
-   body:'The HIS will be intermittently unavailable this Sunday between 02:00 and 04:00 for a scheduled database upgrade. Wards should use the downtime forms kept at each nursing station; entries are back-filled by the HIS team after the window. Raise any post-maintenance issue through the Lakeshore One service desk.'},
+   body:'The HIS will be intermittently unavailable this Sunday between 02:00 and 04:00 for a database upgrade. Wards must use the downtime forms in the red folder at each nursing station and record downtime start and end times on every form. The HIS team back-captures entries after the window. Anything not working after 04:00 goes to the service desk on 4200.'},
   {id:'n3', cat:'hr', off:-2, by:'Human Resources',
    title:'Onam advance and holiday roster — action by Thursday',
-   body:'Staff opting for the festival advance should apply through ESS by Thursday. Department holiday rosters for the Onam week must be submitted by HODs to HR the same day. Minimum-staffing norms for clinical areas apply as per the HR policy manual.'},
+   body:'Staff opting for the festival advance should apply through ESS by Thursday. Department holiday rosters for the Onam week must reach HR the same day, and minimum-staffing norms for clinical areas apply as per annexure B of the leave and roster policy. The Onam celebration and pookalam contest is on the cafeteria lawn — department teams register with HR.'},
   {id:'n4', cat:'clinical', off:-4, by:'Infection Control Committee',
    title:'Hand-hygiene audit results — July',
-   body:'Overall compliance for July was 87% (target 90%). ICU and OT complex crossed 92%; the OP block lagged at 78%, mainly on "before patient contact" moments. Ward-level results are with your nursing in-charge. The next unannounced audit round runs through this month.'},
-  {id:'n5', cat:'it', off:-6, by:'IT Department',
+   body:'Overall compliance for July was 87% against a target of 90%. ICU and the OT complex both crossed 92%; the OP block lagged at 78%, driven almost entirely by the "before patient contact" moment. Ward-level results are with your nursing in-charge. Unannounced audit rounds continue through this month, and the revised hand hygiene policy (v5.1) is now in force.'},
+  {id:'n5', cat:'it', off:-6, must:true, by:'Information Technology',
    title:'Phishing advisory: fake "salary revision" emails',
-   body:'Several staff received emails titled "Salary revision letter" from an external address impersonating HR. Do not open the attachment. Genuine HR circulars are published on this intranet and never ask for your password. Report suspicious email via the service desk — category IT, subcategory Security.'},
+   body:'Several staff received emails titled "Salary revision letter — action required" from an external address impersonating HR. Do not open the attachment. Genuine HR circulars are published on this intranet and never ask for your password. If you opened it, change your password and call 4200 now. Reporting early is never held against you — delay is what causes harm.'},
   {id:'n6', cat:'quality', off:-8, by:'Quality & Patient Safety',
-   title:'SafeReport pilot: 42 reports in the first month — thank you',
-   body:'The anonymous incident-reporting pilot logged 42 reports in its first month, including 9 near-misses that led to process fixes in pharmacy and the sample-collection workflow. Reporting is confidential and non-punitive. Keep them coming — the trends page is open to all staff.'},
-  {id:'n7', cat:'hr', off:-11, by:'Human Resources',
-   title:'New crèche timings and second shift pickup',
-   body:'From the 1st, the staff crèche runs 07:00–21:00 to cover the second shift. Pickup after 19:30 requires prior registration with the crèche desk (ext. 4270). The revised crèche policy is available under Policies & Documents.'},
-  {id:'n8', cat:'admin', off:-14, by:'General Administration',
+   title:'SafeReport: 42 reports in the first month — thank you',
+   body:'The anonymous incident-reporting pilot logged 42 reports in its first month, including 9 near-misses that led to process fixes in pharmacy dispensing and the sample-collection workflow. Reporting is confidential and non-punitive. The trends page is open to all staff, and the closed-loop CAPA status is now published monthly.'},
+  {id:'n7', cat:'clinical', off:-9, by:'Pharmacy & Therapeutics Committee',
+   title:'Antibiotic policy revised — restricted list updated',
+   body:'The antimicrobial policy has been revised. Meropenem, colistin, polymyxin B, daptomycin and ceftazidime-avibactam now require release by Infectious Diseases or the stewardship pharmacist, with a 72-hour automatic review. Surgical prophylaxis tables have been updated for orthopaedic and cardiac procedures. The restricted list is on the Clinical reference page.'},
+  {id:'n8', cat:'hr', off:-11, by:'Human Resources',
+   title:'New crèche timings and second-shift pickup',
+   body:'From the 1st, the staff crèche runs 07:00–21:00 to cover the second shift. Pickup after 19:30 requires prior registration with the crèche desk on 4270. The revised crèche policy is available in the staff zone, and places for the extended hours are allotted by roster need first.'},
+  {id:'n9', cat:'admin', off:-13, by:'General Administration',
    title:'Basement parking re-striping — use Gate 2 this week',
-   body:'Basement level B1 is being re-striped in sections this week. Staff two-wheeler parking temporarily shifts to the Gate 2 surface lot. Ambulance and emergency routes are unaffected.'}
+   body:'Basement level B1 is being re-striped in sections this week. Staff two-wheeler parking temporarily shifts to the Gate 2 surface lot. Ambulance routes, the emergency ramp and the mortuary access road are unaffected. Normal parking resumes Monday.'},
+  {id:'n10', cat:'quality', off:-16, by:'Quality & Patient Safety',
+   title:'Falls down 31% after the hourly rounding pilot',
+   body:'Inpatient falls fell 31% quarter-on-quarter in the three wards running the hourly rounding pilot, with no increase in call-bell volume. The rounding script and the revised fall-risk assessment are being extended to all wards from next month. Training slots open on the learning portal this week.'}
+];
+
+/* ---------- emergency codes ---------- */
+const CODES = [
+  {name:'Code Blue',   color:'#1565C0', what:'Adult cardiac or respiratory arrest', ext:'5555'},
+  {name:'Code Pink',   color:'#E8146E', what:'Paediatric / neonatal emergency or infant abduction', ext:'5555'},
+  {name:'Code Red',    color:'#C62828', what:'Fire or smoke', ext:'5566'},
+  {name:'Code Orange', color:'#EF6C00', what:'Mass casualty / external disaster', ext:'5577'},
+  {name:'Code Yellow', color:'#F9A825', what:'Internal emergency — utility, gas or structural failure', ext:'4030'},
+  {name:'Code Black',  color:'#37474F', what:'Bomb threat or suspicious object', ext:'4444'},
+  {name:'Code Brown',  color:'#6D4C41', what:'Hazardous material or chemical spill', ext:'4030'},
+  {name:'Code Grey',   color:'#78909C', what:'Combative person — security assistance needed', ext:'4444'},
+  {name:'Code Green',  color:'#2E7D32', what:'Evacuation — horizontal then vertical', ext:'5566'}
+];
+
+/* ---------- on-call roster ---------- */
+const ONCALL = [
+  {spec:'Emergency Medicine',      who:'Dr. Ravi Menon',        grade:'Consultant on floor',   ext:'4101'},
+  {spec:'Critical Care',           who:'Dr. Sara Philip',       grade:'Consultant on call',    ext:'4120'},
+  {spec:'Cardiology (Cath lab)',   who:'Dr. Arun Kumar',        grade:'Consultant on call',    ext:'4140'},
+  {spec:'General Surgery',         who:'Dr. Ashok Nambiar',     grade:'Consultant on call',    ext:'4190'},
+  {spec:'Orthopaedics',            who:'Dr. Vivek Ramesh',      grade:'Consultant on call',    ext:'4195'},
+  {spec:'Obstetrics & Gynaecology',who:'Dr. Reena Thomas',      grade:'Consultant on floor',   ext:'4170'},
+  {spec:'Paediatrics & NICU',      who:'Dr. Sunil Kurup',       grade:'Consultant on call',    ext:'4175'},
+  {spec:'Neurology / Stroke',      who:'Dr. Hari Prasad',       grade:'Consultant on call',    ext:'4155'},
+  {spec:'Anaesthesia',             who:'Dr. Latha Nair',        grade:'Consultant on floor',   ext:'4210'},
+  {spec:'Radiology',               who:'Dr. Anoop Sasidharan',  grade:'Reporting on call',     ext:'4250'},
+  {spec:'Blood bank',              who:'Dr. Meenakshi Iyer',    grade:'Duty officer',          ext:'4230'},
+  {spec:'Hospital Administrator',  who:'Thomas Kurian',         grade:'Duty administrator',    ext:'4002'}
+];
+
+/* ---------- critical values ---------- */
+const CRITICAL = [
+  ['Potassium',           '< 2.8 or > 6.2 mmol/L'],
+  ['Sodium',              '< 120 or > 158 mmol/L'],
+  ['Glucose',             '< 45 or > 450 mg/dL'],
+  ['Calcium (ionised)',   '< 0.8 or > 1.6 mmol/L'],
+  ['Haemoglobin',         '< 6 g/dL'],
+  ['Platelet count',      '< 30,000 /µL'],
+  ['INR',                 '> 5.0'],
+  ['Troponin I',          'Any value above the 99th percentile in a new presentation'],
+  ['Arterial pH',         '< 7.20 or > 7.60'],
+  ['Blood culture',       'Any positive Gram stain — call immediately, do not wait for identification'],
+  ['CSF',                 'Any organism on Gram stain or cell count above reference']
+];
+
+/* ---------- antimicrobial stewardship ---------- */
+const AMS = [
+  ['Meropenem',              'Restricted', 'ID or stewardship pharmacist release; 72-hour automatic review'],
+  ['Colistin',               'Restricted', 'ID release only; renal dosing checked by pharmacy each day'],
+  ['Polymyxin B',            'Restricted', 'ID release only'],
+  ['Daptomycin',             'Restricted', 'ID release; not for pulmonary infection — inactivated by surfactant'],
+  ['Ceftazidime-avibactam',  'Restricted', 'ID release; culture and sensitivity mandatory before start'],
+  ['Vancomycin',             'Monitored',  'Trough level before the fourth dose; pharmacy reviews all courses beyond 5 days'],
+  ['Piperacillin-tazobactam','Monitored',  'De-escalate at 48–72 h on culture results'],
+  ['Linezolid',              'Monitored',  'Platelet count twice weekly beyond 10 days of therapy']
+];
+
+/* ---------- rapid reference bundles ---------- */
+const BUNDLES = [
+  {name:'Sepsis — first hour bundle', meta:'Measure lactate · blood cultures before antibiotics · broad-spectrum antibiotic · 30 mL/kg crystalloid for hypotension or lactate ≥ 4 · vasopressors for MAP < 65 after fluids',
+   detail:'Time zero is the moment sepsis is first recognised, not the moment the patient arrived. Repeat lactate within 2–4 hours if the first was raised. Escalate to Critical Care on 4120 if the patient needs vasopressors.'},
+  {name:'STEMI — door to balloon', meta:'ECG within 10 minutes of arrival · activate cath lab on 4140 · target door-to-balloon under 90 minutes · aspirin and loading dose antiplatelet unless contraindicated',
+   detail:'The Emergency physician activates the cath lab directly — no cardiology consult is required before activation. If transfer for PCI would exceed 120 minutes, thrombolyse and arrange transfer.'},
+  {name:'Acute stroke — code pathway', meta:'Last-known-well time is the critical datum · CT within 20 minutes of arrival · NIHSS by the stroke team · thrombolysis window 4.5 h, thrombectomy up to 24 h in selected patients',
+   detail:'Call the stroke consultant on 4155 from triage, in parallel with imaging — not after. Glucose is checked before any thrombolysis decision, since hypoglycaemia mimics stroke.'},
+  {name:'Massive transfusion protocol', meta:'Activate through the blood bank on 4230 · packs issued 1:1:1 red cells, plasma and platelets · named coordinator communicates with the blood bank',
+   detail:'One person owns communication with the blood bank throughout — multiple callers is the most common failure mode. Monitor ionised calcium, and warm all products and the patient.'},
+  {name:'Anaphylaxis', meta:'Adrenaline 0.5 mg IM into the anterolateral thigh, repeat every 5 minutes as needed · remove the trigger · airway and high-flow oxygen · IV fluid bolus',
+   detail:'Adrenaline is first-line and IM — antihistamine and steroid are adjuncts and never delay it. Observe for a biphasic reaction for at least 6 hours after resolution.'},
+  {name:'Rapid response — deteriorating patient', meta:'Call the rapid response team on 5544 for any staff or family concern · an early warning score of 5 or above · or a single parameter in the red zone',
+   detail:'You never need permission to escalate. Family concern alone is a valid trigger and is treated exactly like a scored trigger.'}
+];
+
+/* ---------- people ---------- */
+const PEOPLE = [
+  {name:'Dr. Meera Nair', role:'Medical Director', dept:'Medical Administration', ext:'4001'},
+  {name:'Thomas Kurian', role:'Chief Operating Officer', dept:'Administration', ext:'4002'},
+  {name:'Anju George', role:'Chief Nursing Officer', dept:'Nursing Administration', ext:'4050'},
+  {name:'Sr. Alice Joseph', role:'Nursing Superintendent', dept:'Nursing Administration', ext:'4051'},
+  {name:'Dr. Ravi Menon', role:'HOD', dept:'Emergency & Trauma', ext:'4101'},
+  {name:'Dr. Sara Philip', role:'HOD', dept:'Critical Care', ext:'4120'},
+  {name:'Dr. Arun Kumar', role:'HOD', dept:'Cardiology', ext:'4140'},
+  {name:'Dr. Hari Prasad', role:'HOD', dept:'Neurology', ext:'4155'},
+  {name:'Dr. Lakshmi Pillai', role:'HOD', dept:'Oncology', ext:'4160'},
+  {name:'Dr. Reena Thomas', role:'HOD', dept:'Obstetrics & Gynaecology', ext:'4170'},
+  {name:'Dr. Sunil Kurup', role:'HOD', dept:'Paediatrics & Neonatology', ext:'4175'},
+  {name:'Dr. Jose Mathew', role:'HOD', dept:'Gastroenterology & Liver', ext:'4180'},
+  {name:'Dr. Ashok Nambiar', role:'HOD', dept:'General & GI Surgery', ext:'4190'},
+  {name:'Dr. Vivek Ramesh', role:'HOD', dept:'Orthopaedics', ext:'4195'},
+  {name:'Dr. Latha Nair', role:'HOD', dept:'Anaesthesiology', ext:'4210'},
+  {name:'Dr. Nisha Varghese', role:'Infection Control Officer', dept:'Quality & Patient Safety', ext:'4310'},
+  {name:'Priya Raj', role:'Quality Manager', dept:'Quality & Patient Safety', ext:'4300'},
+  {name:'Dr. Meenakshi Iyer', role:'Blood Bank Officer', dept:'Transfusion Medicine', ext:'4230'},
+  {name:'Dr. Anoop Sasidharan', role:'Senior Consultant', dept:'Radiology & Imaging', ext:'4251'},
+  {name:'Suresh Babu', role:'IT Manager', dept:'Information Technology', ext:'4201'},
+  {name:'Divya Krishnan', role:'HR Manager', dept:'Human Resources', ext:'4271'},
+  {name:'Rakesh Pillai', role:'Facility Manager', dept:'Facility & Maintenance', ext:'4031'},
+  {name:'Vinod Shankar', role:'Biomedical Engineer', dept:'Biomedical Engineering', ext:'4240'},
+  {name:'Fathima Beevi', role:'Front Office Manager', dept:'Patient Relations', ext:'4010'},
+  {name:'George Cherian', role:'Chief Pharmacist', dept:'Pharmacy', ext:'4220'},
+  {name:'Deepa Mohan', role:'Lab Manager', dept:'Central Laboratory', ext:'4260'},
+  {name:'Anil Jacob', role:'Radiology Manager', dept:'Radiology & Imaging', ext:'4250'},
+  {name:'Shalini Das', role:'Dietary Manager', dept:'Food & Beverage', ext:'4290'},
+  {name:'Manoj Varma', role:'Security Officer', dept:'Security', ext:'4445'},
+  {name:'Rehana Salim', role:'Crèche In-charge', dept:'Human Resources', ext:'4270'},
+  {name:'Jacob Philip', role:'Safety Officer', dept:'Facility & Maintenance', ext:'4035'},
+  {name:'Sneha Kurian', role:'Medical Records Officer', dept:'Medical Records', ext:'4280'}
+];
+
+const KEY_EXTS = [
+  {num:'5555', label:'Code Blue — cardiac arrest', crit:true},
+  {num:'5566', label:'Code Red — fire', crit:true},
+  {num:'5544', label:'Rapid response team', crit:true},
+  {num:'4444', label:'Security control room', crit:true},
+  {num:'4100', label:'Emergency & Trauma triage'},
+  {num:'4230', label:'Blood bank'},
+  {num:'4200', label:'IT service desk'},
+  {num:'4310', label:'Infection control nurse'},
+  {num:'4030', label:'Maintenance / facility'},
+  {num:'4020', label:'Housekeeping desk'},
+  {num:'4220', label:'Pharmacy'},
+  {num:'4270', label:'HR front office'}
+];
+
+/* ---------- task-based services ("I need to…") ---------- */
+const SERVICES = [
+  {name:'Raise an IT, facility, housekeeping or biomedical ticket', meta:'Lakeshore One service desk · SLA by priority', href:'../lakeshore-one/', ic:'🎫', roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Report a patient safety incident or near-miss', meta:'SafeReport · confidential, anonymous option', href:'../safereport/', ic:'🛡', roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Report something by WhatsApp', meta:'Text the hospital number in plain language', href:'../whatsapp/', ic:'💬', roles:['nurse','doctor','allied','admin']},
+  {name:'Log patient feedback, a complaint or appreciation', meta:'Patient Inputs · Patient Experience triage', href:'../patient-inputs/', ic:'💗', roles:['nurse','admin','mgmt']},
+  {name:'Book an OT slot or check the theatre list', meta:'OT Schedule · clash checks and day timeline', href:'../ot-schedule/', ic:'🔪', roles:['doctor','nurse','mgmt']},
+  {name:'Check the ultrasound queue and waiting time', meta:'USG Wait · live token queue by machine', href:'../usg-wait/', ic:'⏱', roles:['doctor','nurse','allied','admin']},
+  {name:'Check campus IT and facility status', meta:'IT Pulse · network, power, gas, cold chain', href:'../it-pulse/', ic:'📡', roles:['allied','admin','mgmt','nurse']},
+  {name:'Apply for leave or download a payslip', meta:'ESS portal — opens at go-live', stub:'ESS payslips and leave open at go-live', ic:'📄', roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Claim CME credits or apply for conference sponsorship', meta:'Medical Education office · ext 4005', stub:'CME claim form opens at go-live — meanwhile call ext 4005', ic:'🎓', roles:['doctor','nurse','allied']},
+  {name:'Request a replacement ID badge', meta:'HR front office · ext 4270', stub:'ID badge request opens at go-live — meanwhile call ext 4270', ic:'🪪', roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Indent stores, linen or pharmacy stock', meta:'Materials management · ext 4235', stub:'Stores indent opens at go-live — meanwhile call ext 4235', ic:'📦', roles:['nurse','allied','admin']},
+  {name:'Request a patient record copy', meta:'Medical records · ext 4280, released within 72 h', stub:'Medical record requests are handled by Medical Records on ext 4280', ic:'🗂', roles:['doctor','admin']},
+  {name:'Book the auditorium or a meeting room', meta:'General administration · ext 4003', stub:'Room booking opens at go-live — meanwhile call ext 4003', ic:'📅', roles:['doctor','admin','mgmt']},
+  {name:'Raise a POSH or grievance complaint', meta:'Internal Committee · confidential', stub:'The Internal Committee contacts are listed in policy P-HRM-03', ic:'⚖', roles:['nurse','doctor','allied','admin','mgmt']}
+];
+
+/* ---------- mandatory training ---------- */
+const TRAINING = [
+  {name:'Basic Life Support (BLS) recertification', due:34,  cycle:'Every 2 years', compliance:91, roles:['nurse','doctor','allied']},
+  {name:'Fire safety & evacuation drill',            due:12,  cycle:'Annual',        compliance:88, roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Hand hygiene & infection control',          due:-4,  cycle:'Annual',        compliance:83, roles:['nurse','doctor','allied','admin']},
+  {name:'Biomedical waste segregation',              due:21,  cycle:'Annual',        compliance:86, roles:['nurse','allied','admin']},
+  {name:'International Patient Safety Goals',        due:47,  cycle:'Annual',        compliance:94, roles:['nurse','doctor','allied']},
+  {name:'POSH — prevention of sexual harassment',    due:-11, cycle:'Annual',        compliance:79, roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Information security & data privacy',       due:63,  cycle:'Annual',        compliance:72, roles:['nurse','doctor','allied','admin','mgmt']},
+  {name:'Code Blue response drill',                  due:8,   cycle:'Six-monthly',   compliance:90, roles:['nurse','doctor']},
+  {name:'Radiation safety (AERB)',                   due:96,  cycle:'Annual',        compliance:97, roles:['doctor','allied']},
+  {name:'HIS / EMR competency refresher',            due:120, cycle:'Annual',        compliance:81, roles:['nurse','doctor','allied','admin']}
+];
+
+/* ---------- benefits & wellbeing ---------- */
+const BENEFITS = [
+  {name:'Staff & dependent health cover', what:'Group mediclaim for you, spouse, children and dependent parents. Cashless at VPS network hospitals; claim desk at HR, ext 4272.'},
+  {name:'Treatment concession for staff', what:'Concessional rates on consultation, investigations and inpatient care for staff and immediate family, as per the HR benefits annexure.'},
+  {name:'Employee assistance & counselling', what:'Free, confidential counselling for staff and family — six sessions a year, self-referral, no manager involvement. Book on ext 4275.'},
+  {name:'Staff crèche', what:'On-campus crèche 07:00–21:00 covering the second shift. Pickup after 19:30 needs prior registration with the crèche desk, ext 4270.'},
+  {name:'Subsidised cafeteria', what:'Staff rates at the main cafeteria and the 24-hour night counter for duty staff. Diet counter options are available at every meal.'},
+  {name:'Yoga, gym & wellbeing sessions', what:'Open yoga sessions in the physiotherapy gym on weekday evenings, plus periodic health talks and screening camps for staff.'},
+  {name:'Provident fund, gratuity & insurance', what:'Statutory PF and gratuity, plus group personal accident and term cover. Statements through ESS; queries to payroll, ext 4273.'},
+  {name:'Education assistance for children', what:'Annual education assistance for staff children, applied through HR in the first quarter of the academic year.'},
+  {name:'CME & conference sponsorship', what:'Sponsorship for approved conferences and courses, prioritised by departmental need and prior claim history. Apply through Medical Education, ext 4005.'},
+  {name:'Staff transport & quarters', what:'Shift shuttle on fixed routes for night duty, and limited on-campus quarters and hostel places allotted by roster need.'},
+  {name:'Recognition & praise wall', what:'Send recognition to a colleague on the Lakeshore One praise wall — everyone sees it. Departmental awards are announced quarterly.'},
+  {name:'Festival advance', what:'Interest-free festival advance recovered over six months, applied through ESS ahead of the announced cut-off.'}
+];
+
+const EVENTS = [
+  {off:0,  title:'CME: Sepsis bundles in the first hour', meta:'12:30 · Auditorium · Critical Care · 1 CME credit'},
+  {off:2,  title:'BLS recertification — batch 14', meta:'09:00–13:00 · Skills lab · Mandatory for ICU & ER nursing'},
+  {off:4,  title:'Fire evacuation drill — Wards Tower', meta:'11:00 · All ward staff on shift · Assembly point A'},
+  {off:6,  title:'NABH mock round — OT complex & CSSD', meta:'10:00 · Quality team with external assessor'},
+  {off:8,  title:'Infection control refresher — OP block', meta:'14:00 · Training room 2 · Priority for OP nursing'},
+  {off:9,  title:'Onam celebration — staff lunch & pookalam contest', meta:'12:00 · Cafeteria lawn · Teams register with HR'},
+  {off:13, title:'CME: Antimicrobial stewardship update', meta:'12:30 · Auditorium · Infectious Diseases · 1 CME credit'},
+  {off:16, title:'Grand rounds: complex liver transplant case', meta:'08:00 · Auditorium · Gastro & Liver team'},
+  {off:19, title:'POSH awareness session (mandatory)', meta:'15:00 · Auditorium · Internal Committee'},
+  {off:20, title:'World Patient Safety Day — poster walk', meta:'10:00 · OP block atrium · Quality & Patient Safety'}
 ];
 
 const TODAY = [
-  {when:'08:00', what:'Morning huddle — bed status & discharges', where:'Nursing stations, all wards'},
-  {when:'12:30', what:'CME: Sepsis bundles in the first hour', where:'Auditorium · Dept. of Critical Care'},
+  {when:'08:00', what:'Morning huddle — bed status, discharges and escalations', where:'Nursing stations, all wards'},
+  {when:'09:30', what:'Bed management & discharge planning call', where:'Admin conference room'},
+  {when:'12:30', what:'CME: Sepsis bundles in the first hour', where:'Auditorium · Critical Care'},
   {when:'15:00', what:'Fire safety walk-through — OP block', where:'Assembly point A · Safety Officer'},
   {when:'16:30', what:'Yoga for staff (open session)', where:'Physiotherapy gym, Level 2'}
 ];
@@ -418,202 +1003,582 @@ const MENUS = [
   [['Breakfast','Idiyappam & egg roast'],['Lunch','Special lunch — ghee rice & veg korma'],['Evening','Banana chips & chai'],['Diet counter','Steamed idli / green-gram salad']]
 ];
 
-const KEY_EXTS = [
-  {num:'5555', label:'Code Blue — cardiac arrest', crit:true},
-  {num:'5566', label:'Code Red — fire', crit:true},
-  {num:'4100', label:'Emergency & Trauma triage'},
-  {num:'4444', label:'Security control room'},
-  {num:'4200', label:'IT service desk'},
-  {num:'4020', label:'Housekeeping desk'},
-  {num:'4030', label:'Maintenance / facility'},
-  {num:'4270', label:'HR front office'}
+const QUICKLINKS = [
+  {name:'Service Desk', sub:'Raise a ticket', href:'../lakeshore-one/', roles:['nurse','doctor','allied','admin','mgmt'],
+   svg:'<path d="M14 4h6v6M20 4l-8 8"/><path d="M20 14v5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H10"/>'},
+  {name:'SafeReport', sub:'Patient safety', href:'../safereport/', roles:['nurse','doctor','allied','admin','mgmt'],
+   svg:'<path d="M12 3 3.5 7v5.5c0 4.6 3.4 7.6 8.5 8.5 5.1-.9 8.5-3.9 8.5-8.5V7L12 3Z"/><path d="M12 8.5v5M9.5 11h5"/>'},
+  {name:'OT Schedule', sub:'Theatre list', href:'../ot-schedule/', roles:['doctor','nurse','mgmt'],
+   svg:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4M8.5 14h7"/>'},
+  {name:'USG Wait', sub:'Scan queue', href:'../usg-wait/', roles:['doctor','nurse','allied','admin'],
+   svg:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/>'},
+  {name:'Patient Inputs', sub:'Voice of patient', href:'../patient-inputs/', roles:['nurse','admin','mgmt'],
+   svg:'<path d="M20 15.5A1.5 1.5 0 0 1 18.5 17H8l-4 4V5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5Z"/><path d="M8.5 10.5h7M8.5 13.5h4"/>'},
+  {name:'IT Pulse', sub:'Campus status', href:'../it-pulse/', roles:['allied','admin','mgmt','nurse'],
+   svg:'<path d="M2 12h4l2.5-6 4 12 2.5-6h7"/>'},
+  {name:'WhatsApp', sub:'Report by text', href:'../whatsapp/', roles:['nurse','doctor','allied','admin'],
+   svg:'<path d="M20.5 11.6a8.4 8.4 0 0 1-12.3 7.5L3.5 20.5l1.4-4.6A8.5 8.5 0 1 1 20.5 11.6Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5"/>'},
+  {name:'HIS', sub:'Clinical system', stub:'The HIS opens on hospital workstations', roles:['nurse','doctor','allied','admin'],
+   svg:'<rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/>'},
+  {name:'Webmail', sub:'Staff email', stub:'The webmail link is set by IT at go-live', roles:['nurse','doctor','allied','admin','mgmt'],
+   svg:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'},
+  {name:'ESS / HR', sub:'Payslips & leave', stub:'ESS payslips and leave open at go-live', roles:['nurse','doctor','allied','admin','mgmt'],
+   svg:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/>'},
+  {name:'Learning', sub:'Training portal', stub:'The learning portal opens at go-live', roles:['nurse','doctor','allied','admin','mgmt'],
+   svg:'<path d="m12 4 9 4.5-9 4.5-9-4.5Z"/><path d="M7 11v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V11"/>'},
+  {name:'Dashboard', sub:'Management MIS', href:'../lakeshore-one/', roles:['mgmt'],
+   svg:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'}
 ];
 
-const PEOPLE = [
-  {name:'Dr. Meera Nair', role:'Medical Director', dept:'Medical Administration', ext:'4001'},
-  {name:'Thomas Kurian', role:'Chief Operating Officer', dept:'Administration', ext:'4002'},
-  {name:'Anju George', role:'Chief Nursing Officer', dept:'Nursing Administration', ext:'4050'},
-  {name:'Dr. Ravi Menon', role:'HOD', dept:'Emergency & Trauma', ext:'4101'},
-  {name:'Dr. Sara Philip', role:'HOD', dept:'Critical Care', ext:'4120'},
-  {name:'Dr. Arun Kumar', role:'HOD', dept:'Cardiology', ext:'4140'},
-  {name:'Dr. Lakshmi Pillai', role:'HOD', dept:'Oncology', ext:'4160'},
-  {name:'Dr. Jose Mathew', role:'HOD', dept:'Gastroenterology & Liver', ext:'4180'},
-  {name:'Dr. Nisha Varghese', role:'Infection Control Officer', dept:'Quality & Patient Safety', ext:'4310'},
-  {name:'Priya Raj', role:'Quality Manager', dept:'Quality & Patient Safety', ext:'4300'},
-  {name:'Suresh Babu', role:'IT Manager', dept:'Information Technology', ext:'4201'},
-  {name:'Divya Krishnan', role:'HR Manager', dept:'Human Resources', ext:'4271'},
-  {name:'Rakesh Pillai', role:'Facility Manager', dept:'Facility & Maintenance', ext:'4031'},
-  {name:'Sr. Alice Joseph', role:'Nursing Superintendent', dept:'Nursing Administration', ext:'4051'},
-  {name:'Vinod Shankar', role:'Biomedical Engineer', dept:'Biomedical Engineering', ext:'4240'},
-  {name:'Fathima Beevi', role:'Front Office Manager', dept:'Patient Relations', ext:'4010'},
-  {name:'George Cherian', role:'Chief Pharmacist', dept:'Pharmacy', ext:'4220'},
-  {name:'Deepa Mohan', role:'Lab Manager', dept:'Central Laboratory', ext:'4260'},
-  {name:'Anil Jacob', role:'Radiology Manager', dept:'Radiology & Imaging', ext:'4250'},
-  {name:'Shalini Das', role:'Dietary Manager', dept:'Food & Beverage', ext:'4290'},
-  {name:'Manoj Varma', role:'Security Officer', dept:'Security', ext:'4445'},
-  {name:'Rehana Salim', role:'Crèche In-charge', dept:'Human Resources', ext:'4270'}
+const NAVITEMS = [
+  {id:'home', label:'Home', svg:'<path d="m3 11 9-7 9 7v8.5A1.5 1.5 0 0 1 19.5 21h-15A1.5 1.5 0 0 1 3 19.5Z"/><path d="M9.5 21v-6h5v6"/>'},
+  {id:'news', label:'News', svg:'<path d="M4 5h13v14H5.5A1.5 1.5 0 0 1 4 17.5Z"/><path d="M17 9h3v8.5a1.5 1.5 0 0 1-3 0Z"/><path d="M7.5 9H13M7.5 12.5H13M7.5 16H11"/>'},
+  {id:'policies', label:'Policies', svg:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 15.5h6"/>'},
+  {id:'clinical', label:'Clinical', svg:'<path d="M12 3 3.5 7v5.5c0 4.6 3.4 7.6 8.5 8.5 5.1-.9 8.5-3.9 8.5-8.5V7L12 3Z"/><path d="M12 8.5v5M9.5 11h5"/>'},
+  {id:'directory', label:'Directory', svg:'<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-2.8 2.8-4.5 5.5-4.5s4.9 1.7 5.5 4.5"/><path d="M16 6.5a3 3 0 0 1 0 5.4M17.8 15c1.4.7 2.4 2 2.7 4"/>'},
+  {id:'staff', label:'Staff', svg:'<path d="M12 3v4M8 7h8l1.5 5.5H6.5Z"/><path d="M5 21v-4.5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3V21"/>'}
 ];
 
-const DOCS = [
-  {group:'HR policies', items:[
-    {name:'HR policy manual (v6)', meta:'Updated 3 months ago · Controlled copy', tag:'PDF'},
-    {name:'Leave & holiday roster policy', meta:'Updated 2 months ago', tag:'PDF'},
-    {name:'Crèche policy (revised timings)', meta:'Updated this month', tag:'PDF'},
-    {name:'Code of conduct & grievance redressal', meta:'Updated 8 months ago', tag:'PDF'}]},
-  {group:'Infection control', items:[
-    {name:'Hand hygiene — 5 moments poster set', meta:'Print at ward level', tag:'PDF'},
-    {name:'Isolation precautions manual', meta:'Updated 4 months ago · Controlled copy', tag:'PDF'},
-    {name:'Needle-stick injury protocol', meta:'Updated 6 months ago', tag:'PDF'}]},
-  {group:'IT & information security', items:[
-    {name:'Acceptable use & password policy', meta:'Updated 5 months ago', tag:'PDF'},
-    {name:'HIS downtime procedure & forms', meta:'Keep printed at nursing stations', tag:'PDF'},
-    {name:'Phishing: how to spot & report', meta:'Updated this month', tag:'PDF'}]},
-  {group:'Quality & NABH', items:[
-    {name:'NABH mock-round schedule', meta:'Published this week', tag:'XLSX'},
-    {name:'Incident reporting SOP (SafeReport)', meta:'Updated 2 months ago', tag:'PDF'},
-    {name:'Crash cart checklist (all areas)', meta:'Updated 3 months ago · Controlled copy', tag:'PDF'},
-    {name:'Emergency codes quick card', meta:'Print for badge holders', tag:'PDF'}]}
-];
+/* ============================================================
+   State
+   ============================================================ */
+const LS = {role:'intranet.role', read:'intranet.read', ack:'intranet.ack'};
+const store = {
+  get(k, dflt){ try{ const v = localStorage.getItem(k); return v === null ? dflt : JSON.parse(v); }catch(e){ return dflt; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let role = store.get(LS.role, 'nurse');
+if (!ROLES.some(r => r.id === role)) role = 'nurse';
+const readSet = new Set(store.get(LS.read, []));
+const ackSet  = new Set(store.get(LS.ack, []));
+const saveRead = () => store.set(LS.read, [...readSet]);
+const saveAck  = () => store.set(LS.ack,  [...ackSet]);
 
-const EVENTS = [
-  {off:0,  title:'CME: Sepsis bundles in the first hour', meta:'12:30 · Auditorium · Dept. of Critical Care · 1 CME credit'},
-  {off:2,  title:'BLS recertification — batch 14', meta:'09:00–13:00 · Skills lab · Mandatory for ICU & ER nursing'},
-  {off:4,  title:'Fire evacuation drill — Wards Tower', meta:'11:00 · All ward staff on shift · Assembly point A'},
-  {off:6,  title:'NABH mock round — OT complex & CSSD', meta:'10:00 · Quality team with external assessor'},
-  {off:9,  title:'Onam celebration — staff lunch & pookalam contest', meta:'12:00 · Cafeteria lawn · Department teams register with HR'},
-  {off:13, title:'CME: Antimicrobial stewardship update', meta:'12:30 · Auditorium · Dept. of Infectious Diseases · 1 CME credit'},
-  {off:16, title:'Grand rounds: complex liver transplant case', meta:'08:00 · Auditorium · Gastro & Liver team'},
-  {off:20, title:'World Patient Safety Day — poster walk', meta:'10:00 · OP block atrium · Quality & Patient Safety'}
-];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const roleLabel = id => (ROLES.find(r => r.id === id) || {}).label || id;
 
-/* ---------- read-state (localStorage; demo-mode convenience only) ---------- */
-const READ_KEY = 'intranet.read';
-let readSet;
-try { readSet = new Set(JSON.parse(localStorage.getItem(READ_KEY) || '[]')); }
-catch(e){ readSet = new Set(); }
-function markRead(id){
-  readSet.add(id);
-  try { localStorage.setItem(READ_KEY, JSON.stringify([...readSet])); } catch(e){}
-}
-
-/* ---------- tiny helpers ---------- */
-const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let toastTimer;
 function toast(msg){
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-/* ---------- home ---------- */
-(function renderHome(){
-  const h = NOW.getHours();
-  $('greeting').textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  $('todayLine').textContent = fmtLong(NOW) + ' · VPS Lakeshore, Kochi';
+/* ---------- policy helpers ---------- */
+function policyStatus(p){
+  if (p.rev < 0)  return {cls:'over', label:'Review overdue'};
+  if (p.rev <= 2) return {cls:'due',  label:'Review due'};
+  return {cls:'ok', label:'Current'};
+}
+const policyById = id => POLICIES.find(p => p.id === id);
 
-  const pin = NEWS.find(n => n.pinned);
-  $('pinnedCard').innerHTML =
-    '<div class="p-head"><span class="pill ' + pin.cat + '">' + CATS[pin.cat] + '</span>' +
-    '<span class="kicker" style="color:var(--accent)">Pinned</span></div>' +
-    '<h3>' + esc(pin.title) + '</h3><p>' + esc(pin.body) + '</p>';
+/* ============================================================
+   Drawer
+   ============================================================ */
+let lastFocus = null;
+function openDrawer(title, html){
+  lastFocus = document.activeElement;
+  $('drTitle').innerHTML = title;
+  $('drBody').innerHTML = html;
+  $('drawer').classList.add('show');
+  $('scrim').classList.add('show');
+  $('drClose').focus();
+}
+function closeDrawer(){
+  $('drawer').classList.remove('show');
+  $('scrim').classList.remove('show');
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+$('drClose').onclick = closeDrawer;
+$('scrim').onclick = closeDrawer;
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('drawer').classList.contains('show')) closeDrawer();
+  if (e.key === '/' && !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)){
+    e.preventDefault(); $('globalSearch').focus();
+  }
+});
+
+function openPolicy(id){
+  const p = policyById(id); if (!p) return;
+  const st = policyStatus(p);
+  const acked = ackSet.has(p.id);
+  const html =
+    '<div class="dr-meta">' +
+      '<div><div class="k">Document ID</div><div class="v">' + p.id + '</div></div>' +
+      '<div><div class="k">Version</div><div class="v">v' + p.ver + '</div></div>' +
+      '<div><div class="k">Effective from</div><div class="v">' + fmtD(monOff(p.eff)) + '</div></div>' +
+      '<div><div class="k">Next review</div><div class="v">' + fmtD(monOff(p.rev)) + '</div></div>' +
+      '<div><div class="k">Owner</div><div class="v">' + esc(p.owner) + '</div></div>' +
+      '<div><div class="k">NABH chapter</div><div class="v">' + p.nabh + '</div></div>' +
+    '</div>' +
+    '<div><span class="pill ' + st.cls + '">' + st.label + '</span> ' +
+      '<span class="pill info">' + esc(CATS[p.cat]) + '</span>' +
+      (p.must ? ' <span class="pill hot">Must read</span>' : '') + '</div>' +
+    '<div><h4>Purpose &amp; scope</h4><p style="margin-top:7px">' + esc(p.purpose) + '</p></div>' +
+    '<div><h4>Key points</h4><ul style="margin-top:9px">' +
+      p.points.map(pt => '<li>' + esc(pt) + '</li>').join('') + '</ul></div>' +
+    '<div><h4>NABH mapping</h4><p style="margin-top:7px">' + p.nabh + ' &mdash; ' + esc(NABH[p.nabh]) + '</p></div>' +
+    '<div class="btnrow">' +
+      (p.must
+        ? '<button class="btn" id="ackBtn"' + (acked ? ' disabled' : '') + '>' +
+            (acked ? '✓ Acknowledged' : 'I have read this') + '</button>'
+        : '') +
+      '<button class="btn ghost" id="pdfBtn">Open controlled copy</button>' +
+    '</div>' +
+    '<p style="font-size:11.5px;color:var(--ink-3);line-height:1.6">Printed copies are uncontrolled. ' +
+      'Always check the version here before acting on a printout.</p>';
+  openDrawer(esc(p.name), html);
+  const ack = $('ackBtn');
+  if (ack) ack.onclick = () => {
+    ackSet.add(p.id); saveAck();
+    ack.textContent = '✓ Acknowledged'; ack.disabled = true;
+    toast('Acknowledgement recorded for ' + p.id);
+    renderPolicies(); renderHome();
+  };
+  $('pdfBtn').onclick = () => toast('Demo — the controlled document library opens at go-live');
+}
+
+function openBundle(i){
+  const b = BUNDLES[i]; if (!b) return;
+  openDrawer(esc(b.name),
+    '<div><h4>The bundle</h4><ul style="margin-top:9px">' +
+      b.meta.split(' · ').map(s => '<li>' + esc(s) + '</li>').join('') + '</ul></div>' +
+    '<div><h4>Notes</h4><p style="margin-top:7px">' + esc(b.detail) + '</p></div>' +
+    '<p style="font-size:11.5px;color:var(--ink-3);line-height:1.6">This card is a memory aid, not a substitute ' +
+      'for the full protocol in the policy library.</p>');
+}
+
+/* ============================================================
+   Renderers
+   ============================================================ */
+function renderHome(){
+  const h = NOW.getHours();
+  $('greeting').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening');
+  $('todayLine').textContent = fmtLong(NOW) + ' · VPS Lakeshore, Kochi · viewing as ' + roleLabel(role);
+  $('quickKicker').textContent = 'Quick links for ' + roleLabel(role).toLowerCase();
+
+  /* must-read banner: the oldest unacknowledged must-read notice */
+  const pending = NEWS.filter(n => n.must && !ackSet.has(n.id)).sort((a,b) => a.off - b.off);
+  const card = $('mustReadCard');
+  if (pending.length){
+    const n = pending[0];
+    card.style.display = '';
+    card.innerHTML =
+      '<div class="m-head"><span class="pill hot">Must read</span>' +
+      '<span class="pill info">' + esc(n.by) + '</span>' +
+      '<span style="font-size:11px;color:var(--ink-3);font-weight:600">' + fmtDS(dayOff(n.off)) + '</span></div>' +
+      '<h3>' + esc(n.title) + '</h3><p>' + esc(n.body) + '</p>' +
+      '<div class="btnrow"><button class="btn" id="mrAck">I have read this</button>' +
+      '<span style="font-size:12px;color:var(--ink-3)">' + pending.length + ' notice' +
+      (pending.length > 1 ? 's' : '') + ' waiting for you</span></div>';
+    $('mrAck').onclick = () => {
+      ackSet.add(n.id); readSet.add(n.id); saveAck(); saveRead();
+      toast('Thank you — acknowledgement recorded');
+      renderHome(); renderNews();
+    };
+  } else {
+    card.style.display = 'none';
+  }
+
+  /* at a glance */
+  const myTraining = TRAINING.filter(t => t.roles.includes(role));
+  const overdueTraining = myTraining.filter(t => t.due < 0).length;
+  const unread = NEWS.filter(n => !readSet.has(n.id)).length;
+  const dueRev = POLICIES.filter(p => p.rev < 0).length;
+  const mustPending = POLICIES.filter(p => p.must && !ackSet.has(p.id)).length;
+  $('glanceRow').innerHTML =
+    '<div class="stat"><div class="s-label">Unread notices</div><div class="s-value">' + unread +
+      '</div><div class="s-foot">of ' + NEWS.length + ' published</div></div>' +
+    '<div class="stat"><div class="s-label">Policies to acknowledge</div><div class="s-value">' + mustPending +
+      '</div><div class="s-foot">must-read for all staff</div></div>' +
+    '<div class="stat"><div class="s-label">Your training overdue</div><div class="s-value">' + overdueTraining +
+      '</div><div class="s-foot">of ' + myTraining.length + ' mandatory modules</div></div>' +
+    '<div class="stat"><div class="s-label">Policies past review</div><div class="s-value">' + dueRev +
+      '</div><div class="s-foot">document control is on it</div></div>';
+
+  /* quick links, role filtered */
+  $('quickLinks').innerHTML = QUICKLINKS.filter(q => q.roles.includes(role)).map(q => {
+    const href = q.href || '#';
+    const stub = q.stub ? ' data-stub="' + esc(q.stub) + '"' : '';
+    return '<a class="qlink" href="' + href + '"' + stub + '>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      q.svg + '</svg>' + esc(q.name) + '<small>' + esc(q.sub) + '</small></a>';
+  }).join('');
+  bindStubs();
+
+  /* on-call brief */
+  $('onCallBrief').innerHTML = ONCALL.slice(0, 5).map(o =>
+    '<div class="oncall"><div class="o-spec"><b>' + esc(o.spec) + '</b></div>' +
+    '<div class="o-who">' + esc(o.who) + '<small>' + esc(o.grade) + '</small></div>' +
+    '<div class="o-ext"><b>' + o.ext + '</b><small>Ext</small></div></div>').join('');
 
   $('todayList').innerHTML = TODAY.map(t =>
     '<div class="today-row"><span class="t-when">' + t.when + '</span>' +
     '<span class="t-what">' + esc(t.what) + '<small>' + esc(t.where) + '</small></span></div>').join('');
 
+  /* training brief */
+  $('trainingBrief').innerHTML = myTraining.slice()
+    .sort((a,b) => a.due - b.due).slice(0, 4).map(trainRow).join('');
+
+  /* recently updated policies */
+  $('recentPolicies').innerHTML = POLICIES.slice().sort((a,b) => b.eff - a.eff).slice(0, 4).map(p =>
+    '<div class="doc" data-policy="' + p.id + '" tabindex="0" role="button">' +
+    '<div class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></div>' +
+    '<div class="d-body"><div class="d-name">' + esc(p.name) + '</div>' +
+    '<div class="d-meta">v' + p.ver + ' · effective ' + fmtMY(monOff(p.eff)) + ' · ' + esc(p.owner) + '</div></div>' +
+    '</div>').join('');
+  bindPolicyRows();
+
   $('menuGrid').innerHTML = MENUS[NOW.getDay()].map(m =>
     '<div class="menu-cell"><div class="m-label">' + m[0] + '</div><div class="m-item">' + esc(m[1]) + '</div></div>').join('');
-})();
+}
 
-/* ---------- announcements ---------- */
+function trainRow(t){
+  const cls = t.due < 0 ? 'over' : t.due <= 30 ? 'due' : 'ok';
+  const label = t.due < 0 ? Math.abs(t.due) + ' days overdue'
+              : t.due <= 30 ? 'Due in ' + t.due + ' days'
+              : 'Due ' + fmtDS(dayOff(t.due));
+  return '<div class="train"><div class="t-body"><div class="t-name">' + esc(t.name) + '</div>' +
+    '<div class="t-meta">' + esc(t.cycle) + ' · hospital compliance ' + t.compliance + '%</div>' +
+    '<div class="bar"><i style="width:' + t.compliance + '%"></i></div></div>' +
+    '<span class="pill ' + cls + '">' + label + '</span></div>';
+}
+
+/* ---------- news ---------- */
 let newsFilter = 'all';
+const NEWSCATS = {hr:'HR', it:'IT', clinical:'Clinical', quality:'Quality', admin:'Admin'};
 function renderNewsChips(){
-  const cats = [['all','All']].concat(Object.entries(CATS));
+  const cats = [['all','All']].concat(Object.entries(NEWSCATS));
   $('newsChips').innerHTML = cats.map(([k,label]) =>
     '<button class="chip" data-cat="' + k + '" aria-pressed="' + (k === newsFilter) + '">' + label + '</button>').join('');
-  [...$('newsChips').children].forEach(b => b.onclick = () => { newsFilter = b.dataset.cat; renderNewsChips(); renderNews(); });
+  [...$('newsChips').children].forEach(b => b.onclick = () => {
+    newsFilter = b.dataset.cat; renderNewsChips(); renderNews();
+  });
 }
 function renderNews(){
   const list = NEWS.filter(n => newsFilter === 'all' || n.cat === newsFilter)
-    .slice().sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0) || b.off - a.off);
+    .sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0) || b.off - a.off);
   $('newsList').innerHTML = list.length ? list.map(n =>
     '<article class="news' + (readSet.has(n.id) ? ' read' : '') + '" data-id="' + n.id + '" tabindex="0" role="button" aria-expanded="false">' +
-    '<div class="n-head"><span class="pill ' + n.cat + '">' + CATS[n.cat] + '</span>' +
-    (n.pinned ? '<span class="kicker" style="color:var(--accent)">Pinned</span>' : '') +
-    '<span class="n-date">' + fmt(day(n.off)) + '</span></div>' +
+    '<div class="n-head"><span class="pill info">' + NEWSCATS[n.cat] + '</span>' +
+    (n.pinned ? '<span class="pill hot">Pinned</span>' : '') +
+    (n.must ? '<span class="pill ' + (ackSet.has(n.id) ? 'ok' : 'hot') + '">' +
+       (ackSet.has(n.id) ? '✓ Acknowledged' : 'Must read') + '</span>' : '') +
+    '<span class="n-date">' + fmtDS(dayOff(n.off)) + '</span></div>' +
     '<h3><span class="dot" aria-hidden="true"></span>' + esc(n.title) + '</h3>' +
-    '<p>' + esc(n.body) + '</p><div class="n-by">&mdash; ' + esc(n.by) + '</div></article>').join('')
+    '<div class="n-body"><p style="font-size:13px;line-height:1.6">' + esc(n.body) + '</p>' +
+    '<div class="n-by">&mdash; ' + esc(n.by) + '</div>' +
+    (n.must && !ackSet.has(n.id)
+      ? '<div class="btnrow"><button class="btn" data-ack="' + n.id + '">I have read this</button></div>' : '') +
+    '</div></article>').join('')
     : '<div class="empty">No announcements in this category.</div>';
+
   [...$('newsList').querySelectorAll('.news')].forEach(el => {
-    const open = () => {
+    const toggle = e => {
+      if (e && e.target && e.target.dataset.ack) return;   /* let the ack button act alone */
       el.classList.toggle('open');
       el.setAttribute('aria-expanded', el.classList.contains('open'));
-      if (!el.classList.contains('read')){ el.classList.add('read'); markRead(el.dataset.id); }
+      if (!readSet.has(el.dataset.id)){ readSet.add(el.dataset.id); saveRead(); el.classList.add('read'); renderHome(); }
     };
-    el.onclick = open;
-    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } };
+    el.onclick = toggle;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } };
+  });
+  [...$('newsList').querySelectorAll('[data-ack]')].forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    ackSet.add(b.dataset.ack); readSet.add(b.dataset.ack); saveAck(); saveRead();
+    toast('Thank you — acknowledgement recorded');
+    renderNews(); renderHome();
   });
 }
-renderNewsChips(); renderNews();
+
+/* ---------- policies ---------- */
+let polCat = 'all', polNabh = 'all';
+function renderPolicyChips(){
+  const cats = [['all','All categories']].concat(Object.entries(CATS));
+  $('policyChips').innerHTML = cats.map(([k,label]) =>
+    '<button class="chip" data-cat="' + k + '" aria-pressed="' + (k === polCat) + '">' + esc(label) + '</button>').join('');
+  [...$('policyChips').children].forEach(b => b.onclick = () => {
+    polCat = b.dataset.cat; renderPolicyChips(); renderPolicies();
+  });
+  const chapters = [['all','All NABH chapters']].concat(Object.keys(NABH).map(k => [k, k]));
+  $('nabhChips').innerHTML = chapters.map(([k,label]) =>
+    '<button class="chip" data-n="' + k + '" aria-pressed="' + (k === polNabh) + '" title="' +
+    esc(NABH[k] || 'All chapters') + '">' + esc(label) + '</button>').join('');
+  [...$('nabhChips').children].forEach(b => b.onclick = () => {
+    polNabh = b.dataset.n; renderPolicyChips(); renderPolicies();
+  });
+}
+function renderPolicies(){
+  const q = $('policySearch').value.trim().toLowerCase();
+  const list = POLICIES.filter(p =>
+    (polCat === 'all' || p.cat === polCat) &&
+    (polNabh === 'all' || p.nabh === polNabh) &&
+    (!q || (p.name + ' ' + p.id + ' ' + p.owner + ' ' + CATS[p.cat] + ' ' + NABH[p.nabh]).toLowerCase().includes(q))
+  );
+  const must = POLICIES.filter(p => p.must);
+  const acked = must.filter(p => ackSet.has(p.id)).length;
+  $('policyStats').innerHTML =
+    '<div class="stat"><div class="s-label">Documents</div><div class="s-value">' + POLICIES.length +
+      '</div><div class="s-foot">in the controlled library</div></div>' +
+    '<div class="stat"><div class="s-label">Current</div><div class="s-value">' +
+      POLICIES.filter(p => p.rev > 2).length + '</div><div class="s-foot">within review date</div></div>' +
+    '<div class="stat"><div class="s-label">Review due / overdue</div><div class="s-value">' +
+      POLICIES.filter(p => p.rev <= 2).length + '</div><div class="s-foot">with document control</div></div>' +
+    '<div class="stat"><div class="s-label">Your acknowledgements</div><div class="s-value">' + acked + '/' + must.length +
+      '</div><div class="s-foot">must-read policies</div></div>';
+
+  $('policyList').innerHTML = list.length ? list.map(p => {
+    const st = policyStatus(p);
+    const needsAck = p.must && !ackSet.has(p.id);
+    return '<div class="doc" data-policy="' + p.id + '" tabindex="0" role="button">' +
+      '<div class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></div>' +
+      '<div class="d-body"><div class="d-name">' + esc(p.name) +
+        (needsAck ? ' <span class="pill hot">Must read</span>' : '') + '</div>' +
+      '<div class="d-meta">' + p.id + ' · v' + p.ver + ' · ' + esc(CATS[p.cat]) + ' · ' + p.nabh +
+        ' · ' + esc(p.owner) + '</div></div>' +
+      '<div class="d-right"><span class="pill ' + st.cls + '">' + st.label + '</span>' +
+      '<span class="d-rev">Review ' + fmtMY(monOff(p.rev)) + '</span></div></div>';
+  }).join('') : '<div class="empty">No documents match those filters.</div>';
+  bindPolicyRows();
+}
+function bindPolicyRows(){
+  [...document.querySelectorAll('[data-policy]')].forEach(el => {
+    const go = () => openPolicy(el.dataset.policy);
+    el.onclick = go;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
+  });
+}
+$('policySearch').oninput = renderPolicies;
+
+/* ---------- clinical ---------- */
+function renderClinical(){
+  $('codeGrid').innerHTML = CODES.map(c =>
+    '<div class="code"><span class="swatch" style="background:' + c.color + '"></span>' +
+    '<div class="c-body"><div class="c-name">' + esc(c.name) + '</div>' +
+    '<div class="c-what">' + esc(c.what) + '</div></div>' +
+    '<div class="c-ext">' + c.ext + '</div></div>').join('');
+
+  $('onCallDate').textContent = fmtD(NOW);
+  $('onCallList').innerHTML = ONCALL.map(o =>
+    '<div class="oncall"><div class="o-spec"><b>' + esc(o.spec) + '</b></div>' +
+    '<div class="o-who">' + esc(o.who) + '<small>' + esc(o.grade) + '</small></div>' +
+    '<div class="o-ext"><b>' + o.ext + '</b><small>Ext</small></div></div>').join('');
+
+  $('criticalTbl').innerHTML =
+    '<thead><tr><th>Analyte</th><th>Critical value</th></tr></thead><tbody>' +
+    CRITICAL.map(r => '<tr><td><b>' + esc(r[0]) + '</b></td><td>' + esc(r[1]) + '</td></tr>').join('') +
+    '</tbody>';
+
+  $('amsTbl').innerHTML =
+    '<thead><tr><th>Agent</th><th>Status</th><th>Rule</th></tr></thead><tbody>' +
+    AMS.map(r => '<tr><td><b>' + esc(r[0]) + '</b></td>' +
+      '<td><span class="pill ' + (r[1] === 'Restricted' ? 'over' : 'due') + '">' + r[1] + '</span></td>' +
+      '<td>' + esc(r[2]) + '</td></tr>').join('') + '</tbody>';
+
+  $('bundleList').innerHTML = BUNDLES.map((b, i) =>
+    '<div class="svc" data-bundle="' + i + '" tabindex="0" role="button">' +
+    '<div class="s-ic">⚡</div><div class="s-body"><div class="s-name">' + esc(b.name) + '</div>' +
+    '<div class="s-meta">' + esc(b.meta) + '</div></div><span class="chev">&rsaquo;</span></div>').join('');
+  [...document.querySelectorAll('[data-bundle]')].forEach(el => {
+    const go = () => openBundle(+el.dataset.bundle);
+    el.onclick = go;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
+  });
+}
 
 /* ---------- directory ---------- */
-$('extGrid').innerHTML = KEY_EXTS.map(e =>
-  '<div class="ext-cell' + (e.crit ? ' crit' : '') + '"><div class="e-num">' + e.num + '</div>' +
-  '<div class="e-label">' + esc(e.label) + '</div></div>').join('');
-
 function initials(name){
-  return name.replace(/^(Dr|Sr|Mr|Ms|Mrs)\.\s+/,'').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+  return name.replace(/^(Dr|Sr|Mr|Ms|Mrs)\.\s+/, '').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
 }
-function renderDir(){
+function renderDirectory(){
+  $('extGrid').innerHTML = KEY_EXTS.map(e =>
+    '<div class="ext-cell' + (e.crit ? ' crit' : '') + '"><div class="e-num">' + e.num + '</div>' +
+    '<div class="e-label">' + esc(e.label) + '</div></div>').join('');
   const q = $('dirSearch').value.trim().toLowerCase();
-  const list = PEOPLE.filter(p => !q || (p.name + ' ' + p.role + ' ' + p.dept).toLowerCase().includes(q));
+  const list = PEOPLE.filter(p => !q || (p.name + ' ' + p.role + ' ' + p.dept + ' ' + p.ext).toLowerCase().includes(q));
   $('dirList').innerHTML = list.length ? list.map(p =>
     '<div class="person"><div class="avatar">' + initials(p.name) + '</div>' +
     '<div class="p-body"><div class="p-name">' + esc(p.name) + '</div>' +
-    '<div class="p-meta">' + esc(p.role) + ' &middot; ' + esc(p.dept) + '</div></div>' +
+    '<div class="p-meta">' + esc(p.role) + ' · ' + esc(p.dept) + '</div></div>' +
     '<div class="p-ext"><b>' + p.ext + '</b><small>Ext</small></div></div>').join('')
     : '<div class="empty">No one matches &ldquo;' + esc($('dirSearch').value.trim()) + '&rdquo;.</div>';
 }
-$('dirSearch').oninput = renderDir;
-renderDir();
+$('dirSearch').oninput = renderDirectory;
 
-/* ---------- documents ---------- */
-$('docGroups').innerHTML = DOCS.map(g =>
-  '<div class="panel" style="margin-bottom:14px"><span class="kicker">' + esc(g.group) + '</span>' +
-  g.items.map(d =>
-    '<div class="doc" tabindex="0" role="button">' +
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>' +
-    '<div class="d-body"><div class="d-name">' + esc(d.name) + '</div><div class="d-meta">' + esc(d.meta) + '</div></div>' +
-    '<span class="d-tag">' + d.tag + '</span></div>').join('') + '</div>').join('');
-[...document.querySelectorAll('.doc')].forEach(el => {
-  const open = () => toast('Demo — the document library opens at go-live');
-  el.onclick = open;
-  el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } };
-});
+/* ---------- staff zone ---------- */
+function renderStaff(){
+  $('serviceList').innerHTML = SERVICES.filter(s => s.roles.includes(role)).map(s => {
+    const tag = s.href ? 'a href="' + s.href + '"' : 'div tabindex="0" role="button" data-stub="' + esc(s.stub) + '"';
+    const end = s.href ? 'a' : 'div';
+    return '<' + tag + ' class="svc"><div class="s-ic">' + s.ic + '</div>' +
+      '<div class="s-body"><div class="s-name">' + esc(s.name) + '</div>' +
+      '<div class="s-meta">' + esc(s.meta) + '</div></div><span class="chev">&rsaquo;</span></' + end + '>';
+  }).join('');
+  bindStubs();
 
-/* ---------- events ---------- */
-$('eventList').innerHTML = EVENTS.map(e => {
-  const d = day(e.off);
-  const rel = e.off === 0 ? 'Today' : e.off === 1 ? 'Tomorrow' : d.toLocaleDateString('en-IN', {weekday:'short'});
-  return '<div class="event"><div class="cal"><div class="c-mon">' +
-    d.toLocaleDateString('en-IN', {month:'short'}) + '</div><div class="c-day">' + d.getDate() + '</div></div>' +
-    '<div class="e-body"><h3>' + esc(e.title) + '</h3><div class="e-meta">' + rel + ' &middot; ' + esc(e.meta) + '</div></div></div>';
-}).join('');
+  $('trainingList').innerHTML = TRAINING.filter(t => t.roles.includes(role))
+    .sort((a,b) => a.due - b.due).map(trainRow).join('');
 
-/* ---------- quick-link stubs ---------- */
-[...document.querySelectorAll('a.qlink[data-stub]')].forEach(a => {
-  a.addEventListener('click', e => { e.preventDefault(); toast(a.dataset.stub.replace(/&amp;/g,'&')); });
-});
+  $('benefitList').innerHTML = BENEFITS.map(b =>
+    '<div class="benefit"><div class="b-name">' + esc(b.name) + '</div>' +
+    '<div class="b-what">' + esc(b.what) + '</div></div>').join('');
 
-/* ---------- bottom nav ---------- */
-const TABS = ['home','news','directory','docs','events'];
-function show(tab){
-  TABS.forEach(t => {
-    $('tab-' + t).classList.toggle('active', t === tab);
-    $('nav-' + t).setAttribute('aria-pressed', t === tab);
+  $('eventList').innerHTML = EVENTS.map(e => {
+    const d = dayOff(e.off);
+    const rel = e.off === 0 ? 'Today' : e.off === 1 ? 'Tomorrow' : d.toLocaleDateString('en-IN', {weekday:'short'});
+    return '<div class="event"><div class="cal"><div class="c-mon">' +
+      d.toLocaleDateString('en-IN', {month:'short'}) + '</div><div class="c-day">' + d.getDate() + '</div></div>' +
+      '<div class="e-body"><h3>' + esc(e.title) + '</h3>' +
+      '<div class="e-meta">' + rel + ' · ' + esc(e.meta) + '</div></div></div>';
+  }).join('');
+}
+
+function bindStubs(){
+  [...document.querySelectorAll('[data-stub]')].forEach(el => {
+    const go = e => { if (e) e.preventDefault(); toast(el.dataset.stub); };
+    el.onclick = go;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
   });
+}
+
+/* ============================================================
+   Global search — the front door of any good intranet
+   ============================================================ */
+function hilite(text, q){
+  const i = text.toLowerCase().indexOf(q);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+}
+function runSearch(raw){
+  const q = raw.trim().toLowerCase();
+  $('searchBox').classList.toggle('has', !!q);
+  if (!q){ show(lastTab === 'search' ? 'home' : lastTab); return; }
+
+  const hits = [];
+  POLICIES.forEach(p => {
+    const hay = (p.name + ' ' + p.id + ' ' + p.owner + ' ' + CATS[p.cat] + ' ' + p.purpose).toLowerCase();
+    if (hay.includes(q)) hits.push({group:'Policies & documents', name:p.name,
+      meta:p.id + ' · v' + p.ver + ' · ' + CATS[p.cat] + ' · ' + p.owner, act:() => openPolicy(p.id)});
+  });
+  PEOPLE.forEach(p => {
+    if ((p.name + ' ' + p.role + ' ' + p.dept + ' ' + p.ext).toLowerCase().includes(q))
+      hits.push({group:'People', name:p.name, meta:p.role + ' · ' + p.dept + ' · Ext ' + p.ext,
+        act:() => { show('directory'); $('dirSearch').value = raw; renderDirectory(); }});
+  });
+  ONCALL.forEach(o => {
+    if ((o.spec + ' ' + o.who).toLowerCase().includes(q))
+      hits.push({group:'On call today', name:o.spec + ' — ' + o.who, meta:o.grade + ' · Ext ' + o.ext,
+        act:() => show('clinical')});
+  });
+  CODES.forEach(c => {
+    if ((c.name + ' ' + c.what).toLowerCase().includes(q))
+      hits.push({group:'Emergency codes', name:c.name, meta:c.what + ' · Dial ' + c.ext, act:() => show('clinical')});
+  });
+  BUNDLES.forEach((b, i) => {
+    if ((b.name + ' ' + b.meta).toLowerCase().includes(q))
+      hits.push({group:'Clinical bundles', name:b.name, meta:b.meta.slice(0, 90) + '…', act:() => openBundle(i)});
+  });
+  SERVICES.forEach(s => {
+    if ((s.name + ' ' + s.meta).toLowerCase().includes(q))
+      hits.push({group:'Services & forms', name:s.name, meta:s.meta,
+        act:() => { if (s.href) location.href = s.href; else { show('staff'); toast(s.stub); } }});
+  });
+  NEWS.forEach(n => {
+    if ((n.title + ' ' + n.body).toLowerCase().includes(q))
+      hits.push({group:'Announcements', name:n.title, meta:n.by + ' · ' + fmtDS(dayOff(n.off)),
+        act:() => { show('news'); const el = $('newsList').querySelector('[data-id="' + n.id + '"]'); if (el) el.click(); }});
+  });
+  BENEFITS.forEach(b => {
+    if ((b.name + ' ' + b.what).toLowerCase().includes(q))
+      hits.push({group:'Benefits & wellbeing', name:b.name, meta:b.what.slice(0, 90) + '…', act:() => show('staff')});
+  });
+  TRAINING.forEach(t => {
+    if (t.name.toLowerCase().includes(q))
+      hits.push({group:'Training', name:t.name, meta:t.cycle + ' · compliance ' + t.compliance + '%', act:() => show('staff')});
+  });
+
+  $('srTitle').textContent = hits.length + ' result' + (hits.length === 1 ? '' : 's') + ' for “' + raw.trim() + '”';
+  $('srSub').textContent = hits.length
+    ? 'Across policies, clinical reference, people, services, announcements and training.'
+    : 'Try a shorter term, a document ID such as P-HIC-01, or an extension number.';
+
+  const groups = [];
+  hits.forEach(h => {
+    let g = groups.find(x => x.name === h.group);
+    if (!g){ g = {name:h.group, items:[]}; groups.push(g); }
+    g.items.push(h);
+  });
+  $('srResults').innerHTML = groups.length ? groups.map((g, gi) =>
+    '<div class="sr-group"><span class="kicker">' + esc(g.name) + ' (' + g.items.length + ')</span>' +
+    '<div class="rowlist">' + g.items.map((h, hi) =>
+      '<div class="sr-hit" data-g="' + gi + '" data-h="' + hi + '" tabindex="0" role="button">' +
+      '<div class="h-body"><div class="h-name">' + hilite(h.name, q) + '</div>' +
+      '<div class="h-meta">' + hilite(h.meta, q) + '</div></div>' +
+      '<span class="chev" style="color:var(--ink-3);font-size:18px">&rsaquo;</span></div>').join('') +
+    '</div></div>').join('') : '<div class="empty">Nothing found.</div>';
+
+  [...$('srResults').querySelectorAll('.sr-hit')].forEach(el => {
+    const go = () => groups[+el.dataset.g].items[+el.dataset.h].act();
+    el.onclick = go;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
+  });
+  show('search', true);
+}
+let searchTimer;
+$('globalSearch').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const v = e.target.value;
+  searchTimer = setTimeout(() => runSearch(v), 140);
+});
+$('searchClear').onclick = () => {
+  $('globalSearch').value = ''; $('searchBox').classList.remove('has');
+  show(lastTab === 'search' ? 'home' : lastTab); $('globalSearch').focus();
+};
+
+/* ============================================================
+   Navigation
+   ============================================================ */
+const TABS = NAVITEMS.map(n => n.id).concat('search');
+let lastTab = 'home';
+function navHTML(cls){
+  return NAVITEMS.map(n =>
+    '<button id="' + cls + '-' + n.id + '" data-tab="' + n.id + '" aria-pressed="' + (n.id === 'home') + '">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    n.svg + '</svg>' + n.label + '</button>').join('');
+}
+$('sideNav').innerHTML = navHTML('side');
+$('bottomNav').innerHTML = navHTML('bot');
+
+function show(tab, fromSearch){
+  TABS.forEach(t => { const el = $('tab-' + t); if (el) el.classList.toggle('active', t === tab); });
+  NAVITEMS.forEach(n => {
+    const on = n.id === tab;
+    ['side','bot'].forEach(p => { const b = $(p + '-' + n.id); if (b) b.setAttribute('aria-pressed', on); });
+  });
+  if (tab !== 'search'){
+    lastTab = tab;
+    if (!fromSearch && $('globalSearch').value){ $('globalSearch').value = ''; $('searchBox').classList.remove('has'); }
+  }
   window.scrollTo({top:0});
 }
-TABS.forEach(t => $('nav-' + t).onclick = () => show(t));
+[...document.querySelectorAll('[data-tab]')].forEach(b => b.onclick = () => show(b.dataset.tab));
+[...document.querySelectorAll('[data-goto]')].forEach(b => b.onclick = () => show(b.dataset.goto));
+
+/* ---------- role switcher ---------- */
+$('roleSel').innerHTML = ROLES.map(r =>
+  '<option value="' + r.id + '"' + (r.id === role ? ' selected' : '') + '>' + r.label + '</option>').join('');
+$('roleSel').onchange = e => {
+  role = e.target.value; store.set(LS.role, role);
+  renderHome(); renderStaff();
+  toast('Now showing what matters to ' + roleLabel(role).toLowerCase() + 's');
+};
+
+/* ---------- boot ---------- */
+renderHome();
+renderNewsChips(); renderNews();
+renderPolicyChips(); renderPolicies();
+renderClinical();
+renderDirectory();
+renderStaff();
 </script>
 </body>
 </html>
